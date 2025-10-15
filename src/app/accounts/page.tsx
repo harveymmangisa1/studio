@@ -64,14 +64,14 @@ export default function ChartOfAccountsPage() {
   const [newAccountType, setNewAccountType] = useState('');
   const [newParentAccountId, setNewParentAccountId] = useState<string | undefined>(undefined);
   const [newDescription, setNewDescription] = useState('');
-  const [newAccountName, setNewAccountName] = useState('');
-  const [newAccountType, setNewAccountType] = useState('');
-  const [newParentAccountId, setNewParentAccountId] = useState<string | undefined>(undefined);
-  const [newDescription, setNewDescription] = useState('');
   const [newIsActive, setNewIsActive] = useState(true);
 
   const [addFormErrors, setAddFormErrors] = useState<Record<string, string>>({});
   const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
+
+  // Edit dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
   useEffect(() => {
     const fetchAccounts = async () => {

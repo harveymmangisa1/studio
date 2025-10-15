@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { CustomerSelector } from './CustomerSelector';
 import { InvoiceLineItems } from './InvoiceLineItems';
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { recordSale } from '../lib/ledger';
 
 const invoiceSchema = z.object({
