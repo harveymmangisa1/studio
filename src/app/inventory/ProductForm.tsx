@@ -23,6 +23,7 @@ const productSchema = z.object({
   cost: z.coerce.number().min(0, 'Cost price must be non-negative'),
   price: z.coerce.number().min(0, 'Selling price must be non-negative'),
   quantity: z.coerce.number().int().min(0, 'Stock quantity must be non-negative'),
+  minStock: z.coerce.number().int().min(0, 'Min. stock must be non-negative').optional(),
 });
 
 export type Product = z.infer<typeof productSchema>;
@@ -42,6 +43,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       cost: 0,
       price: 0,
       quantity: 0,
+      minStock: 10,
     },
   });
 
@@ -119,7 +121,8 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             )}
           />
         </div>
-        <FormField
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
             control={form.control}
             name="quantity"
             render={({ field }) => (
@@ -132,6 +135,20 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             </FormItem>
             )}
         />
+          <FormField
+            control={form.control}
+            name="minStock"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Min. Stock</FormLabel>
+                <FormControl>
+                <Input type="number" placeholder="10" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        </div>
         <Button type="submit" className="w-full">
           {product ? 'Save Changes' : 'Save Product'}
         </Button>

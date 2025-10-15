@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,6 +20,7 @@ import {
   Eye,
   TrendingDown
 } from "lucide-react";
+import Link from 'next/link';
 import SalesChart from "@/components/dashboard/SalesChart";
 import ExpensesChart from "@/components/dashboard/ExpensesChart";
 
@@ -45,62 +47,86 @@ interface Activity {
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
-    totalProducts: 248,
-    lowStockItems: 12,
-    totalSales: 1250,
-    salesChange: -12.3,
-    totalRevenue: 45231.89,
-    revenueChange: 20.1,
-    totalCustomers: 89,
-    pendingOrders: 5,
+    totalProducts: 0,
+    lowStockItems: 0,
+    totalSales: 0,
+    salesChange: 0,
+    totalRevenue: 0,
+    revenueChange: 0,
+    totalCustomers: 0,
+    pendingOrders: 0,
   });
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('month');
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      // Here you would typically re-fetch data
-      setRefreshing(false);
-    }, 1000);
+  useEffect(() => {
+    fetchDashboardData();
+  }, [timeRange]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      const [ 
+        { data: revenueData, error: revenueError },
+        { count: salesCount, error: salesError },
+        { count: productsCount, error: productsError },
+        { count: customersCount, error: customersError },
+        { data: lowStockData, error: lowStockError },
+        { count: pendingOrdersCount, error: pendingOrdersError },
+        { data: recentSales, error: recentSalesError },
+        { data: recentStock, error: recentStockError },
+        { data: recentCustomers, error: recentCustomersError },
+      ] = await Promise.all([
+        supabase.from('sales_invoices').select('total_amount').eq('payment_status', 'Paid'),
+        supabase.from('sales_invoices').select('*' , { count: 'exact' }),
+        supabase.from('products').select('*' , { count: 'exact' }),
+        supabase.from('customers').select('*' , { count: 'exact' }),
+        supabase.from('products').select('id').lte('stock_quantity', 10), // Assuming reorder_point is 10
+        supabase.from('sales_invoices').select('*' , { count: 'exact' }).eq('payment_status', 'Unpaid'),
+        supabase.from('sales_invoices').select('id, created_at, total_amount, invoice_number').order('created_at', { ascending: false }).limit(5),
+        supabase.from('stock_movements').select('id, created_at, movement_type, quantity, products(name)').order('created_at', { ascending: false }).limit(5),
+        supabase.from('customers').select('id, created_at, name').order('created_at', { ascending: false }).limit(5),
+      ]);
+
+      if (revenueError || salesError || productsError || customersError || lowStockError || pendingOrdersError || recentSalesError || recentStockError || recentCustomersError) {
+        throw new Error('Error fetching dashboard data');
+      }
+
+      const totalRevenue = revenueData?.reduce((sum, invoice) => sum + invoice.total_amount, 0) || 0;
+
+      const formattedActivities: Activity[] = [
+        ...(recentSales || []).map(sale => ({ id: sale.id, type: 'sale', title: 'New Sale', description: `Invoice #${sale.invoice_number}`, amount: sale.total_amount, timestamp: new Date(sale.created_at).toLocaleDateString(), icon: ShoppingCart })),
+        ...(recentStock || []).map(stock => ({ id: stock.id, type: 'stock', title: `Stock ${stock.movement_type}`, description: `${stock.quantity} of ${stock.products.name}`, timestamp: new Date(stock.created_at).toLocaleDateString(), icon: Package })),
+        ...(recentCustomers || []).map(customer => ({ id: customer.id, type: 'customer', title: 'New Customer', description: customer.name, timestamp: new Date(customer.created_at).toLocaleDateString(), icon: Users })),
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      setStats({
+        totalRevenue,
+        totalSales: salesCount || 0,
+        totalProducts: productsCount || 0,
+        totalCustomers: customersCount || 0,
+        lowStockItems: lowStockData?.length || 0,
+        pendingOrders: pendingOrdersCount || 0,
+        salesChange: 0, // Placeholder
+        revenueChange: 0, // Placeholder
+      });
+
+      setRecentActivities(formattedActivities);
+
+    } catch (error: any) {
+      console.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const recentActivities: Activity[] = [
-    {
-      id: '1',
-      type: 'sale',
-      title: 'New Sale Recorded',
-      description: 'Order #SO-0012 completed',
-      amount: 250.00,
-      timestamp: '2 hours ago',
-      icon: ShoppingCart,
-    },
-    {
-      id: '2',
-      type: 'stock',
-      title: 'Low Stock Alert',
-      description: 'Product "Wireless Mouse" below minimum stock',
-      timestamp: '4 hours ago',
-      icon: Package,
-    },
-    {
-      id: '3',
-      type: 'customer',
-      title: 'New Customer Registered',
-      description: 'Tech Solutions Inc. added to system',
-      timestamp: '1 day ago',
-      icon: Users,
-    },
-    {
-      id: '4',
-      type: 'sale',
-      title: 'Large Order Processed',
-      description: 'Order #SO-0011 worth $1,250.00',
-      amount: 1250.00,
-      timestamp: '1 day ago',
-      icon: ShoppingCart,
-    },
-  ];
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchDashboardData().finally(() => setRefreshing(false));
+  }
 
   const statCards = [
     {
@@ -204,9 +230,11 @@ export default function DashboardPage() {
                             {Math.abs(card.change)}%
                             </div>
                         )}
-                        <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8">
-                            <Eye className="w-4 h-4 text-muted-foreground" />
-                        </Button>
+                        <Link href={card.title === 'Total Revenue' || card.title === 'Total Sales' ? '/sales' : card.title === 'Total Products' ? '/inventory' : '/customers'}>
+                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8">
+                              <Eye className="w-4 h-4 text-muted-foreground" />
+                          </Button>
+                        </Link>
                     </div>
                 </div>
               </CardHeader>
@@ -230,7 +258,9 @@ export default function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Activity</CardTitle>
-                <Button variant="link" className="text-sm">View All</Button>
+                <Link href="/audit-log">
+                  <Button variant="link" className="text-sm">View All</Button>
+                </Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -286,7 +316,9 @@ export default function DashboardPage() {
                         <div>
                             <p className="text-sm font-medium text-amber-900">Low Stock Alert</p>
                             <p className="text-xs text-amber-700 mt-1">{stats.lowStockItems} products are below their minimum stock level.</p>
-                            <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-amber-600">View Products →</Button>
+                            <Link href="/inventory">
+                              <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-amber-600">View Products →</Button>
+                            </Link>
                         </div>
                         </div>
                     )}
@@ -297,7 +329,9 @@ export default function DashboardPage() {
                         <div>
                             <p className="text-sm font-medium text-blue-900">Pending Orders</p>
                             <p className="text-xs text-blue-700 mt-1">{stats.pendingOrders} sales orders await processing.</p>
-                             <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-blue-600">Process Orders →</Button>
+                             <Link href="/sales">
+                               <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-blue-600">Process Orders →</Button>
+                             </Link>
                         </div>
                         </div>
                     )}
@@ -319,17 +353,19 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-3">
                      {[
-                        { label: 'New Sale', icon: ShoppingCart, color: 'bg-emerald-500' },
-                        { label: 'Add Product', icon: Package, color: 'bg-blue-500' },
-                        { label: 'New Customer', icon: Users, color: 'bg-amber-500' },
-                        { label: 'View Reports', icon: TrendingUp, color: 'bg-slate-500' },
+                        { label: 'New Sale', icon: ShoppingCart, color: 'bg-emerald-500', href: '/sales/new' },
+                        { label: 'Add Product', icon: Package, color: 'bg-blue-500', href: '/inventory' },
+                        { label: 'New Customer', icon: Users, color: 'bg-amber-500', href: '/customers' },
+                        { label: 'View Reports', icon: TrendingUp, color: 'bg-slate-500', href: '/reports/balance-sheet' },
                     ].map((action, index) => (
-                        <Button key={index} variant="outline" className="flex-col h-24 gap-2">
-                             <div className={`${action.color} p-2 rounded-lg`}>
-                                <action.icon className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="text-sm font-medium text-muted-foreground">{action.label}</span>
-                        </Button>
+                        <Link key={index} href={action.href}>
+                          <Button variant="outline" className="flex-col h-24 gap-2 w-full">
+                               <div className={`${action.color} p-2 rounded-lg`}>
+                                  <action.icon className="w-5 h-5 text-white" />
+                              </div>
+                              <span className="text-sm font-medium text-muted-foreground">{action.label}</span>
+                          </Button>
+                        </Link>
                     ))}
                 </CardContent>
             </Card>
