@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTenant } from '@/lib/tenant';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ interface InvoiceDetails {
 }
 
 export default function InvoiceDetailsPage() {
+  const { tenant } = useTenant();
   const { id } = useParams();
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,7 @@ export default function InvoiceDetailsPage() {
       const { data, error } = await supabase
         .from('sales_invoices')
         .select('*, customers:customers(*), sales_invoice_line_items:sales_line_items(*, products:products(*))')
+        .eq('tenant_id', tenant?.id || '')
         .eq('id', id)
         .single();
 

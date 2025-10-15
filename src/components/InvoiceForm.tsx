@@ -11,6 +11,7 @@ import { CustomerSelector } from './CustomerSelector';
 import { InvoiceLineItems } from './InvoiceLineItems';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTenant } from '@/lib/tenant';
 import { recordSale } from '../lib/ledger';
 
 const invoiceSchema = z.object({
@@ -27,6 +28,7 @@ const invoiceSchema = z.object({
 export type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 export function InvoiceForm() {
+  const { tenant } = useTenant();
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
@@ -51,12 +53,45 @@ export function InvoiceForm() {
     setTotal(newTotal);
   }, [lineItems]);
 
+  async function generateInvoiceNumber(tenantId: string) {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const prefix = `INV-${yyyy}${mm}`;
+
+    const { data: latest, error } = await supabase
+      .from('sales_invoices')
+      .select('invoice_number')
+      .eq('tenant_id', tenantId)
+      .ilike('invoice_number', `${prefix}-%`)
+      .order('invoice_number', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    let nextSeq = 1;
+    if (latest && latest.length > 0) {
+      const last = latest[0].invoice_number as string;
+      const parts = last.split('-');
+      const seqStr = parts[2] || '0000';
+      const seq = parseInt(seqStr, 10);
+      if (!Number.isNaN(seq)) nextSeq = seq + 1;
+    }
+
+    const seqPadded = String(nextSeq).padStart(4, '0');
+    return `${prefix}-${seqPadded}`;
+  }
+
   async function onSubmit(data: InvoiceFormData) {
     try {
+      if (!tenant?.id) throw new Error('No tenant selected');
+
+      const invoice_number = await generateInvoiceNumber(tenant.id);
       // Create the invoice
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('sales_invoices')
         .insert({
+          tenant_id: tenant.id,
           customer_id: data.customer_id,
           invoice_date: data.invoice_date,
           due_date: data.due_date,
@@ -64,6 +99,7 @@ export function InvoiceForm() {
           tax_amount: tax,
           total_amount: total,
           payment_status: 'Unpaid',
+          invoice_number,
         })
         .select('id')
         .single();
@@ -72,6 +108,7 @@ export function InvoiceForm() {
 
       // Create the line items
       const lineItemsData = data.line_items.map(item => ({
+        tenant_id: tenant.id,
         invoice_id: invoiceData.id,
         product_id: item.product_id,
         quantity: item.quantity,
@@ -88,6 +125,7 @@ export function InvoiceForm() {
         const { data: product, error: productError } = await supabase
           .from('products')
           .select('stock_quantity')
+          .eq('tenant_id', tenant.id)
           .eq('id', item.product_id)
           .single();
 
@@ -98,12 +136,14 @@ export function InvoiceForm() {
         const { error: updateError } = await supabase
           .from('products')
           .update({ stock_quantity: newQuantity })
+          .eq('tenant_id', tenant.id)
           .eq('id', item.product_id);
 
         if (updateError) throw updateError;
 
         // Log the stock movement
         const { error: movementError } = await supabase.from('stock_movements').insert({
+          tenant_id: tenant.id,
           product_id: item.product_id,
           quantity: -item.quantity,
           movement_type: 'sale',
@@ -118,13 +158,14 @@ export function InvoiceForm() {
         const { data: product, error: productError } = await supabase
           .from('products')
           .select('cost_price')
+          .eq('tenant_id', tenant.id)
           .eq('id', item.product_id)
           .single();
         if (productError) throw productError;
         return acc + (product.cost_price * item.quantity);
       }, Promise.resolve(0));
 
-      await recordSale(invoiceData.id, data.customer_id, total, await cogs);
+      await recordSale(invoiceData.id, data.customer_id, total, await cogs, tenant.id);
 
       alert('Invoice created successfully!');
       form.reset();

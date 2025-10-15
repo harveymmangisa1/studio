@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTenant } from '@/lib/tenant';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Product {
@@ -16,13 +17,17 @@ interface ProductSelectorProps {
 }
 
 export function ProductSelector({ control, index }: ProductSelectorProps) {
+  const { tenant } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data, error } = await supabase.from('products').select('id, name, selling_price');
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name, selling_price')
+          .eq('tenant_id', tenant?.id || '');
         if (error) throw error;
         setProducts(data || []);
       } catch (error) {

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { Tenant } from './tenant';
 
 /**
  * Calculates the Profit & Loss for a given period.
@@ -6,11 +7,12 @@ import { supabase } from './supabase';
  * @param endDate - The end date of the period.
  * @returns An object containing revenue, cogs, gross_profit, expenses, and net_profit.
  */
-export async function calculateProfitAndLoss(startDate: string, endDate: string) {
+export async function calculateProfitAndLoss(startDate: string, endDate: string, tenant?: Tenant | null) {
   // Resolve account ids by conventional names
   const { data: accounts, error: accountsError } = await supabase
     .from('accounts')
-    .select('id, account_name');
+    .select('id, account_name')
+    .eq('tenant_id', tenant?.id || '');
   if (accountsError) throw accountsError;
 
   const revenueAccountIds = accounts
@@ -28,6 +30,7 @@ export async function calculateProfitAndLoss(startDate: string, endDate: string)
     .from('ledger_entries')
     .select('credit_amount, account_id')
     .in('account_id', revenueAccountIds)
+    .eq('tenant_id', tenant?.id || '')
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDate);
   if (revenueError) throw revenueError;
@@ -38,6 +41,7 @@ export async function calculateProfitAndLoss(startDate: string, endDate: string)
     .from('ledger_entries')
     .select('debit_amount, account_id')
     .in('account_id', cogsAccountIds)
+    .eq('tenant_id', tenant?.id || '')
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDate);
   if (cogsError) throw cogsError;
@@ -48,6 +52,7 @@ export async function calculateProfitAndLoss(startDate: string, endDate: string)
     .from('ledger_entries')
     .select('debit_amount, account_id')
     .in('account_id', expenseAccountIds)
+    .eq('tenant_id', tenant?.id || '')
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDate);
   if (expenseError) throw expenseError;
@@ -69,10 +74,11 @@ export async function calculateProfitAndLoss(startDate: string, endDate: string)
  * Calculates the Balance Sheet.
  * @returns An object containing total assets, liabilities, and equity.
  */
-export async function calculateBalanceSheet() {
+export async function calculateBalanceSheet(tenant?: Tenant | null) {
   const { data: accounts, error } = await supabase
     .from('accounts')
-    .select('balance, account_type');
+    .select('balance, account_type')
+    .eq('tenant_id', tenant?.id || '');
   if (error) throw error;
 
   const totals = (accounts || []).reduce(

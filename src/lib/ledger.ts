@@ -16,7 +16,10 @@ interface LedgerTransaction {
  * @param description - A description of the overall transaction.
  * @param date - The date of the transaction.
  */
-export async function createDoubleEntryTransaction(entries: Omit<LedgerTransaction, 'date' | 'description'>[]) {
+export async function createDoubleEntryTransaction(
+  entries: Omit<LedgerTransaction, 'date' | 'description'>[],
+  tenantId: string
+) {
   const totalDebits = entries.reduce((sum, entry) => sum + entry.debit, 0);
   const totalCredits = entries.reduce((sum, entry) => sum + entry.credit, 0);
 
@@ -27,6 +30,7 @@ export async function createDoubleEntryTransaction(entries: Omit<LedgerTransacti
   const transactionDate = new Date().toISOString();
 
   const ledgerEntries = entries.map(entry => ({
+    tenant_id: tenantId,
     account_id: entry.accountId,
     debit_amount: entry.debit,
     credit_amount: entry.credit,
@@ -44,7 +48,7 @@ export async function createDoubleEntryTransaction(entries: Omit<LedgerTransacti
 
   // After inserting, update account balances
   for (const entry of entries) {
-    await updateAccountBalance(entry.accountId, entry.debit, entry.credit);
+    await updateAccountBalance(entry.accountId, entry.debit, entry.credit, tenantId);
   }
 
   return data;
@@ -56,10 +60,11 @@ export async function createDoubleEntryTransaction(entries: Omit<LedgerTransacti
  * @param debit - The debit amount to apply.
  * @param credit - The credit amount to apply.
  */
-async function updateAccountBalance(accountId: string, debit: number, credit: number) {
+async function updateAccountBalance(accountId: string, debit: number, credit: number, tenantId: string) {
   const { data: account, error: fetchError } = await supabase
     .from('accounts')
     .select('balance, account_type')
+    .eq('tenant_id', tenantId)
     .eq('id', accountId)
     .single();
 
@@ -78,17 +83,25 @@ async function updateAccountBalance(accountId: string, debit: number, credit: nu
   const { error: updateError } = await supabase
     .from('accounts')
     .update({ balance: newBalance })
+    .eq('tenant_id', tenantId)
     .eq('id', accountId);
 
   if (updateError) throw updateError;
 }
 
 // Example of how to use createDoubleEntryTransaction for a sale
-export async function recordSale(invoiceId: string, customerId: string, totalAmount: number, cogs: number) {
+export async function recordSale(
+  invoiceId: string,
+  customerId: string,
+  totalAmount: number,
+  cogs: number,
+  tenantId: string
+) {
   // Look up the required account IDs by conventional names
   const { data: accounts, error } = await supabase
     .from('accounts')
     .select('id, account_name')
+    .eq('tenant_id', tenantId)
     .in('account_name', ['Accounts Receivable', 'Sales Revenue', 'Cost of Goods Sold', 'Inventory']);
 
   if (error) throw error;
@@ -109,5 +122,5 @@ export async function recordSale(invoiceId: string, customerId: string, totalAmo
     { accountId: inventoryAccountId, debit: 0, credit: cogs, referenceType: 'sales_invoice', referenceId: invoiceId },
   ];
 
-  await createDoubleEntryTransaction(entries);
+  await createDoubleEntryTransaction(entries, tenantId);
 }

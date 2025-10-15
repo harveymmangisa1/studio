@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/lib/supabase';
+import { useTenant } from '@/lib/tenant';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
@@ -58,6 +59,7 @@ const initialProducts: Product[] = [
 ];
 
 export default function InventoryPage() {
+  const { tenant } = useTenant();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -70,7 +72,10 @@ export default function InventoryPage() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('products').select('*');
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('tenant_id', tenant?.id || '');
       if (error) throw error;
       setProducts(data || []);
     } catch (error: any) {
@@ -102,7 +107,11 @@ export default function InventoryPage() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        const { error } = await supabase.from('products').delete().eq('id', id);
+        const { error } = await supabase
+          .from('products')
+          .delete()
+          .eq('tenant_id', tenant?.id || '')
+          .eq('id', id);
         if (error) throw error;
         fetchProducts(); // Re-fetch products to update the list
       } catch (error: any) {
