@@ -7,38 +7,51 @@ import { supabase } from './supabase';
  * @returns An object containing revenue, cogs, gross_profit, expenses, and net_profit.
  */
 export async function calculateProfitAndLoss(startDate: string, endDate: string) {
-  // Fetch revenue
+  // Resolve account ids by conventional names
+  const { data: accounts, error: accountsError } = await supabase
+    .from('accounts')
+    .select('id, account_name');
+  if (accountsError) throw accountsError;
+
+  const revenueAccountIds = accounts
+    ?.filter(a => a.account_name?.toLowerCase().includes('revenue'))
+    .map(a => a.id) || [];
+  const cogsAccountIds = accounts
+    ?.filter(a => a.account_name?.toLowerCase().includes('cost of goods sold') || a.account_name === 'COGS')
+    .map(a => a.id) || [];
+  const expenseAccountIds = accounts
+    ?.filter(a => a.account_name && !a.account_name.toLowerCase().includes('revenue') && !a.account_name.toLowerCase().includes('inventory') && !a.account_name.toLowerCase().includes('accounts receivable') && !a.account_name.toLowerCase().includes('cash') && a.account_name !== 'Cost of Goods Sold')
+    .map(a => a.id) || [];
+
+  // Revenue: sum credits for revenue accounts
   const { data: revenueData, error: revenueError } = await supabase
     .from('ledger_entries')
-    .select('credit_amount')
-    .eq('account_type', 'Revenue') // This assumes account_type is on ledger_entries
+    .select('credit_amount, account_id')
+    .in('account_id', revenueAccountIds)
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDate);
-
   if (revenueError) throw revenueError;
-  const totalRevenue = revenueData.reduce((sum, entry) => sum + entry.credit_amount, 0);
+  const totalRevenue = (revenueData || []).reduce((sum, entry) => sum + Number(entry.credit_amount || 0), 0);
 
-  // Fetch Cost of Goods Sold (COGS)
+  // COGS: sum debits for COGS accounts
   const { data: cogsData, error: cogsError } = await supabase
     .from('ledger_entries')
-    .select('debit_amount')
-    .eq('account_type', 'COGS')
+    .select('debit_amount, account_id')
+    .in('account_id', cogsAccountIds)
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDate);
-
   if (cogsError) throw cogsError;
-  const totalCOGS = cogsData.reduce((sum, entry) => sum + entry.debit_amount, 0);
+  const totalCOGS = (cogsData || []).reduce((sum, entry) => sum + Number(entry.debit_amount || 0), 0);
 
-  // Fetch Expenses
+  // Expenses: sum debits for expense accounts
   const { data: expenseData, error: expenseError } = await supabase
     .from('ledger_entries')
-    .select('debit_amount')
-    .eq('account_type', 'Expense')
+    .select('debit_amount, account_id')
+    .in('account_id', expenseAccountIds)
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDate);
-
   if (expenseError) throw expenseError;
-  const totalExpenses = expenseData.reduce((sum, entry) => sum + entry.debit_amount, 0);
+  const totalExpenses = (expenseData || []).reduce((sum, entry) => sum + Number(entry.debit_amount || 0), 0);
 
   const grossProfit = totalRevenue - totalCOGS;
   const netProfit = grossProfit - totalExpenses;
@@ -57,36 +70,25 @@ export async function calculateProfitAndLoss(startDate: string, endDate: string)
  * @returns An object containing total assets, liabilities, and equity.
  */
 export async function calculateBalanceSheet() {
-  // Fetch total assets
-  const { data: assetsData, error: assetsError } = await supabase
+  const { data: accounts, error } = await supabase
     .from('accounts')
-    .select('balance')
-    .eq('account_type', 'Asset');
+    .select('balance, account_type');
+  if (error) throw error;
 
-  if (assetsError) throw assetsError;
-  const totalAssets = assetsData.reduce((sum, account) => sum + account.balance, 0);
-
-  // Fetch total liabilities
-  const { data: liabilitiesData, error: liabilitiesError } = await supabase
-    .from('accounts')
-    .select('balance')
-    .eq('account_type', 'Liability');
-
-  if (liabilitiesError) throw liabilitiesError;
-  const totalLiabilities = liabilitiesData.reduce((sum, account) => sum + account.balance, 0);
-
-  // Fetch total equity
-  const { data: equityData, error: equityError } = await supabase
-    .from('accounts')
-    .select('balance')
-    .eq('account_type', 'Equity');
-
-  if (equityError) throw equityError;
-  const totalEquity = equityData.reduce((sum, account) => sum + account.balance, 0);
+  const totals = (accounts || []).reduce(
+    (acc, account) => {
+      const balance = Number(account.balance || 0);
+      if (account.account_type === 'Asset') acc.assets += balance;
+      else if (account.account_type === 'Liability') acc.liabilities += balance;
+      else if (account.account_type === 'Equity') acc.equity += balance;
+      return acc;
+    },
+    { assets: 0, liabilities: 0, equity: 0 }
+  );
 
   return {
-    assets: totalAssets,
-    liabilities: totalLiabilities,
-    equity: totalEquity,
+    assets: totals.assets,
+    liabilities: totals.liabilities,
+    equity: totals.equity,
   };
 }

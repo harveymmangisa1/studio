@@ -85,22 +85,27 @@ async function updateAccountBalance(accountId: string, debit: number, credit: nu
 
 // Example of how to use createDoubleEntryTransaction for a sale
 export async function recordSale(invoiceId: string, customerId: string, totalAmount: number, cogs: number) {
-  // This is a simplified example. You would need to fetch the correct account IDs for
-  // Accounts Receivable, Sales Revenue, Cost of Goods Sold, and Inventory.
-  const accountsReceivableAccountId = '... a real account ID ...';
-  const salesRevenueAccountId = '... a real account ID ...';
-  const cogsAccountId = '... a real account ID ...';
-  const inventoryAccountId = '... a real account ID ...';
+  // Look up the required account IDs by conventional names
+  const { data: accounts, error } = await supabase
+    .from('accounts')
+    .select('id, account_name')
+    .in('account_name', ['Accounts Receivable', 'Sales Revenue', 'Cost of Goods Sold', 'Inventory']);
+
+  if (error) throw error;
+
+  const accountsReceivableAccountId = accounts?.find(a => a.account_name === 'Accounts Receivable')?.id;
+  const salesRevenueAccountId = accounts?.find(a => a.account_name === 'Sales Revenue')?.id;
+  const cogsAccountId = accounts?.find(a => a.account_name === 'Cost of Goods Sold')?.id;
+  const inventoryAccountId = accounts?.find(a => a.account_name === 'Inventory')?.id;
+
+  if (!accountsReceivableAccountId || !salesRevenueAccountId || !cogsAccountId || !inventoryAccountId) {
+    throw new Error('Required accounts not found: ensure AR, Revenue, COGS, and Inventory exist.');
+  }
 
   const entries = [
-    // Debit Accounts Receivable to increase it
     { accountId: accountsReceivableAccountId, debit: totalAmount, credit: 0, referenceType: 'sales_invoice', referenceId: invoiceId },
-    // Credit Sales Revenue to increase it
     { accountId: salesRevenueAccountId, debit: 0, credit: totalAmount, referenceType: 'sales_invoice', referenceId: invoiceId },
-    
-    // Debit COGS to recognize the expense
     { accountId: cogsAccountId, debit: cogs, credit: 0, referenceType: 'sales_invoice', referenceId: invoiceId },
-    // Credit Inventory to decrease it
     { accountId: inventoryAccountId, debit: 0, credit: cogs, referenceType: 'sales_invoice', referenceId: invoiceId },
   ];
 

@@ -49,7 +49,12 @@ export function InvoiceLineItems({ control }: { control: any }) {
                 />
               </TableCell>
               <TableCell className="text-right">
-                {/* This should update dynamically */}
+                {(() => {
+                  const quantity = Number(control.getValues(`line_items.${index}.quantity`) || 0);
+                  const unitPrice = Number(control.getValues(`line_items.${index}.unit_price`) || 0);
+                  const total = (quantity * unitPrice) || 0;
+                  return `$${total.toFixed(2)}`;
+                })()}
               </TableCell>
               <TableCell>
                 <Button variant="ghost" onClick={() => remove(index)}>
