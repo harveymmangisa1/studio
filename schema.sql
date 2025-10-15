@@ -58,7 +58,7 @@ CREATE TABLE tenant_settings (
 -- Create the products table
 CREATE TABLE products (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     sku VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
     category VARCHAR(100),
@@ -77,7 +77,7 @@ CREATE TABLE products (
 -- Create the sales_invoices table
 CREATE TABLE sales_invoices (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     invoice_number VARCHAR(50) NOT NULL,
     customer_id UUID,
     customer_name VARCHAR(255),
@@ -100,7 +100,7 @@ CREATE TABLE sales_invoices (
 -- Create the sales_line_items table
 CREATE TABLE sales_line_items (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     invoice_id UUID NOT NULL,
     product_id UUID NOT NULL,
     quantity INT,
@@ -113,7 +113,7 @@ CREATE TABLE sales_line_items (
 -- Create the stock_movements table
 CREATE TABLE stock_movements (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     product_id UUID NOT NULL,
     movement_type VARCHAR(50),
     quantity INT,
@@ -129,7 +129,7 @@ CREATE TABLE stock_movements (
 -- Create the customers table
 CREATE TABLE customers (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(50),
@@ -144,7 +144,7 @@ CREATE TABLE customers (
 -- Create the expenses table
 CREATE TABLE expenses (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     category VARCHAR(100),
     amount DECIMAL(10, 2),
     description TEXT,
@@ -159,7 +159,7 @@ CREATE TABLE expenses (
 -- Create the suppliers table
 CREATE TABLE suppliers (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(50),
@@ -173,7 +173,7 @@ CREATE TABLE suppliers (
 -- Create the accounts table
 CREATE TABLE accounts (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     account_code VARCHAR(50) NOT NULL,
     account_name VARCHAR(255) NOT NULL,
     account_type VARCHAR(50) NOT NULL,
@@ -190,7 +190,7 @@ CREATE TABLE accounts (
 -- Create the ledger_entries table
 CREATE TABLE ledger_entries (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     account_id UUID NOT NULL,
     debit_amount DECIMAL(12, 2),
     credit_amount DECIMAL(12, 2),
@@ -206,7 +206,7 @@ CREATE TABLE ledger_entries (
 -- Create the audit_log table
 CREATE TABLE audit_log (
     id UUID DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL DEFAULT current_tenant_id() REFERENCES tenants(id) ON DELETE CASCADE,
     user_id UUID,
     action VARCHAR(255),
     table_name VARCHAR(100),
@@ -254,50 +254,51 @@ ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ledger_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
+-- JWT-based tenant helper and RLS Policies
 
-create or replace function set_current_tenant(tenant_id_input UUID)
-returns void as $$
-begin
-  perform set_config('app.current_tenant_id', tenant_id_input::TEXT, FALSE);
-end;
-$$ language plpgsql SECURITY DEFINER;
+create or replace function current_tenant_id()
+returns uuid
+language sql
+stable
+as $$
+  select (current_setting('request.jwt.claims', true)::jsonb ->> 'tenant_id')::uuid;
+$$;
 
 CREATE POLICY "Enable read access for user's tenant" ON tenants
-FOR SELECT USING (id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR SELECT USING (id = current_tenant_id());
 
 CREATE POLICY "Enable read access for user's tenant" ON tenant_users
-FOR SELECT USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR SELECT USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable read access for user's tenant" ON tenant_settings
-FOR SELECT USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR SELECT USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON products
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON sales_invoices
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON sales_line_items
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON stock_movements
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON customers
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON expenses
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON suppliers
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON accounts
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON ledger_entries
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
 
 CREATE POLICY "Enable access for user's tenant" ON audit_log
-FOR ALL USING (tenant_id = (SELECT current_setting('app.current_tenant_id')::UUID));
+FOR ALL USING (tenant_id = current_tenant_id());
