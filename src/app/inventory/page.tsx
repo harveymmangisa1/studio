@@ -125,7 +125,7 @@ export default function InventoryPage() {
     if (quantity === 0) return { status: 'out-of-stock', label: 'Out of Stock', variant: 'destructive' as const };
     if (quantity <= minStock) return { status: 'low-stock', label: 'Low Stock', variant: 'destructive' as const };
     if (quantity <= minStock * 2) return { status: 'medium-stock', label: 'Medium Stock', variant: 'outline' as const };
-    return { status: 'in-stock', label: 'In Stock', variant: 'success' as const };
+    return { status: 'in-stock', label: 'In Stock', variant: 'default' as const };
   };
 
   const getStockStatusCounts = () => {
@@ -195,7 +195,7 @@ export default function InventoryPage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => { setEditingProduct(null); setShowForm(true); }}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Product
           </Button>
@@ -204,58 +204,13 @@ export default function InventoryPage() {
 
       {/* Dialog for Product Form */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
           </DialogHeader>
           <ProductForm product={editingProduct} onSuccess={handleFormSuccess} />
         </DialogContent>
       </Dialog>
-
-      {/* Filter and Search Section */}
-      {/* <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input 
-                placeholder="Search by name, category, or SKU..." 
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <Filter className="h-5 w-5 text-muted-foreground" />
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category.charAt(0).toUpperCase() + category.slice(1)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={stockFilter} onValueChange={setStockFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Stock Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(stockStatusCounts).map(([status, count]) => (
-                    <SelectItem key={status} value={status}>
-                      {status.replace('-', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} ({count})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" onClick={refreshData} disabled={loading}>
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card> */}
 
       {/* Products Table */}
       <Card>
@@ -269,6 +224,7 @@ export default function InventoryPage() {
                 <TableHead>Product</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Expiry Date</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-center">Stock</TableHead>
                 <TableHead className="text-center">Status</TableHead>
@@ -283,10 +239,16 @@ export default function InventoryPage() {
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell className="text-muted-foreground">{product.sku}</TableCell>
                     <TableCell>{product.category}</TableCell>
+                    <TableCell>
+                      {product.expiryDate 
+                        ? new Date(product.expiryDate).toLocaleDateString() 
+                        : <span className="text-muted-foreground/50">N/A</span>
+                      }
+                    </TableCell>
                     <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
                     <TableCell className="text-center">{product.quantity}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={stockInfo.variant}>{stockInfo.label}</Badge>
+                      <Badge variant={stockInfo.variant as any}>{stockInfo.label}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

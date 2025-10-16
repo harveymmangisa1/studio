@@ -14,6 +14,18 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -24,6 +36,8 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, 'Selling price must be non-negative'),
   quantity: z.coerce.number().int().min(0, 'Stock quantity must be non-negative'),
   minStock: z.coerce.number().int().min(0, 'Min. stock must be non-negative').optional(),
+  industryCategory: z.string().optional(),
+  expiryDate: z.date().optional(),
 });
 
 export type Product = z.infer<typeof productSchema>;
@@ -38,14 +52,17 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
     resolver: zodResolver(productSchema),
     defaultValues: product || {
       name: '',
-      category: '',
+      category: 'General Retail',
       sku: '',
       cost: 0,
       price: 0,
       quantity: 0,
       minStock: 10,
+      industryCategory: 'General Retail',
     },
   });
+
+  const industryCategory = form.watch('industryCategory');
 
   function onSubmit(data: Product) {
     onSuccess(data);
@@ -54,6 +71,29 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="industryCategory"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Industry Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an industry" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="General Retail">General Retail</SelectItem>
+                  <SelectItem value="Pharmacy">Pharmacy</SelectItem>
+                  <SelectItem value="Food & Beverage">Food & Beverage</SelectItem>
+                  <SelectItem value="Electronics">Electronics</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="name"
@@ -72,7 +112,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
+              <FormLabel>Sub-Category</FormLabel>
               <FormControl>
                 <Input placeholder="Electronics" {...field} />
               </FormControl>
@@ -93,6 +133,49 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             </FormItem>
           )}
         />
+
+        {industryCategory === 'Pharmacy' && (
+          <FormField
+            control={form.control}
+            name="expiryDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Expiry Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+        />
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
