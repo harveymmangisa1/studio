@@ -13,14 +13,6 @@ import {
   CardDescription 
 } from '@/components/ui/card';
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
@@ -34,7 +26,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import AccountTreeTable from '@/components/AccountTreeTable';
 import { MoreHorizontal } from 'lucide-react';
 
 interface Account {
@@ -64,14 +56,13 @@ export default function ChartOfAccountsPage() {
   const [newAccountType, setNewAccountType] = useState('');
   const [newParentAccountId, setNewParentAccountId] = useState<string | undefined>(undefined);
   const [newDescription, setNewDescription] = useState('');
-  const [newAccountName, setNewAccountName] = useState('');
-  const [newAccountType, setNewAccountType] = useState('');
-  const [newParentAccountId, setNewParentAccountId] = useState<string | undefined>(undefined);
-  const [newDescription, setNewDescription] = useState('');
   const [newIsActive, setNewIsActive] = useState(true);
 
   const [addFormErrors, setAddFormErrors] = useState<Record<string, string>>({});
   const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
+  
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -80,7 +71,9 @@ export default function ChartOfAccountsPage() {
         if (error) {
           throw error;
         }
-        setAccounts(data || []);
+        // Initialize balance for all accounts, assuming it comes from DB or needs calculation
+        const accountsWithBalance = (data || []).map(acc => ({...acc, balance: acc.balance || 0}));
+        setAccounts(accountsWithBalance);
       } catch (error: any) {
         setError(error.message);
       } finally {
@@ -113,7 +106,7 @@ export default function ChartOfAccountsPage() {
           case 'Revenue': validRange = codePrefix === 4; break;
           case 'Expense': validRange = codePrefix === 5; break;
         }
-        if (!validRange) {
+        if (!validRange && account.account_type) {
           errors.account_code = `Account Code ${account.account_code} is not in the valid range for ${account.account_type} accounts.`;
         }
 
@@ -134,9 +127,10 @@ export default function ChartOfAccountsPage() {
       account_code: newAccountCode,
       account_name: newAccountName,
       account_type: newAccountType,
-      parent_account_id: newParentAccountId === '' ? null : newParentAccountId,
+      parent_account_id: newParentAccountId === '' ? undefined : newParentAccountId,
       description: newDescription,
       is_active: newIsActive,
+      balance: 0,
     };
 
     const errors = validateAccount(newAccountData);
@@ -151,14 +145,15 @@ export default function ChartOfAccountsPage() {
         .insert([
           newAccountData
         ])
-        .select();
+        .select()
+        .single();
 
       if (error) {
         throw error;
       }
 
       if (data) {
-        setAccounts([...accounts, data[0]]);
+        setAccounts([...accounts, data]);
         // Reset form
         setNewAccountCode('');
         setNewAccountName('');
@@ -168,7 +163,7 @@ export default function ChartOfAccountsPage() {
         setNewIsActive(true);
       }
     } catch (error: any) {
-      setError(error.message);
+      setAddFormErrors({ form: error.message });
     }
   };
 
@@ -203,22 +198,22 @@ export default function ChartOfAccountsPage() {
           account_name: editingAccount.account_name,
           description: editingAccount.description,
           is_active: editingAccount.is_active,
-          // account_code and account_type are not editable as per spec
         })
         .eq('id', editingAccount.id)
-        .select();
+        .select()
+        .single();
 
       if (error) {
         throw error;
       }
 
       if (data) {
-        setAccounts(accounts.map(acc => (acc.id === data[0].id ? data[0] : acc)));
+        setAccounts(accounts.map(acc => (acc.id === data.id ? data : acc)));
         setIsEditDialogOpen(false);
         setEditingAccount(null);
       }
     } catch (error: any) {
-      setError(error.message);
+      setEditFormErrors({ form: error.message });
     }
   };
 
@@ -264,7 +259,7 @@ export default function ChartOfAccountsPage() {
     return <div>Error: {error}</div>;
   }
 
-  const parentAccounts = accounts.filter(acc => acc.account_type === newAccountType);
+  const parentAccounts = accounts.filter(acc => acc.account_type === newAccountType && !acc.parent_account_id);
 
   return (
     <div className="p-8">
@@ -312,99 +307,84 @@ export default function ChartOfAccountsPage() {
                 <DialogHeader>
                   <DialogTitle>Add New Account</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleAddAccount}>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="account_code" className="text-right">
-                        Account Code
-                      </Label>
-                    <Input
-                      id="account_code"
-                      value={newAccountCode}
-                      onChange={(e) => setNewAccountCode(e.target.value)}
-                      className="col-span-3"
-                      required
-                    />
-                  </div>
-                  {addFormErrors.account_code && <p className="col-span-4 text-right text-red-500 text-sm">{addFormErrors.account_code}</p>}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="account_name" className="text-right">
-                      Account Name
-                    </Label>
-                    <Input
-                      id="account_name"
-                      value={newAccountName}
-                      onChange={(e) => setNewAccountName(e.target.value)}
-                      className="col-span-3"
-                      required
-                    />
-                  </div>
-                  {addFormErrors.account_name && <p className="col-span-4 text-right text-red-500 text-sm">{addFormErrors.account_name}</p>}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="account_type" className="text-right">
-                      Account Type
-                    </Label>
-                    <Select onValueChange={setNewAccountType} value={newAccountType} required>
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select an account type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Asset">Asset</SelectItem>
-                        <SelectItem value="Liability">Liability</SelectItem>
-                        <SelectItem value="Equity">Equity</SelectItem>
-                        <SelectItem value="Revenue">Revenue</SelectItem>
-                        <SelectItem value="Expense">Expense</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {addFormErrors.account_type && <p className="col-span-4 text-right text-red-500 text-sm">{addFormErrors.account_type}</p>}
-                  {newAccountType && parentAccounts.length > 0 && (
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="parent_account" className="text-right">
-                        Parent Account
-                      </Label>
-                      <Select onValueChange={setNewParentAccountId} value={newParentAccountId} >
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select a parent account (optional)" />
+                <form onSubmit={handleAddAccount} className="space-y-4">
+                    <div>
+                      <Label htmlFor="account_code">Account Code</Label>
+                      <Input
+                        id="account_code"
+                        value={newAccountCode}
+                        onChange={(e) => setNewAccountCode(e.target.value)}
+                        required
+                      />
+                      {addFormErrors.account_code && <p className="text-red-500 text-sm">{addFormErrors.account_code}</p>}
+                    </div>
+                    <div>
+                      <Label htmlFor="account_name">Account Name</Label>
+                      <Input
+                        id="account_name"
+                        value={newAccountName}
+                        onChange={(e) => setNewAccountName(e.target.value)}
+                        required
+                      />
+                      {addFormErrors.account_name && <p className="text-red-500 text-sm">{addFormErrors.account_name}</p>}
+                    </div>
+                    <div>
+                      <Label htmlFor="account_type">Account Type</Label>
+                      <Select onValueChange={setNewAccountType} value={newAccountType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an account type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {parentAccounts.map(acc => (
-                            <SelectItem key={acc.id} value={acc.id}>
-                              {acc.account_name} ({acc.account_code})
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="Asset">Asset</SelectItem>
+                          <SelectItem value="Liability">Liability</SelectItem>
+                          <SelectItem value="Equity">Equity</SelectItem>
+                          <SelectItem value="Revenue">Revenue</SelectItem>
+                          <SelectItem value="Expense">Expense</SelectItem>
                         </SelectContent>
                       </Select>
+                      {addFormErrors.account_type && <p className="text-red-500 text-sm">{addFormErrors.account_type}</p>}
                     </div>
-                  )}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="description" className="text-right">
-                      Description
-                    </Label>
-                    <Input
-                      id="description"
-                      value={newDescription}
-                      onChange={(e) => setNewDescription(e.target.value)}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="is_active" className="text-right">
-                      Is Active
-                    </Label>
-                    <input
-                      type="checkbox"
-                      id="is_active"
-                      checked={newIsActive}
-                      onChange={(e) => setNewIsActive(e.target.checked)}
-                      className="col-span-3 w-4 h-4"
-                    />
-                  </div>
-                </div>
-                <Button type="submit">Add Account</Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+                    {newAccountType && parentAccounts.length > 0 && (
+                      <div>
+                        <Label htmlFor="parent_account">Parent Account</Label>
+                        <Select onValueChange={setNewParentAccountId} value={newParentAccountId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a parent account (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {parentAccounts.map(acc => (
+                              <SelectItem key={acc.id} value={acc.id}>
+                                {acc.account_name} ({acc.account_code})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Input
+                        id="description"
+                        value={newDescription}
+                        onChange={(e) => setNewDescription(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                       <input
+                        type="checkbox"
+                        id="is_active"
+                        checked={newIsActive}
+                        onChange={(e) => setNewIsActive(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor="is_active">Is Active</Label>
+                    </div>
+                  <Button type="submit">Add Account</Button>
+                  {addFormErrors.form && <p className="text-red-500 text-sm">{addFormErrors.form}</p>}
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           <AccountTreeTable accounts={filteredAccounts} onEditAccount={handleEditAccount} onDeleteAccount={handleDeleteAccount} />
         </CardContent>
@@ -417,68 +397,53 @@ export default function ChartOfAccountsPage() {
             <DialogTitle>Edit Account</DialogTitle>
           </DialogHeader>
           {editingAccount && (
-            <form onSubmit={handleUpdateAccount}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit_account_code" className="text-right">
-                    Account Code
-                  </Label>
+            <form onSubmit={handleUpdateAccount} className="space-y-4">
+              <div>
+                  <Label htmlFor="edit_account_code">Account Code</Label>
                   <Input
                     id="edit_account_code"
                     value={editingAccount.account_code}
-                    className="col-span-3"
                     disabled
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit_account_name" className="text-right">
-                    Account Name
-                  </Label>
+                <div>
+                  <Label htmlFor="edit_account_name">Account Name</Label>
                   <Input
                     id="edit_account_name"
                     value={editingAccount.account_name}
                     onChange={(e) => setEditingAccount({ ...editingAccount, account_name: e.target.value })}
-                    className="col-span-3"
                     required
                   />
+                  {editFormErrors.account_name && <p className="text-red-500 text-sm">{editFormErrors.account_name}</p>}
                 </div>
-                {editFormErrors.account_name && <p className="col-span-4 text-right text-red-500 text-sm">{editFormErrors.account_name}</p>}
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit_account_type" className="text-right">
-                    Account Type
-                  </Label>
+                <div>
+                  <Label htmlFor="edit_account_type">Account Type</Label>
                   <Input
                     id="edit_account_type"
                     value={editingAccount.account_type}
-                    className="col-span-3"
                     disabled
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit_description" className="text-right">
-                    Description
-                  </Label>
+                <div>
+                  <Label htmlFor="edit_description">Description</Label>
                   <Input
                     id="edit_description"
                     value={editingAccount.description || ''}
                     onChange={(e) => setEditingAccount({ ...editingAccount, description: e.target.value })}
-                    className="col-span-3"
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit_is_active" className="text-right">
-                    Is Active
-                  </Label>
+                <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     id="edit_is_active"
                     checked={editingAccount.is_active}
                     onChange={(e) => setEditingAccount({ ...editingAccount, is_active: e.target.checked })}
-                    className="col-span-3 w-4 h-4"
+                    className="h-4 w-4"
                   />
+                   <Label htmlFor="edit_is_active">Is Active</Label>
                 </div>
-              </div>
               <Button type="submit">Save Changes</Button>
+              {editFormErrors.form && <p className="text-red-500 text-sm">{editFormErrors.form}</p>}
             </form>
           )}
         </DialogContent>
