@@ -107,7 +107,7 @@ const menuGroups: MenuGroup[] = [
         description: 'Track and manage expenses'
       },
       { 
-        href: '/accounting', 
+        href: '/accounts', 
                 label: 'Accounting',
                 icon: FileText,
                 roles: ['Admin', 'Accountant', 'Auditor'], 
