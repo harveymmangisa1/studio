@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useTenant } from '@/lib/tenant';
 
 const customerSchema = z.object({
   id: z.string().optional(),
@@ -15,6 +16,7 @@ const customerSchema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   credit_terms: z.string().optional(),
+  tenant_id: z.string().optional(), // Add tenant_id to schema
 });
 
 export type Customer = z.infer<typeof customerSchema>;
@@ -25,6 +27,7 @@ interface CustomerFormProps {
 }
 
 export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
+  const { tenant } = useTenant();
   const form = useForm<Customer>({
     resolver: zodResolver(customerSchema),
     defaultValues: customer || {
@@ -38,6 +41,9 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
   });
 
   function onSubmit(data: Customer) {
+    if (!customer && tenant) { // If it's a new customer, add the tenant_id
+      data.tenant_id = tenant.id;
+    }
     onSuccess(data);
   }
 
