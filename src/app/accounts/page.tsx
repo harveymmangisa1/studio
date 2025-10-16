@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTenant } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +50,7 @@ interface Account {
 }
 
 export default function ChartOfAccountsPage() {
+  const { tenant } = useTenant();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,19 +66,22 @@ export default function ChartOfAccountsPage() {
   const [newAccountType, setNewAccountType] = useState('');
   const [newParentAccountId, setNewParentAccountId] = useState<string | undefined>(undefined);
   const [newDescription, setNewDescription] = useState('');
-  const [newAccountName, setNewAccountName] = useState('');
-  const [newAccountType, setNewAccountType] = useState('');
-  const [newParentAccountId, setNewParentAccountId] = useState<string | undefined>(undefined);
-  const [newDescription, setNewDescription] = useState('');
   const [newIsActive, setNewIsActive] = useState(true);
 
   const [addFormErrors, setAddFormErrors] = useState<Record<string, string>>({});
   const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
 
+  // Edit dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const { data, error } = await supabase.from('accounts').select('*, parent_account_id');
+        const { data, error } = await supabase
+          .from('accounts')
+          .select('*, parent_account_id')
+          .eq('tenant_id', tenant?.id || '');
         if (error) {
           throw error;
         }
@@ -149,7 +154,7 @@ export default function ChartOfAccountsPage() {
       const { data, error } = await supabase
         .from('accounts')
         .insert([
-          newAccountData
+          { ...newAccountData, tenant_id: tenant?.id || '' }
         ])
         .select();
 
@@ -205,6 +210,7 @@ export default function ChartOfAccountsPage() {
           is_active: editingAccount.is_active,
           // account_code and account_type are not editable as per spec
         })
+        .eq('tenant_id', tenant?.id || '')
         .eq('id', editingAccount.id)
         .select();
 
@@ -229,6 +235,7 @@ export default function ChartOfAccountsPage() {
       const { error } = await supabase
         .from('accounts')
         .delete()
+        .eq('tenant_id', tenant?.id || '')
         .eq('id', id);
 
       if (error) {

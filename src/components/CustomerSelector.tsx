@@ -20,7 +20,9 @@ export function CustomerSelector({ onSelectCustomer }: CustomerSelectorProps) {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const { data, error } = await supabase.from('customers').select('id, name');
+        const { data, error } = await supabase
+          .from('customers')
+          .select('id, name');
         if (error) throw error;
         setCustomers(data || []);
       } catch (error) {

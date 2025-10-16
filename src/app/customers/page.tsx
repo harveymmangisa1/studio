@@ -29,7 +29,9 @@ export default function CustomersPage() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from('customers').select('*');
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*');
       if (error) throw error;
       setCustomers(data || []);
     } catch (error: any) {
@@ -42,7 +44,10 @@ export default function CustomersPage() {
   const handleFormSuccess = async (customer: Customer) => {
     try {
       if (editingCustomer) {
-        const { error } = await supabase.from('customers').update(customer).eq('id', customer.id);
+        const { error } = await supabase
+          .from('customers')
+          .update(customer)
+          .eq('id', customer.id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from('customers').insert([customer]);
@@ -64,7 +69,10 @@ export default function CustomersPage() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
       try {
-        const { error } = await supabase.from('customers').delete().eq('id', id);
+        const { error } = await supabase
+          .from('customers')
+          .delete()
+          .eq('id', id);
         if (error) throw error;
         fetchCustomers();
       } catch (error: any) {

@@ -1,17 +1,13 @@
 'use client';
 
 import { Tenant, TenantContext } from '@/lib/tenant';
-import { setSupabaseTenant, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
 
-  useEffect(() => {
-    if (tenant) {
-      setSupabaseTenant(tenant.id);
-    }
-  }, [tenant]);
+  // With JWT claim-based RLS, no per-request RPC is needed
 
   useEffect(() => {
     const getTenant = async () => {

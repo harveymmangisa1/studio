@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { createDoubleEntryTransaction } from '../../lib/ledger';
+import { useTenant } from '@/lib/tenant';
 
 interface Invoice {
   id: string;
@@ -33,7 +34,9 @@ export default function SalesInvoicesPage() {
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from('sales_invoices').select('*');
+      const { data, error } = await supabase
+        .from('sales_invoices')
+        .select('*');
       if (error) throw error;
       setInvoices(data || []);
     } catch (error: any) {

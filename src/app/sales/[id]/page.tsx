@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -41,14 +42,14 @@ export default function InvoiceDetailsPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('sales_invoices')
-        .select('*, customers(*), sales_invoice_line_items(*, products(*))')
+        .select('*, customers:customers(*), sales_invoice_line_items:sales_line_items(*, products:products(*))')
         .eq('id', id)
         .single();
 
       if (error) throw error;
 
       if (data) {
-        const subtotal = data.sales_invoice_line_items.reduce((acc: any, item: any) => acc + item.quantity * item.unit_price, 0);
+        const subtotal = (data.sales_invoice_line_items || []).reduce((acc: any, item: any) => acc + item.quantity * item.unit_price, 0);
         const tax = data.total_amount - subtotal;
 
         setInvoice({

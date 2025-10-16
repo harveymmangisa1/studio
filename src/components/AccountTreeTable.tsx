@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 interface Account {
   id: string;

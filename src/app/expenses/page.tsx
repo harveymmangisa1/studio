@@ -23,7 +23,9 @@ export default function ExpensesPage() {
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from('expenses').select('*');
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*');
       if (error) throw error;
       setExpenses(data || []);
     } catch (error: any) {

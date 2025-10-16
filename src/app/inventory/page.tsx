@@ -70,7 +70,9 @@ export default function InventoryPage() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('products').select('*');
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
       if (error) throw error;
       setProducts(data || []);
     } catch (error: any) {
@@ -102,7 +104,10 @@ export default function InventoryPage() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        const { error } = await supabase.from('products').delete().eq('id', id);
+        const { error } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', id);
         if (error) throw error;
         fetchProducts(); // Re-fetch products to update the list
       } catch (error: any) {

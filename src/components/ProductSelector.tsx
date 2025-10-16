@@ -22,7 +22,9 @@ export function ProductSelector({ control, index }: ProductSelectorProps) {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data, error } = await supabase.from('products').select('id, name, selling_price');
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name, selling_price');
         if (error) throw error;
         setProducts(data || []);
       } catch (error) {

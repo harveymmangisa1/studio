@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { CustomerSelector } from './CustomerSelector';
 import { InvoiceLineItems } from './InvoiceLineItems';
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { recordSale } from '../lib/ledger';
 
 const invoiceSchema = z.object({
@@ -50,8 +51,37 @@ export function InvoiceForm() {
     setTotal(newTotal);
   }, [lineItems]);
 
+  async function generateInvoiceNumber() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const prefix = `INV-${yyyy}${mm}`;
+
+    const { data: latest, error } = await supabase
+      .from('sales_invoices')
+      .select('invoice_number')
+      .ilike('invoice_number', `${prefix}-%`)
+      .order('invoice_number', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    let nextSeq = 1;
+    if (latest && latest.length > 0) {
+      const last = latest[0].invoice_number as string;
+      const parts = last.split('-');
+      const seqStr = parts[2] || '0000';
+      const seq = parseInt(seqStr, 10);
+      if (!Number.isNaN(seq)) nextSeq = seq + 1;
+    }
+
+    const seqPadded = String(nextSeq).padStart(4, '0');
+    return `${prefix}-${seqPadded}`;
+  }
+
   async function onSubmit(data: InvoiceFormData) {
     try {
+      const invoice_number = await generateInvoiceNumber();
       // Create the invoice
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('sales_invoices')
@@ -63,6 +93,7 @@ export function InvoiceForm() {
           tax_amount: tax,
           total_amount: total,
           payment_status: 'Unpaid',
+          invoice_number,
         })
         .select('id')
         .single();
@@ -71,6 +102,7 @@ export function InvoiceForm() {
 
       // Create the line items
       const lineItemsData = data.line_items.map(item => ({
+        tenant_id: tenant.id,
         invoice_id: invoiceData.id,
         product_id: item.product_id,
         quantity: item.quantity,
