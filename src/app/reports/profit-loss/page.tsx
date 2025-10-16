@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { calculateProfitAndLoss } from '@/lib/calculations';
-import { useTenant } from '@/lib/tenant';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,6 @@ interface PNLData {
 }
 
 export default function ProfitLossPage() {
-  const { tenant } = useTenant();
   const [pnlData, setPnlData] = useState<PNLData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +29,7 @@ export default function ProfitLossPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await calculateProfitAndLoss(startDate, endDate, tenant);
+      const data = await calculateProfitAndLoss(startDate, endDate);
       setPnlData(data);
     } catch (error: any) {
       setError(error.message);

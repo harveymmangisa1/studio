@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useTenant } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,7 +16,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export default function CustomersPage() {
-  const { tenant } = useTenant();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,8 +31,7 @@ export default function CustomersPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('customers')
-        .select('*')
-        .eq('tenant_id', tenant?.id || '');
+        .select('*');
       if (error) throw error;
       setCustomers(data || []);
     } catch (error: any) {
@@ -50,11 +47,10 @@ export default function CustomersPage() {
         const { error } = await supabase
           .from('customers')
           .update(customer)
-          .eq('tenant_id', tenant?.id || '')
           .eq('id', customer.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('customers').insert([{ ...customer, tenant_id: tenant?.id || '' }]);
+        const { error } = await supabase.from('customers').insert([customer]);
         if (error) throw error;
       }
       setShowForm(false);
@@ -76,7 +72,6 @@ export default function CustomersPage() {
         const { error } = await supabase
           .from('customers')
           .delete()
-          .eq('tenant_id', tenant?.id || '')
           .eq('id', id);
         if (error) throw error;
         fetchCustomers();

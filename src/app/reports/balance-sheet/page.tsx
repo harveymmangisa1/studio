@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { calculateBalanceSheet } from '@/lib/calculations';
-import { useTenant } from '@/lib/tenant';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -13,7 +12,6 @@ interface BalanceSheetData {
 }
 
 export default function BalanceSheetPage() {
-  const { tenant } = useTenant();
   const [balanceSheetData, setBalanceSheetData] = useState<BalanceSheetData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +20,7 @@ export default function BalanceSheetPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await calculateBalanceSheet(tenant);
+      const data = await calculateBalanceSheet();
       setBalanceSheetData(data);
     } catch (error: any) {
       setError(error.message);

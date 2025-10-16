@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useTenant } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,7 +11,6 @@ import { ExpenseForm, Expense } from '@/components/ExpenseForm';
 import ExpensesChart from '@/components/dashboard/ExpensesChart';
 
 export default function ExpensesPage() {
-  const { tenant } = useTenant();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,8 +25,7 @@ export default function ExpensesPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('expenses')
-        .select('*')
-        .eq('tenant_id', tenant?.id || '');
+        .select('*');
       if (error) throw error;
       setExpenses(data || []);
     } catch (error: any) {

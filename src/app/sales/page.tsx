@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useTenant } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -28,7 +27,6 @@ interface Invoice {
 }
 
 export default function SalesInvoicesPage() {
-  const { tenant } = useTenant();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,8 +36,7 @@ export default function SalesInvoicesPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('sales_invoices')
-        .select('*')
-        .eq('tenant_id', tenant?.id || '');
+        .select('*');
       if (error) throw error;
       setInvoices(data || []);
     } catch (error: any) {
@@ -58,7 +55,6 @@ export default function SalesInvoicesPage() {
       const { error } = await supabase
         .from('sales_invoices')
         .update({ payment_status: 'Paid', payment_date: new Date().toISOString() })
-        .eq('tenant_id', tenant?.id || '')
         .eq('id', invoiceId);
 
       if (error) throw error;
@@ -67,7 +63,6 @@ export default function SalesInvoicesPage() {
       const { data: accounts, error: accountsError } = await supabase
         .from('accounts')
         .select('id, account_name')
-        .eq('tenant_id', tenant?.id || '')
         .in('account_name', ['Accounts Receivable', 'Cash']);
 
       if (accountsError) throw accountsError;
@@ -79,11 +74,10 @@ export default function SalesInvoicesPage() {
         throw new Error('Could not find required accounts for transaction.');
       }
 
-      if (!tenant?.id) throw new Error('No tenant selected');
       await createDoubleEntryTransaction([
         { accountId: cashAccountId, debit: totalAmount, credit: 0 },
         { accountId: accountsReceivableAccountId, debit: 0, credit: totalAmount },
-      ], tenant.id);
+      ]);
 
       fetchInvoices();
     } catch (error: any) {

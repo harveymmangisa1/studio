@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useTenant } from '@/lib/tenant';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -16,7 +15,6 @@ interface AgingInvoice {
 }
 
 export default function ARAgingReportPage() {
-  const { tenant } = useTenant();
   const [agingData, setAgingData] = useState<Record<string, AgingInvoice[]>>({
     '0-30': [],
     '31-60': [],
@@ -32,7 +30,6 @@ export default function ARAgingReportPage() {
         const { data, error } = await supabase
           .from('sales_invoices')
           .select('customer_name, invoice_number, invoice_date, due_date, total_amount')
-          .eq('tenant_id', tenant?.id || '')
           .eq('payment_status', 'Unpaid');
 
         if (error) throw error;

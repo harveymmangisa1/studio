@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useTenant } from '@/lib/tenant';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Customer {
@@ -15,7 +14,6 @@ interface CustomerSelectorProps {
 }
 
 export function CustomerSelector({ onSelectCustomer }: CustomerSelectorProps) {
-  const { tenant } = useTenant();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,8 +22,7 @@ export function CustomerSelector({ onSelectCustomer }: CustomerSelectorProps) {
       try {
         const { data, error } = await supabase
           .from('customers')
-          .select('id, name')
-          .eq('tenant_id', tenant?.id || '');
+          .select('id, name');
         if (error) throw error;
         setCustomers(data || []);
       } catch (error) {

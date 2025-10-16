@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
-import { useTenant } from '@/lib/tenant';
 import { createDoubleEntryTransaction } from '@/lib/ledger';
 
 const expenseSchema = z.object({
@@ -26,7 +25,6 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
-  const { tenant } = useTenant();
   const form = useForm<Expense>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
@@ -39,10 +37,9 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 
   async function onSubmit(data: Expense) {
     try {
-      if (!tenant?.id) throw new Error('No tenant selected');
       const { data: expenseData, error: expenseError } = await supabase
         .from('expenses')
-        .insert({ ...data, tenant_id: tenant.id })
+        .insert(data)
         .select('id')
         .single();
 
@@ -52,7 +49,6 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
       const { data: accounts, error: accountsError } = await supabase
         .from('accounts')
         .select('id, account_name')
-        .eq('tenant_id', tenant.id)
         .in('account_name', [data.category, 'Cash']); // Assuming expense category matches account name
 
       if (accountsError) throw accountsError;
@@ -67,7 +63,7 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
       await createDoubleEntryTransaction([
         { accountId: expenseAccountId, debit: data.amount, credit: 0 },
         { accountId: cashAccountId, debit: 0, credit: data.amount },
-      ], tenant.id);
+      ]);
 
       onSuccess();
     } catch (error: any) {
