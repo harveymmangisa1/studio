@@ -91,7 +91,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Purchases', 
         icon: ShoppingBag, 
         roles: ['Admin', 'Manager', 'Store Clerk', 'Accountant', 'Auditor'], 
-        comingSoon: true,
+        comingSoon: false,
         description: 'Purchase orders and suppliers'
       },
     ]
@@ -117,7 +117,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Reports', 
         icon: BarChart3, 
         roles: ['Admin', 'Manager', 'Accountant', 'Auditor'], 
-        comingSoon: true,
+        comingSoon: false,
         description: 'Analytics and insights'
       },
     ]
@@ -130,7 +130,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Customers', 
         icon: Users, 
         roles: ['Admin', 'Manager', 'Cashier', 'Accountant', 'Auditor'], 
-        comingSoon: true,
+        comingSoon: false,
         description: 'Customer database and history'
       },
       { 
@@ -138,7 +138,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Suppliers', 
         icon: Warehouse, 
         roles: ['Admin', 'Manager', 'Store Clerk', 'Accountant', 'Auditor'], 
-        comingSoon: true,
+        comingSoon: false,
         description: 'Supplier management'
       },
     ]
@@ -151,7 +151,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Team', 
         icon: Shield, 
         roles: ['Admin'], 
-        comingSoon: true,
+        comingSoon: false,
         description: 'User and role management'
       },
       { 
