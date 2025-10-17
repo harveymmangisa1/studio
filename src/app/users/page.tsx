@@ -39,6 +39,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/lib/supabase';
 import { toCsv } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const Select = dynamic(() => import('@/components/ui/select').then(mod => mod.Select), { ssr: false });
+const SelectContent = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectContent), { ssr: false });
+const SelectItem = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectItem), { ssr: false });
+const SelectTrigger = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectTrigger), { ssr: false });
+const SelectValue = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectValue), { ssr: false });
+
 
 const initialUsers: TeamUser[] = [
   { 
@@ -104,37 +112,34 @@ export default function UsersPage() {
     }
 
     if (roleFilter !== 'all') {
-      filtered = filtered.filter(user => user.role.toLowerCase() === roleFilter.toLowerCase());
+      filtered = filtered.filter(user => user.role.toLowerCase() === roleFilter);
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(user => user.status.toLowerCase() === statusFilter.toLowerCase());
+      filtered = filtered.filter(user => user.status.toLowerCase() === statusFilter);
     }
 
     setFilteredUsers(filtered);
   };
 
-  const handleAddUser = (user: Omit<TeamUser, 'id' | 'created_at'>) => {
-    const newUser: TeamUser = {
-      ...user,
-      id: Date.now().toString(),
-      created_at: new Date().toISOString(),
-    };
-    setUsers([newUser, ...users]);
+  const handleSaveUser = (user: TeamUser) => {
+    if(editingUser) {
+      setUsers(users.map(u => u.id === user.id ? user : u));
+    } else {
+      const newUser = {
+        ...user,
+        id: Date.now().toString(),
+        created_at: new Date().toISOString(),
+      };
+      setUsers([newUser, ...users]);
+    }
     setIsFormOpen(false);
+    setEditingUser(null);
   };
 
   const handleEditUser = (user: TeamUser) => {
     setEditingUser(user);
     setIsFormOpen(true);
-  };
-
-  const handleUpdateUser = (updatedUser: TeamUser) => {
-    setUsers(users.map(user => 
-      user.id === updatedUser.id ? updatedUser : user
-    ));
-    setIsFormOpen(false);
-    setEditingUser(null);
   };
 
   const handleDeleteUser = (id: string) => {
@@ -215,7 +220,7 @@ export default function UsersPage() {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setIsFormOpen(true)}>
+          <Button onClick={() => { setEditingUser(null); setIsFormOpen(true); }}>
             <UserPlus className="w-4 h-4 mr-2" />
             Invite User
           </Button>
@@ -266,31 +271,33 @@ export default function UsersPage() {
               </div>
             </div>
             <div className="w-full sm:w-48">
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="accountant">Accountant</option>
-                <option value="store clerk">Store Clerk</option>
-                <option value="cashier">Cashier</option>
-                <option value="auditor">Auditor</option>
-              </select>
+              <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="Admin">Admin</SelectItem>
+                    <SelectItem value="Manager">Manager</SelectItem>
+                    <SelectItem value="Accountant">Accountant</SelectItem>
+                    <SelectItem value="Store Clerk">Store Clerk</SelectItem>
+                    <SelectItem value="Cashier">Cashier</SelectItem>
+                    <SelectItem value="Auditor">Auditor</SelectItem>
+                  </SelectContent>
+              </Select>
             </div>
             <div className="w-full sm:w-48">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="inactive">Inactive</option>
-              </select>
+               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
@@ -383,7 +390,7 @@ export default function UsersPage() {
           </DialogHeader>
           <UserForm
             user={editingUser}
-            onSave={editingUser ? handleUpdateUser : handleAddUser}
+            onSave={handleSaveUser}
             onCancel={() => {
               setIsFormOpen(false);
               setEditingUser(null);

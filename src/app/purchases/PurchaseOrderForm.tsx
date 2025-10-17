@@ -93,7 +93,7 @@ export function PurchaseOrderForm({ order, onSave, onCancel }: PurchaseOrderForm
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, cost_price')
+        .select('id, name, cost')
         .order('name');
       
       if (error) throw error;
@@ -139,7 +139,7 @@ export function PurchaseOrderForm({ order, onSave, onCancel }: PurchaseOrderForm
         if (field === 'product_id') {
           const product = products.find(p => p.id === value);
           updated.product_name = product?.name || '';
-          updated.unit_price = product?.cost_price || 0;
+          updated.unit_price = product?.cost || 0;
           updated.total_price = updated.quantity * updated.unit_price;
         }
         return updated;

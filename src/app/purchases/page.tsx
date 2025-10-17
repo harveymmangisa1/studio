@@ -42,13 +42,14 @@ import {
 import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { toCsv } from '@/lib/utils';
 
 const Select = dynamic(() => import('@/components/ui/select').then(mod => mod.Select), { ssr: false });
 const SelectContent = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectContent), { ssr: false });
 const SelectItem = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectItem), { ssr: false });
 const SelectTrigger = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectTrigger), { ssr: false });
 const SelectValue = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectValue), { ssr: false });
-import { toCsv } from '@/lib/utils';
+
 
 const initialPurchaseOrders: PurchaseOrder[] = [
   { 
@@ -107,33 +108,25 @@ export default function PurchasesPage() {
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status.toLowerCase() === statusFilter.toLowerCase());
+      filtered = filtered.filter(order => order.status.toLowerCase() === statusFilter);
     }
 
     setFilteredOrders(filtered);
   };
 
-  const handleAddOrder = (order: Omit<PurchaseOrder, 'id' | 'created_at'>) => {
-    const newOrder: PurchaseOrder = {
-      ...order,
-      id: Date.now().toString(),
-      created_at: new Date().toISOString(),
-    };
-    setPurchaseOrders([newOrder, ...purchaseOrders]);
+  const handleSaveOrder = (order: PurchaseOrder) => {
+    if(editingOrder) {
+      setPurchaseOrders(purchaseOrders.map(o => o.id === order.id ? order : o));
+    } else {
+      setPurchaseOrders([order, ...purchaseOrders]);
+    }
     setIsFormOpen(false);
+    setEditingOrder(null);
   };
 
   const handleEditOrder = (order: PurchaseOrder) => {
     setEditingOrder(order);
     setIsFormOpen(true);
-  };
-
-  const handleUpdateOrder = (updatedOrder: PurchaseOrder) => {
-    setPurchaseOrders(purchaseOrders.map(order => 
-      order.id === updatedOrder.id ? updatedOrder : order
-    ));
-    setIsFormOpen(false);
-    setEditingOrder(null);
   };
 
   const handleDeleteOrder = (id: string) => {
@@ -195,7 +188,7 @@ export default function PurchasesPage() {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setIsFormOpen(true)}>
+          <Button onClick={() => { setEditingOrder(null); setIsFormOpen(true); } }>
             <PlusCircle className="w-4 h-4 mr-2" />
             New Purchase Order
           </Button>
@@ -246,15 +239,15 @@ export default function PurchasesPage() {
               </div>
             </div>
             <div className="w-full sm:w-48">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Received">Received</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -337,7 +330,7 @@ export default function PurchasesPage() {
           </DialogHeader>
           <PurchaseOrderForm
             order={editingOrder}
-            onSave={editingOrder ? handleUpdateOrder : handleAddOrder}
+            onSave={handleSaveOrder}
             onCancel={() => {
               setIsFormOpen(false);
               setEditingOrder(null);

@@ -34,7 +34,7 @@ export interface Supplier {
 
 interface SupplierFormProps {
   supplier?: Supplier | null;
-  onSave: (supplier: Supplier) => void;
+  onSave: (supplier: any) => void;
   onCancel: () => void;
 }
 
@@ -66,14 +66,10 @@ export function SupplierForm({ supplier, onSave, onCancel }: SupplierFormProps) 
     setLoading(true);
 
     try {
-      const supplierData: Supplier = {
-        id: supplier?.id || Date.now().toString(),
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        payment_terms: formData.payment_terms,
-        created_at: supplier?.created_at || new Date().toISOString(),
+      const supplierData = {
+        ...formData,
+        id: supplier?.id || undefined,
+        created_at: supplier?.created_at || undefined,
       };
 
       onSave(supplierData);

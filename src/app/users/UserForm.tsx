@@ -40,8 +40,8 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'Store Clerk' as const,
-    status: 'Pending' as const,
+    role: 'Store Clerk' as TeamUser['role'],
+    status: 'Pending' as TeamUser['status'],
   });
 
   const [loading, setLoading] = useState(false);
