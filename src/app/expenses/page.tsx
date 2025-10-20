@@ -9,6 +9,7 @@ import { PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ExpenseForm, Expense } from '@/components/ExpenseForm';
 import ExpensesChart from '@/components/dashboard/ExpensesChart';
+import { PageHeader } from '@/components/shared';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -48,16 +49,15 @@ export default function ExpensesPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Expenses</h1>
-          <p className="text-muted-foreground">Track and manage your business expenses.</p>
-        </div>
+      <PageHeader
+        title="Expenses"
+        description="Track and manage your business expenses."
+      >
         <Button onClick={() => { setShowForm(true); }}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Expense
         </Button>
-      </div>
+      </PageHeader>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent>

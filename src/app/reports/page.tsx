@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { PageHeader } from '@/components/shared';
 
 interface ReportCard {
   title: string;
@@ -189,25 +190,20 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Reports & Analytics</h1>
-          <p className="text-muted-foreground">Comprehensive business insights and financial reports</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export All
-          </Button>
-          <Button>
-            <Calendar className="w-4 h-4 mr-2" />
-            Schedule Report
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Reports & Analytics"
+        description="Comprehensive business insights and financial reports"
+      >
+        <Button variant="outline">
+          <Download className="w-4 h-4 mr-2" />
+          Export All
+        </Button>
+        <Button>
+          <Calendar className="w-4 h-4 mr-2" />
+          Schedule Report
+        </Button>
+      </PageHeader>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

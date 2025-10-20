@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { createDoubleEntryTransaction } from '../../lib/ledger';
+import { PageHeader } from '@/components/shared';
 
 interface Invoice {
   id: string;
@@ -92,18 +93,17 @@ export default function SalesInvoicesPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Sales Invoices</h1>
-          <p className="text-muted-foreground">Manage your sales and customer invoices.</p>
-        </div>
+      <PageHeader
+        title="Sales Invoices"
+        description="Manage your sales and customer invoices."
+      >
         <Link href="/sales/new">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Invoice
           </Button>
         </Link>
-      </div>
+      </PageHeader>
 
       <Card>
         <CardHeader>

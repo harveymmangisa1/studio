@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import SalesChart from "@/components/dashboard/SalesChart";
 import ExpensesChart from "@/components/dashboard/ExpensesChart";
+import { PageHeader } from '@/components/shared';
 
 interface Stats {
   totalProducts: number;
@@ -173,32 +174,27 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Real-time business performance and insights</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Tabs defaultValue="month" onValueChange={(value) => setTimeRange(value as any)}>
-            <TabsList>
-              <TabsTrigger value="today">Today</TabsTrigger>
-              <TabsTrigger value="week">Week</TabsTrigger>
-              <TabsTrigger value="month">Month</TabsTrigger>
-            </TabsList>
-          </Tabs>
+      <PageHeader
+        title="Dashboard Overview"
+        description="Real-time business performance and insights"
+      >
+        <Tabs defaultValue="month" onValueChange={(value) => setTimeRange(value as any)}>
+          <TabsList>
+            <TabsTrigger value="today">Today</TabsTrigger>
+            <TabsTrigger value="week">Week</TabsTrigger>
+            <TabsTrigger value="month">Month</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline ml-2">Refresh</span>
-          </Button>
-        </div>
-      </div>
+        <Button
+          variant="outline"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline ml-2">Refresh</span>
+        </Button>
+      </PageHeader>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

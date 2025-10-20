@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/lib/supabase';
 import { toCsv } from '@/lib/utils';
+import { PageHeader } from '@/components/shared';
 import dynamic from 'next/dynamic';
 
 const Select = dynamic(() => import('@/components/ui/select').then(mod => mod.Select), { ssr: false });
@@ -207,25 +208,20 @@ export default function UsersPage() {
   const totalUsers = users.length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Team Management</h1>
-          <p className="text-muted-foreground">Manage user accounts, roles, and permissions</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={exportToCsv}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={() => { setEditingUser(null); setIsFormOpen(true); }}>
-            <UserPlus className="w-4 h-4 mr-2" />
-            Invite User
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Team Management"
+        description="Manage user accounts, roles, and permissions"
+      >
+        <Button variant="outline" onClick={exportToCsv}>
+          <Download className="w-4 h-4 mr-2" />
+          Export
+        </Button>
+        <Button onClick={() => { setEditingUser(null); setIsFormOpen(true); }}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          Invite User
+        </Button>
+      </PageHeader>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

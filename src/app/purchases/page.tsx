@@ -43,6 +43,7 @@ import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { toCsv } from '@/lib/utils';
+import { PageHeader } from '@/components/shared';
 
 const Select = dynamic(() => import('@/components/ui/select').then(mod => mod.Select), { ssr: false });
 const SelectContent = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectContent), { ssr: false });
@@ -175,25 +176,20 @@ export default function PurchasesPage() {
   const receivedOrders = filteredOrders.filter(order => order.status === 'Received').length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Purchase Orders</h1>
-          <p className="text-muted-foreground">Manage supplier orders and procurement</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={exportToCsv}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={() => { setEditingOrder(null); setIsFormOpen(true); } }>
-            <PlusCircle className="w-4 h-4 mr-2" />
-            New Purchase Order
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Purchase Orders"
+        description="Manage supplier orders and procurement"
+      >
+        <Button variant="outline" onClick={exportToCsv}>
+          <Download className="w-4 h-4 mr-2" />
+          Export
+        </Button>
+        <Button onClick={() => { setEditingOrder(null); setIsFormOpen(true); } }>
+          <PlusCircle className="w-4 h-4 mr-2" />
+          New Purchase Order
+        </Button>
+      </PageHeader>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

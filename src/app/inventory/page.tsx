@@ -46,6 +46,7 @@ const SelectItem = dynamic(() => import('@/components/ui/select').then(mod => mo
 const SelectTrigger = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectTrigger), { ssr: false });
 const SelectValue = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectValue), { ssr: false });
 import { toCsv } from '@/lib/utils';
+import { PageHeader } from '@/components/shared';
 const initialProducts: Product[] = [
   { id: '1', name: 'Wireless Mouse', category: 'Electronics', sku: 'WM-001', cost: 15.00, price: 29.99, quantity: 150, minStock: 10 },
   { id: '2', name: 'Mechanical Keyboard', category: 'Electronics', sku: 'MK-001', cost: 55.00, price: 99.99, quantity: 75, minStock: 5 },
@@ -172,35 +173,31 @@ export default function InventoryPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold">Inventory Management</h1>
-          <p className="text-muted-foreground">Track, manage, and analyze your product inventory.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => {
-            const columns = ['id', 'name', 'category', 'sku', 'cost', 'price', 'quantity', 'minStock'];
-            const csv = toCsv(filteredProducts, columns);
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'products.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button onClick={() => { setEditingProduct(null); setShowForm(true); }}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Inventory Management"
+        description="Track, manage, and analyze your product inventory."
+      >
+        <Button variant="outline" onClick={() => {
+          const columns = ['id', 'name', 'category', 'sku', 'cost', 'price', 'quantity', 'minStock'];
+          const csv = toCsv(filteredProducts, columns);
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', 'products.csv');
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }}>
+          <Download className="mr-2 h-4 w-4" />
+          Export
+        </Button>
+        <Button onClick={() => { setEditingProduct(null); setShowForm(true); }}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Product
+        </Button>
+      </PageHeader>
 
       {/* Dialog for Product Form */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
