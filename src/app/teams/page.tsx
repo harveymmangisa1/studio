@@ -14,7 +14,7 @@ import { FormField, SuccessCard, PageHeader } from '@/components/shared';
 
 const STORAGE_KEY = 'teamMemberFormDraft';
 
-const ProgressBar = ({ currentStep, completedSteps }) => {
+const ProgressBar = ({ currentStep, completedSteps }: { currentStep: number, completedSteps: number[] }) => {
   const steps = [
     { number: 1, label: 'Basic' },
     { number: 2, label: 'Permissions' },
@@ -65,10 +65,10 @@ const ProgressBar = ({ currentStep, completedSteps }) => {
 };
 
 
-export default function ProgressiveTeamMemberForm({ onSuccess, onCancel, initialData }) {
+export default function ProgressiveTeamMemberForm({ onSuccess, onCancel, initialData }: { onSuccess?: (data: any) => void; onCancel?: () => void; initialData?: any; }) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState([]);
-  const [errors, setErrors] = useState({});
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -78,7 +78,7 @@ export default function ProgressiveTeamMemberForm({ onSuccess, onCancel, initial
     department: '',
     phone: '',
     accessLevel: 'standard',
-    permissions: [],
+    permissions: [] as string[],
     startDate: '',
     manager: '',
     notes: ''
@@ -106,12 +106,12 @@ export default function ProgressiveTeamMemberForm({ onSuccess, onCancel, initial
     }
   }, [formData, currentStep, completedSteps, showSuccess]);
 
-  const validateEmail = (email) => {
+  const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const validateStep = (step) => {
-    const newErrors = {};
+  const validateStep = (step: number) => {
+    const newErrors: Record<string, string> = {};
 
     if (step === 1) {
       if (!formData.fullName || formData.fullName.length < 2) {
@@ -146,7 +146,7 @@ export default function ProgressiveTeamMemberForm({ onSuccess, onCancel, initial
     setCurrentStep(currentStep + 1);
   };
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (field: keyof typeof formData, value: any) => {
     setFormData({ ...formData, [field]: value });
     if (errors[field]) {
       setErrors({ ...errors, [field]: undefined });

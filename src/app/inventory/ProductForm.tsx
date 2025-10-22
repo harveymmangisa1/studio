@@ -51,13 +51,13 @@ const ProgressBar = ({ currentStep, completedSteps }) => {
   ];
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-2">
+    <div className="mb-6 lg:mb-8">
+      <div className="flex items-center justify-between mb-2 px-2 sm:px-0">
         {steps.map((step, index) => (
           <React.Fragment key={step.number}>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center flex-1 max-w-[80px] sm:max-w-none">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-sm sm:text-base transition-all ${
                   completedSteps.includes(step.number)
                     ? 'bg-green-500 text-white'
                     : step.number === currentStep
@@ -66,15 +66,15 @@ const ProgressBar = ({ currentStep, completedSteps }) => {
                 }`}
               >
                 {completedSteps.includes(step.number) ? (
-                  <Check className="w-5 h-5" />
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
                 ) : (
                   step.number
                 )}
               </div>
-              <span className="text-xs mt-1 font-medium">{step.label}</span>
+              <span className="text-xs mt-1 font-medium text-center hidden xs:block">{step.label}</span>
             </div>
             {index < steps.length - 1 && (
-              <div className="flex-1 h-1 mx-2 bg-gray-200 rounded">
+              <div className="flex-1 h-1 mx-1 sm:mx-2 bg-gray-200 rounded">
                 <div
                   className={`h-full rounded transition-all ${
                     completedSteps.includes(step.number) ? 'bg-green-500' : 'bg-gray-200'
@@ -86,7 +86,7 @@ const ProgressBar = ({ currentStep, completedSteps }) => {
           </React.Fragment>
         ))}
       </div>
-      <div className="text-center text-sm text-gray-600">
+      <div className="text-center text-sm text-gray-600 px-2">
         Step {currentStep} of 4 ({Math.round((currentStep / 4) * 100)}% complete)
       </div>
     </div>
@@ -281,17 +281,17 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
 
   if (showSuccess) {
     return (
-      <Card className="max-w-md mx-auto">
-        <CardContent className="text-center py-12">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="text-center py-8 sm:py-12 px-4 sm:px-6">
           <div className="mb-4 flex justify-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-10 h-10 text-green-500" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold mb-2">
+          <h3 className="text-xl sm:text-2xl font-bold mb-2">
             {product ? 'Product Updated!' : 'Product Created!'}
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-6 text-sm sm:text-base">
             {form.getValues().name} has been {product ? 'updated' : 'added'} to your inventory.
           </p>
           <div className="space-y-2">
@@ -308,355 +308,375 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto border-0 shadow-none">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Package className="w-6 h-6" />
-          {product ? 'Edit Product' : 'Add New Product'}
-        </CardTitle>
-        <CardDescription>
-          {currentStep === 1 && "Enter basic product information and categorization"}
-          {currentStep === 2 && "Set pricing and profit margins"}
-          {currentStep === 3 && "Configure inventory levels and stock management"}
-          {currentStep === 4 && "Review all product details before saving"}
-        </CardDescription>
-      </CardHeader>
+    <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 lg:px-6">
+      <Card className="w-full border-0 shadow-sm sm:shadow-md lg:shadow-lg">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl lg:text-2xl">
+            <Package className="w-5 h-5 sm:w-6 sm:h-6" />
+            {product ? 'Edit Product' : 'Add New Product'}
+          </CardTitle>
+          <CardDescription className="text-sm sm:text-base">
+            {currentStep === 1 && "Enter basic product information and categorization"}
+            {currentStep === 2 && "Set pricing and profit margins"}
+            {currentStep === 3 && "Configure inventory levels and stock management"}
+            {currentStep === 4 && "Review all product details before saving"}
+          </CardDescription>
+        </CardHeader>
 
-      <CardContent>
-        <ProgressBar currentStep={currentStep} completedSteps={completedSteps} />
+        <CardContent className="px-3 sm:px-6">
+          <ProgressBar currentStep={currentStep} completedSteps={completedSteps} />
 
-        <form onSubmit={form.handleSubmit(onSuccess)} className="space-y-8">
-          {/* Step 1: Basic Information */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Product Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField 
-                    label="Product Name" 
-                    required 
-                    error={formErrors.name}
-                    helpText="Descriptive name that customers will see"
-                    isValid={form.watch('name')?.length >= 2}
-                  >
-                    <Input
-                      placeholder="e.g., Logitech MX Master 3S"
-                      {...form.register('name')}
-                      className={formErrors.name ? 'border-red-500' : form.watch('name')?.length >= 2 ? 'border-green-500' : ''}
-                    />
-                  </FormField>
-
-                  <FormField 
-                    label="SKU (Stock Keeping Unit)" 
-                    required 
-                    error={formErrors.sku}
-                    helpText="Unique identifier for internal tracking"
-                    isValid={!!form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku'))}
-                  >
-                    <Input
-                      placeholder="LOG-MXM3S-BLK"
-                      {...form.register('sku')}
-                      className={formErrors.sku ? 'border-red-500' : form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku')) ? 'border-green-500' : ''}
-                    />
-                  </FormField>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Categorization</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField 
-                    label="Industry Category" 
-                    required 
-                    error={formErrors.industryCategory}
-                    helpText="Select the primary industry for this product"
-                    isValid={!!form.watch('industryCategory')}
-                  >
-                    <Select
-                      value={form.watch('industryCategory')}
-                      onValueChange={(value) => form.setValue('industryCategory', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an industry" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="General Retail">General Retail</SelectItem>
-                        <SelectItem value="Pharmacy">Pharmacy</SelectItem>
-                        <SelectItem value="Food & Beverage">Food & Beverage</SelectItem>
-                        <SelectItem value="Electronics">Electronics</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormField>
-                  <FormField 
-                    label="Product Category" 
-                    required 
-                    error={formErrors.category}
-                    helpText="Specific category within the industry"
-                    isValid={!!form.watch('category')}
-                  >
-                    <Input
-                      placeholder="e.g., Computer Accessories"
-                      {...form.register('category')}
-                      className={formErrors.category ? 'border-red-500' : form.watch('category') ? 'border-green-500' : ''}
-                    />
-                  </FormField>
-                  {industryCategory === 'Pharmacy' && (
+          <form onSubmit={form.handleSubmit(onSuccess)} className="space-y-6 lg:space-y-8">
+            {/* Step 1: Basic Information */}
+            {currentStep === 1 && (
+              <div className="space-y-4 lg:space-y-6">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-3 px-4 sm:px-6">
+                    <CardTitle className="text-base sm:text-lg">Product Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
                     <FormField 
-                      label="Expiry Date" 
-                      helpText="Required for pharmaceutical products"
-                    >
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !form.watch('expiryDate') && "text-muted-foreground"
-                            )}
-                          >
-                            {form.watch('expiryDate') ? (
-                              format(form.watch('expiryDate')!, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={form.watch('expiryDate')}
-                            onSelect={(date) => form.setValue('expiryDate', date)}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormField>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Step 2: Pricing */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Product Pricing</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField 
-                      label="Cost Price" 
+                      label="Product Name" 
                       required 
-                      error={formErrors.cost}
-                      helpText="Your cost to acquire one unit of the product."
-                      isValid={cost >= 0 && cost < 1000000}
+                      error={formErrors.name}
+                      helpText="Descriptive name that customers will see"
+                      isValid={form.watch('name')?.length >= 2}
                     >
                       <Input
-                        type="number"
-                        placeholder="15.00"
-                        {...form.register('cost')}
-                        className={formErrors.cost ? 'border-red-500' : cost >= 0 ? 'border-green-500' : ''}
+                        placeholder="e.g., Logitech MX Master 3S"
+                        {...form.register('name')}
+                        className={formErrors.name ? 'border-red-500' : form.watch('name')?.length >= 2 ? 'border-green-500' : ''}
                       />
                     </FormField>
 
                     <FormField 
-                      label="Selling Price" 
+                      label="SKU (Stock Keeping Unit)" 
                       required 
-                      error={formErrors.price}
-                      helpText="The price customers will pay."
-                      isValid={price >= cost && price >= 0}
+                      error={formErrors.sku}
+                      helpText="Unique identifier for internal tracking"
+                      isValid={!!form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku'))}
                     >
                       <Input
-                        type="number"
-                        placeholder="29.99"
-                        {...form.register('price')}
-                        className={formErrors.price ? 'border-red-500' : price >= cost && price >= 0 ? 'border-green-500' : ''}
+                        placeholder="LOG-MXM3S-BLK"
+                        {...form.register('sku')}
+                        className={formErrors.sku ? 'border-red-500' : form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku')) ? 'border-green-500' : ''}
                       />
                     </FormField>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <PriceComparison cost={cost || 0} price={price || 0} />
-
-                  {price < cost && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-amber-800">
-                        <AlertCircle className="w-4 h-4" />
-                        <span className="font-medium">Warning: Selling below cost</span>
-                      </div>
-                      <p className="text-amber-700 text-sm mt-1">
-                        You are selling this product for less than it costs. This will result in a loss.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Step 3: Inventory */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Stock Management</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-3 px-4 sm:px-6">
+                    <CardTitle className="text-base sm:text-lg">Categorization</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
                     <FormField 
-                      label="Opening Stock Quantity" 
+                      label="Industry Category" 
                       required 
-                      error={formErrors.quantity}
-                      helpText="Current available stock on hand."
-                      isValid={quantity >= 0 && quantity < 1000000}
+                      error={formErrors.industryCategory}
+                      helpText="Select the primary industry for this product"
+                      isValid={!!form.watch('industryCategory')}
                     >
-                      <Input
-                        type="number"
-                        placeholder="150"
-                        {...form.register('quantity')}
-                        className={formErrors.quantity ? 'border-red-500' : quantity >= 0 ? 'border-green-500' : ''}
-                      />
+                      <Select
+                        value={form.watch('industryCategory')}
+                        onValueChange={(value) => form.setValue('industryCategory', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an industry" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="General Retail">General Retail</SelectItem>
+                          <SelectItem value="Pharmacy">Pharmacy</SelectItem>
+                          <SelectItem value="Food & Beverage">Food & Beverage</SelectItem>
+                          <SelectItem value="Electronics">Electronics</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormField>
-
                     <FormField 
-                      label="Minimum Stock Level" 
-                      error={formErrors.minStock}
-                      helpText="Get an alert when stock drops to this level."
-                      isValid={minStock >= 0 && minStock < 10000}
+                      label="Product Category" 
+                      required 
+                      error={formErrors.category}
+                      helpText="Specific category within the industry"
+                      isValid={!!form.watch('category')}
                     >
                       <Input
-                        type="number"
-                        placeholder="10"
-                        {...form.register('minStock')}
-                        value={minStock || ''}
-                        className={formErrors.minStock ? 'border-red-500' : minStock >= 0 ? 'border-green-500' : ''}
+                        placeholder="e.g., Computer Accessories"
+                        {...form.register('category')}
+                        className={formErrors.category ? 'border-red-500' : form.watch('category') ? 'border-green-500' : ''}
                       />
                     </FormField>
-                  </div>
-
-                  <StockStatus quantity={quantity || 0} minStock={minStock || 10} />
-
-                  {quantity <= minStock && quantity > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-amber-800">
-                        <AlertCircle className="w-4 h-4" />
-                        <span className="font-medium">Low Stock Alert</span>
-                      </div>
-                      <p className="text-amber-700 text-sm mt-1">
-                        Stock level is at or below minimum. Consider reordering soon.
-                      </p>
-                    </div>
-                  )}
-
-                  {quantity === 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-red-800">
-                        <AlertCircle className="w-4 h-4" />
-                        <span className="font-medium">Out of Stock</span>
-                      </div>
-                      <p className="text-red-700 text-sm mt-1">
-                        This product is currently out of stock. Update quantity when available.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Step 4: Review */}
-          {currentStep === 4 && (
-            <div className="space-y-6">
-              <div className="border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">Basic Information</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)}>Edit</Button>
-                </div>
-                <div className="space-y-1 text-sm">
-                  <p><span className="text-gray-500">Industry:</span> {form.watch('industryCategory')}</p>
-                  <p><span className="text-gray-500">Name:</span> {form.watch('name')}</p>
-                  <p><span className="text-gray-500">Category:</span> {form.watch('category')}</p>
-                  <p><span className="text-gray-500">SKU:</span> {form.watch('sku')}</p>
-                  {form.watch('expiryDate') && (
-                    <p><span className="text-gray-500">Expiry:</span> {format(form.watch('expiryDate')!, "PPP")}</p>
-                  )}
-                </div>
+                    {industryCategory === 'Pharmacy' && (
+                      <FormField 
+                        label="Expiry Date" 
+                        helpText="Required for pharmaceutical products"
+                      >
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !form.watch('expiryDate') && "text-muted-foreground"
+                              )}
+                            >
+                              {form.watch('expiryDate') ? (
+                                format(form.watch('expiryDate')!, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={form.watch('expiryDate')}
+                              onSelect={(date) => form.setValue('expiryDate', date)}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormField>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
-
-              <div className="border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">Pricing</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)}>Edit</Button>
-                </div>
-                <div className="space-y-1 text-sm">
-                  <p><span className="text-gray-500">Cost Price:</span> ${form.watch('cost')?.toFixed(2)}</p>
-                  <p><span className="text-gray-500">Selling Price:</span> ${form.watch('price')?.toFixed(2)}</p>
-                  <p><span className="text-gray-500">Profit Margin:</span> 
-                    {cost > 0 ? (((price - cost) / cost) * 100).toFixed(1) : '0'}%
-                  </p>
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">Inventory</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(3)}>Edit</Button>
-                </div>
-                <div className="space-y-1 text-sm">
-                  <p><span className="text-gray-500">Stock Quantity:</span> {form.watch('quantity')}</p>
-                  <p><span className="text-gray-500">Min Stock Level:</span> {form.watch('minStock') || 10}</p>
-                  <div className="mt-2">
-                    <StockStatus quantity={quantity} minStock={minStock} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </form>
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8 pt-6 border-t">
-          <div>
-            {currentStep > 1 && (
-              <Button variant="outline" onClick={handleBack}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
             )}
-            {onCancel && currentStep === 1 && (
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
+
+            {/* Step 2: Pricing */}
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-3 px-4 sm:px-6">
+                    <CardTitle className="text-base sm:text-lg">Product Pricing</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <FormField 
+                        label="Cost Price" 
+                        required 
+                        error={formErrors.cost}
+                        helpText="Your cost to acquire one unit of the product."
+                        isValid={cost >= 0 && cost < 1000000}
+                      >
+                        <Input
+                          type="number"
+                          placeholder="15.00"
+                          {...form.register('cost')}
+                          className={formErrors.cost ? 'border-red-500' : cost >= 0 ? 'border-green-500' : ''}
+                        />
+                      </FormField>
+
+                      <FormField 
+                        label="Selling Price" 
+                        required 
+                        error={formErrors.price}
+                        helpText="The price customers will pay."
+                        isValid={price >= cost && price >= 0}
+                      >
+                        <Input
+                          type="number"
+                          placeholder="29.99"
+                          {...form.register('price')}
+                          className={formErrors.price ? 'border-red-500' : price >= cost && price >= 0 ? 'border-green-500' : ''}
+                        />
+                      </FormField>
+                    </div>
+
+                    <PriceComparison cost={cost || 0} price={price || 0} />
+
+                    {price < cost && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-amber-800">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="font-medium">Warning: Selling below cost</span>
+                        </div>
+                        <p className="text-amber-700 text-sm mt-1">
+                          You are selling this product for less than it costs. This will result in a loss.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             )}
+
+            {/* Step 3: Inventory */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-3 px-4 sm:px-6">
+                    <CardTitle className="text-base sm:text-lg">Stock Management</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <FormField 
+                        label="Opening Stock Quantity" 
+                        required 
+                        error={formErrors.quantity}
+                        helpText="Current available stock on hand."
+                        isValid={quantity >= 0 && quantity < 1000000}
+                      >
+                        <Input
+                          type="number"
+                          placeholder="150"
+                          {...form.register('quantity')}
+                          className={formErrors.quantity ? 'border-red-500' : quantity >= 0 ? 'border-green-500' : ''}
+                        />
+                      </FormField>
+
+                      <FormField 
+                        label="Minimum Stock Level" 
+                        error={formErrors.minStock}
+                        helpText="Get an alert when stock drops to this level."
+                        isValid={minStock >= 0 && minStock < 10000}
+                      >
+                        <Input
+                          type="number"
+                          placeholder="10"
+                          {...form.register('minStock')}
+                          value={minStock || ''}
+                          className={formErrors.minStock ? 'border-red-500' : minStock >= 0 ? 'border-green-500' : ''}
+                        />
+                      </FormField>
+                    </div>
+
+                    <StockStatus quantity={quantity || 0} minStock={minStock || 10} />
+
+                    {quantity <= minStock && quantity > 0 && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-amber-800">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="font-medium">Low Stock Alert</span>
+                        </div>
+                        <p className="text-amber-700 text-sm mt-1">
+                          Stock level is at or below minimum. Consider reordering soon.
+                        </p>
+                      </div>
+                    )}
+
+                    {quantity === 0 && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-red-800">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="font-medium">Out of Stock</span>
+                        </div>
+                        <p className="text-red-700 text-sm mt-1">
+                          This product is currently out of stock. Update quantity when available.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Step 4: Review */}
+            {currentStep === 4 && (
+              <div className="space-y-4 lg:space-y-6">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-3 px-4 sm:px-6">
+                    <CardTitle className="text-base sm:text-lg">Basic Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2 flex-1">
+                        <p><span className="text-gray-500 font-medium">Industry:</span> {form.watch('industryCategory')}</p>
+                        <p><span className="text-gray-500 font-medium">Name:</span> {form.watch('name')}</p>
+                        <p><span className="text-gray-500 font-medium">Category:</span> {form.watch('category')}</p>
+                        <p><span className="text-gray-500 font-medium">SKU:</span> {form.watch('sku')}</p>
+                        {form.watch('expiryDate') && (
+                          <p><span className="text-gray-500 font-medium">Expiry:</span> {format(form.watch('expiryDate')!, "PPP")}</p>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)} className="shrink-0">
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-3 px-4 sm:px-6">
+                    <CardTitle className="text-base sm:text-lg">Pricing</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2 flex-1">
+                        <p><span className="text-gray-500 font-medium">Cost Price:</span> ${form.watch('cost')?.toFixed(2)}</p>
+                        <p><span className="text-gray-500 font-medium">Selling Price:</span> ${form.watch('price')?.toFixed(2)}</p>
+                        <p><span className="text-gray-500 font-medium">Profit Margin:</span> 
+                          {cost > 0 ? (((price - cost) / cost) * 100).toFixed(1) : '0'}%
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)} className="shrink-0">
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-3 px-4 sm:px-6">
+                    <CardTitle className="text-base sm:text-lg">Inventory</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2 flex-1">
+                        <p><span className="text-gray-500 font-medium">Stock Quantity:</span> {form.watch('quantity')}</p>
+                        <p><span className="text-gray-500 font-medium">Min Stock Level:</span> {form.watch('minStock') || 10}</p>
+                        <div className="mt-2">
+                          <StockStatus quantity={quantity} minStock={minStock} />
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setCurrentStep(3)} className="shrink-0">
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </form>
+
+          {/* Navigation Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 lg:mt-8 pt-4 sm:pt-6 border-t">
+            <div className="flex gap-2">
+              {currentStep > 1 && (
+                <Button variant="outline" onClick={handleBack} className="flex-1 sm:flex-none">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              )}
+              {onCancel && currentStep === 1 && (
+                <Button variant="outline" onClick={onCancel} className="flex-1 sm:flex-none">
+                  Cancel
+                </Button>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={handleSaveDraft} className="order-2 sm:order-1">
+                <Save className="mr-2 h-4 w-4" />
+                Save Draft
+              </Button>
+
+              {currentStep < 4 ? (
+                <Button onClick={handleNext} className="order-1 sm:order-2 flex-1">
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 order-1 sm:order-2 flex-1">
+                  <Check className="mr-2 h-4 w-4" />
+                  {product ? 'Update Product' : 'Create Product'}
+                </Button>
+              )}
+            </div>
           </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSaveDraft}>
-              <Save className="mr-2 h-4 w-4" />
-              Save Draft
-            </Button>
-
-            {currentStep < 4 ? (
-              <Button onClick={handleNext}>
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
-                <Check className="mr-2 h-4 w-4" />
-                {product ? 'Update Product' : 'Create Product'}
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

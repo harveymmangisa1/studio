@@ -10,7 +10,7 @@ CREATE TABLE tenants (
     created_at TIMESTAMPTZ DEFAULT now(),
     subscription_status VARCHAR(50),
     subscription_tier VARCHAR(50),
-    max_users INT,
+    max_users INT,the 
     max_products INT,
     max_transactions_per_month INT,
     updated_at TIMESTAMPTZ DEFAULT now()
