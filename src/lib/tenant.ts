@@ -1,9 +1,13 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext } from 'react';
 
 export interface Tenant {
   id: string;
   name: string;
-  // Add other tenant properties as needed
+  address?: string;
+  email?: string;
+  phone?: string;
+  logo_url?: string;
+  primary_color?: string;
 }
 
 export const TenantContext = createContext<{

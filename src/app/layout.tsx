@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './print.css';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { TenantProvider } from '@/components/TenantProvider';

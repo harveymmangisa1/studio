@@ -11,80 +11,61 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { DocumentHeader } from '@/components/DocumentHeader';
 
-interface InvoiceDetails {
+// Mock data since we don't have a quotes table yet
+const MOCK_QUOTES = [
+  { id: '1', quote_number: 'QT-001', customer_name: 'Prospect Inc.', total_amount: 1500, status: 'Sent', quote_date: '2024-05-20', expiry_date: '2024-06-20', customer_email: 'contact@prospect.inc', customer_address: '123 Prospect Ave, Innovation City', line_items: [{ id: 1, products: { name: 'Ergonomic Chair' }, quantity: 5, unit_price: 250 }], subtotal: 1250, tax: 250 },
+  { id: '2', quote_number: 'QT-002', customer_name: 'Lead Ventures', total_amount: 3200, status: 'Accepted', quote_date: '2024-05-18', expiry_date: '2024-06-18', customer_email: 'deals@leadventures.com', customer_address: '456 Venture Rd, Growth Town', line_items: [{ id: 1, products: { name: 'Mechanical Keyboard' }, quantity: 20, unit_price: 100 }], subtotal: 2000, tax: 1200 },
+];
+
+interface QuoteDetails {
   id: string;
-  invoice_number: string;
+  quote_number: string;
   customer_name: string;
   customer_email: string;
   customer_address: string;
   total_amount: number;
-  payment_status: string;
-  invoice_date: string;
-  due_date: string;
+  status: string;
+  quote_date: string;
+  expiry_date: string;
   line_items: any[];
   subtotal: number;
   tax: number;
 }
 
-export default function InvoiceDetailsPage() {
+export default function QuoteDetailsPage() {
   const { id } = useParams();
-  const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
+  const [quote, setQuote] = useState<QuoteDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
-      fetchInvoiceDetails();
+      fetchQuoteDetails();
     }
   }, [id]);
 
-  const fetchInvoiceDetails = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('sales_invoices')
-        .select('*, customers(*), sales_invoice_line_items(*, products(*))')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const subtotal = data.sales_invoice_line_items.reduce((acc: any, item: any) => acc + item.quantity * item.unit_price, 0);
-        const tax = data.total_amount - subtotal;
-
-        setInvoice({
-          id: data.id,
-          invoice_number: data.invoice_number,
-          customer_name: data.customers.name,
-          customer_email: data.customers.email,
-          customer_address: data.customers.address,
-          total_amount: data.total_amount,
-          payment_status: data.payment_status,
-          invoice_date: data.invoice_date,
-          due_date: data.due_date,
-          line_items: data.sales_invoice_line_items,
-          subtotal,
-          tax,
-        });
-      }
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+  const fetchQuoteDetails = async () => {
+    setLoading(true);
+    // This is mocked. In a real app, you would fetch from supabase
+    const foundQuote = MOCK_QUOTES.find(q => q.id === id);
+    if (foundQuote) {
+      setQuote(foundQuote);
+    } else {
+      setError('Quotation not found.');
     }
+    setLoading(false);
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading invoice details...</div>;
+    return <div className="flex justify-center items-center h-64">Loading quotation details...</div>;
   }
 
   if (error) {
     return <div className="text-red-500">Error: {error}</div>;
   }
 
-  if (!invoice) {
-    return <div>Invoice not found.</div>;
+  if (!quote) {
+    return <div>Quotation not found.</div>;
   }
 
   return (
@@ -92,43 +73,41 @@ export default function InvoiceDetailsPage() {
       <div className="flex justify-end gap-2 no-print">
         <Button variant="outline" onClick={() => window.print()}>Download PDF</Button>
         <Button onClick={() => {
-          console.log('Sending invoice...');
-          toast({ title: 'Invoice Sent', description: `Invoice ${invoice.invoice_number} has been sent to ${invoice.customer_name}.` });
-        }}>Send Invoice</Button>
+          console.log('Sending quote...');
+          toast({ title: 'Quotation Sent', description: `Quotation ${quote.quote_number} has been sent to ${quote.customer_name}.` });
+        }}>Send Quotation</Button>
       </div>
 
       <div id="printable-area">
-        <DocumentHeader title="INVOICE" documentId={invoice.invoice_number} />
-        
-        {/* Invoice Details */}
+        <DocumentHeader title="QUOTATION" documentId={quote.quote_number} />
+
         <Card className="mb-8">
           <CardContent className="p-6 grid gap-6 md:grid-cols-2">
             <div className="grid gap-2">
-              <h3 className="font-semibold">Billed To:</h3>
+              <h3 className="font-semibold">Prepared For:</h3>
               <div className="text-muted-foreground">
-                <p className="font-medium text-slate-700">{invoice.customer_name}</p>
-                <p>{invoice.customer_address}</p>
-                <p>{invoice.customer_email}</p>
+                <p className="font-medium text-slate-700">{quote.customer_name}</p>
+                <p>{quote.customer_address}</p>
+                <p>{quote.customer_email}</p>
               </div>
             </div>
             <div className="grid gap-2 text-left md:text-right">
-              <h3 className="font-semibold">Invoice Details:</h3>
+              <h3 className="font-semibold">Quotation Details:</h3>
               <div className="text-muted-foreground">
-                <p><strong>Invoice Number:</strong> {invoice.invoice_number}</p>
-                <p><strong>Invoice Date:</strong> {new Date(invoice.invoice_date).toLocaleDateString()}</p>
-                <p><strong>Due Date:</strong> {new Date(invoice.due_date).toLocaleDateString()}</p>
-                 <Badge variant={invoice.payment_status === 'Paid' ? 'default' : 'destructive'} className="mt-2 w-fit ml-auto">
-                    {invoice.payment_status}
+                <p><strong>Quotation Number:</strong> {quote.quote_number}</p>
+                <p><strong>Quote Date:</strong> {new Date(quote.quote_date).toLocaleDateString()}</p>
+                <p><strong>Expiry Date:</strong> {new Date(quote.expiry_date).toLocaleDateString()}</p>
+                 <Badge variant={quote.status === 'Accepted' ? 'default' : 'outline'} className="mt-2 w-fit ml-auto">
+                    {quote.status}
                   </Badge>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Line Items */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Order Summary</CardTitle>
+            <CardTitle>Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -141,7 +120,7 @@ export default function InvoiceDetailsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoice.line_items.map(item => (
+                {quote.line_items.map(item => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <p className="font-medium">{item.products.name}</p>
@@ -156,21 +135,20 @@ export default function InvoiceDetailsPage() {
           </CardContent>
         </Card>
 
-        {/* Totals */}
         <div className="flex justify-end">
           <div className="w-full max-w-xs space-y-4">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>${invoice.subtotal.toFixed(2)}</span>
+              <span>${quote.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Tax</span>
-              <span>${invoice.tax.toFixed(2)}</span>
+              <span>${quote.tax.toFixed(2)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span>${invoice.total_amount.toFixed(2)}</span>
+              <span>${quote.total_amount.toFixed(2)}</span>
             </div>
           </div>
         </div>

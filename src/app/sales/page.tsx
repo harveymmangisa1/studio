@@ -105,17 +105,17 @@ export default function SalesPage() {
   
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { variant: "outline" | "destructive" | "default"; icon?: React.ElementType }> = {
-      'Paid': { variant: 'outline', icon: CheckCircle },
+      'Paid': { variant: 'default' as any, icon: CheckCircle },
       'Unpaid': { variant: 'destructive', icon: Clock },
       'Sent': { variant: 'outline', icon: FileText },
-      'Accepted': { variant: 'default' },
+      'Accepted': { variant: 'default' as any },
       'Draft': { variant: 'secondary' as any },
     };
     const config = statusConfig[status] || { variant: 'outline' };
     const Icon = config.icon;
 
     return (
-      <Badge variant={config.variant}>
+      <Badge variant={config.variant as any}>
         {Icon && <Icon className="mr-1 h-3 w-3" />}
         {status}
       </Badge>
@@ -251,8 +251,11 @@ export default function SalesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <span>Edit</span>
+                            <DropdownMenuItem asChild>
+                               <Link href={`/sales/quotes/${quote.id}`}>
+                                 <Eye className="mr-2 h-4 w-4" />
+                                 <span>View Details</span>
+                               </Link>
                             </DropdownMenuItem>
                             {quote.status !== 'Accepted' && (
                               <DropdownMenuItem>
