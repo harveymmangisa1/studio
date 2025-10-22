@@ -47,9 +47,18 @@ interface Activity {
   icon: React.ElementType;
 }
 
+const MOCK_SALES_DATA = [
+  { month: "Jan", sales: 4000 },
+  { month: "Feb", sales: 3000 },
+  { month: "Mar", sales: 5000 },
+  { month: "Apr", sales: 4500 },
+  { month: "May", sales: 6000 },
+  { month: "Jun", sales: 7500 },
+];
+
 export default function DashboardPage() {
   const { tenant } = useTenant();
-  const userName = "Alex Morgan"; // Mock user name
+  const [userName, setUserName] = useState("User"); 
   const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
     lowStockItems: 0,
@@ -67,6 +76,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
+    const getUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if(user) {
+            // In a real app, you'd fetch the user's profile name from your 'users' table
+            setUserName(user.email?.split('@')[0] || "User");
+        }
+    }
+    getUser();
   }, [timeRange]);
 
   const fetchDashboardData = async () => {
@@ -96,7 +113,6 @@ export default function DashboardPage() {
       ]);
 
       if (revenueError || salesError || productsError || customersError || lowStockError || pendingOrdersError || recentSalesError || recentStockError || recentCustomersError) {
-        // For now, we will just log the error. In a real app, you'd want to handle this more gracefully.
         console.error({
           revenueError, salesError, productsError, customersError, lowStockError, pendingOrdersError, recentSalesError, recentStockError, recentCustomersError
         });
@@ -297,7 +313,7 @@ export default function DashboardPage() {
                 <CardDescription>Your sales performance over the last 6 months.</CardDescription>
             </CardHeader>
             <CardContent>
-                <SalesChart />
+                <SalesChart data={MOCK_SALES_DATA} />
             </CardContent>
             </Card>
         </div>
