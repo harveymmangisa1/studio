@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,6 @@ import {
   CheckCircle,
   Building2,
   ChevronRight,
-  ChevronLeft,
   Upload,
   Download,
   Eye,
@@ -28,6 +27,8 @@ import {
   RefreshCw
 } from "lucide-react";
 import { FormField, SuccessCard, PageHeader } from '@/components/shared';
+import { useTenant } from '@/lib/tenant';
+import { supabase } from '@/lib/supabase';
 
 // Types
 interface SettingsData {
@@ -64,6 +65,7 @@ interface TabConfig {
 }
 
 export default function SettingsPage() {
+  const { tenant, setTenant, theme, setTheme } = useTenant();
   const [currentTab, setCurrentTab] = useState('general');
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [showSuccess, setShowSuccess] = useState(false);
@@ -73,12 +75,11 @@ export default function SettingsPage() {
   const [progress, setProgress] = useState(0);
   const [backupProgress, setBackupProgress] = useState(0);
 
-  // Initialize settings with default values
-  const [settings, setSettings] = useState<SettingsData>({
-    companyName: 'StockPaEasy Inc.',
-    companyEmail: 'contact@stockpaeasy.com',
-    companyPhone: '+1 (555) 123-4567',
-    companyAddress: '123 Business Street, Suite 100\nNew York, NY 10001',
+  const [settings, setSettings] = useState<Partial<SettingsData>>({
+    companyName: '',
+    companyEmail: '',
+    companyPhone: '',
+    companyAddress: '',
     timezone: 'America/New_York',
     currency: 'USD',
     emailNotifications: true,
@@ -91,6 +92,25 @@ export default function SettingsPage() {
     autoBackup: true,
     backupFrequency: 'daily'
   });
+
+  useEffect(() => {
+    if (tenant) {
+      setSettings({
+        ...settings,
+        companyName: tenant.name,
+        companyEmail: tenant.email,
+        companyPhone: tenant.phone,
+        companyAddress: tenant.address,
+      });
+    }
+  }, [tenant]);
+
+  useEffect(() => {
+    if (theme) {
+      setSettings(prev => ({...prev, theme}));
+    }
+  }, [theme]);
+
 
   // Tab configuration with completion status
   const tabs: TabConfig[] = [
@@ -113,7 +133,7 @@ export default function SettingsPage() {
       label: 'Security', 
       icon: Shield, 
       description: 'Configure security settings and access controls',
-      completed: settings.twoFactorAuth || settings.sessionTimeout > 15
+      completed: settings.twoFactorAuth || (settings.sessionTimeout && settings.sessionTimeout > 15)
     },
     { 
       id: 'appearance', 
@@ -157,7 +177,7 @@ export default function SettingsPage() {
       if (!settings.companyName || settings.companyName.length < 2) {
         newErrors.companyName = 'Company name must be at least 2 characters';
       }
-      if (!settings.companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.companyEmail)) {
+      if (settings.companyEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.companyEmail)) {
         newErrors.companyEmail = 'Please enter a valid email address';
       }
     }
@@ -179,13 +199,32 @@ export default function SettingsPage() {
   };
 
   const handleSave = async () => {
-    if (validateSettings(currentTab)) {
-      setIsLoading(true);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setIsLoading(false);
+    if (!tenant || !validateSettings(currentTab)) return;
+
+    setIsLoading(true);
+
+    const updates = {
+      name: settings.companyName,
+      email: settings.companyEmail,
+      phone: settings.companyPhone,
+      address: settings.companyAddress,
+      // In a real app, you would save other settings too
+    };
+
+    const { data, error } = await supabase
+      .from('tenants')
+      .update(updates)
+      .eq('id', tenant.id)
+      .select()
+      .single();
+    
+    setIsLoading(false);
+
+    if (error) {
+      console.error('Error updating settings:', error);
+      alert('Failed to save settings.');
+    } else if (data) {
+      setTenant(data);
       setHasUnsavedChanges(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
@@ -195,6 +234,10 @@ export default function SettingsPage() {
   const handleFieldChange = (field: keyof SettingsData, value: any) => {
     setSettings(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
+
+    if (field === 'theme' && setTheme) {
+      setTheme(value);
+    }
     
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -220,7 +263,6 @@ export default function SettingsPage() {
   };
 
   const handleExportData = () => {
-    // Simulate data export
     const dataStr = JSON.stringify(settings, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -270,7 +312,6 @@ export default function SettingsPage() {
         </div>
       </PageHeader>
 
-      {/* Progress Overview */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
@@ -293,7 +334,6 @@ export default function SettingsPage() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar Navigation */}
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="text-lg">Settings</CardTitle>
@@ -340,7 +380,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Main Content */}
         <div className="lg:col-span-3">
           <Card>
             <CardHeader>
@@ -365,7 +404,6 @@ export default function SettingsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* General Settings */}
               {currentTab === 'general' && (
                 <div className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
@@ -451,7 +489,6 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Notification Settings */}
               {currentTab === 'notifications' && (
                 <div className="space-y-6">
                   <div className="bg-slate-50 p-4 rounded-lg">
@@ -482,7 +519,6 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Security Settings */}
               {currentTab === 'security' && (
                 <div className="space-y-6">
                   <div className="bg-slate-50 p-4 rounded-lg">
@@ -546,7 +582,7 @@ export default function SettingsPage() {
                   </div>
 
                   <FormField label="Session Timeout" helpText="Automatically log out after inactivity">
-                    <Select value={settings.sessionTimeout.toString()} onValueChange={(value) => handleFieldChange('sessionTimeout', parseInt(value))}>
+                    <Select value={settings.sessionTimeout?.toString()} onValueChange={(value) => handleFieldChange('sessionTimeout', parseInt(value))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -562,7 +598,6 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Appearance Settings */}
               {currentTab === 'appearance' && (
                 <div className="space-y-6">
                   <FormField label="Theme" helpText="Choose your preferred color scheme">
@@ -585,7 +620,6 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Data Settings */}
               {currentTab === 'data' && (
                 <div className="space-y-6">
                   <div className="bg-slate-50 p-4 rounded-lg">

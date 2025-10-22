@@ -6,6 +6,22 @@ import { useState, useEffect } from 'react';
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(storedTheme);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
 
   useEffect(() => {
     if (tenant) {
@@ -46,7 +62,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <TenantContext.Provider value={{ tenant, setTenant }}>
+    <TenantContext.Provider value={{ tenant, setTenant, theme, setTheme }}>
       {children}
     </TenantContext.Provider>
   );

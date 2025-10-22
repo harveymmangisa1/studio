@@ -13,7 +13,14 @@ export interface Tenant {
 export const TenantContext = createContext<{
   tenant: Tenant | null;
   setTenant: (tenant: Tenant | null) => void;
-}>({ tenant: null, setTenant: () => {} });
+  theme: string;
+  setTheme: (theme: string) => void;
+}>({ 
+  tenant: null, 
+  setTenant: () => {},
+  theme: 'light',
+  setTheme: () => {}
+});
 
 export function useTenant() {
   return useContext(TenantContext);
