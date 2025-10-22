@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Package } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@stockpaeasy.com');
+  const [password, setPassword] = useState('demo-password');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export default function LoginPage() {
                 <Package className="w-8 h-8 text-primary-foreground" />
             </div>
           <CardTitle>Welcome to StockPaEasy</CardTitle>
-          <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
+          <CardDescription>Use the demo credentials below to log in and explore the app.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
@@ -78,7 +78,7 @@ export default function LoginPage() {
               {error && <p className="text-red-500 text-sm">{error}</p>}
               {message && <p className="text-green-500 text-sm">{message}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ? 'Logging in...' : 'Login as Demo User'}
               </Button>
             </div>
           </form>
