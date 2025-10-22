@@ -351,10 +351,10 @@ export default function LoginPage() {
             <div className="text-center">
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Don't have an account?{' '}
-                <button className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors inline-flex items-center space-x-1">
+                <a href="#" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors inline-flex items-center space-x-1">
                   <UserPlus className="w-4 h-4" />
-                  <span>Start Free Trial</span>
-                </button>
+                  <span>Sign up now</span>
+                </a>
               </p>
             </div>
             
