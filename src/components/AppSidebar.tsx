@@ -42,6 +42,7 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { useState, useEffect } from 'react';
+import { useTenant } from '@/lib/tenant';
 
 // TODO: Integrate with a real useAuth hook once implemented
 // import { useAuth } from '../../contexts/AuthContext';
@@ -179,6 +180,7 @@ const menuGroups: MenuGroup[] = [
 ];
 
 export function AppSidebar() {
+  const { tenant } = useTenant();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -237,7 +239,7 @@ export function AppSidebar() {
                 <Package className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-slate-900">StockPaEasy</h1>
+                <h1 className="text-lg font-bold text-slate-900">{tenant?.name || 'StockPaEasy'}</h1>
               </div>
             </div>
           </div>
@@ -270,7 +272,7 @@ export function AppSidebar() {
                 </div>
                 {!isCollapsed && (
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-white">StockPaEasy</h1>
+                    <h1 className="text-xl font-bold text-slate-900 dark:text-white">{tenant?.name || 'StockPaEasy'}</h1>
                     <p className="text-xs text-slate-600 dark:text-slate-400">Business Management</p>
                   </div>
                 )}

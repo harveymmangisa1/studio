@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,16 +16,15 @@ import {
   Shield, 
   Palette, 
   Database,
-  AlertCircle,
-  CheckCircle,
   Building2
 } from "lucide-react";
 import { FormField, SuccessCard, PageHeader } from '@/components/shared';
-
+import { useTenant, Tenant } from '@/lib/tenant';
 
 export default function SettingsPage() {
+  const { tenant, setTenant } = useTenant();
   const [currentTab, setCurrentTab] = useState('general');
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string,string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [settings, setSettings] = useState({
@@ -46,13 +45,22 @@ export default function SettingsPage() {
     backupFrequency: 'daily'
   });
 
+  useEffect(() => {
+    if (tenant) {
+      setSettings(prev => ({
+        ...prev,
+        companyName: tenant.name,
+      }));
+    }
+  }, [tenant]);
+
   const validateSettings = () => {
-    const newErrors = {};
+    const newErrors: Record<string,string> = {};
     
     if (!settings.companyName || settings.companyName.length < 2) {
       newErrors.companyName = 'Company name must be at least 2 characters';
     }
-    if (!settings.companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.companyEmail)) {
+    if (settings.companyEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.companyEmail)) {
       newErrors.companyEmail = 'Please enter a valid email address';
     }
     
@@ -62,12 +70,15 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     if (validateSettings()) {
+      if (tenant) {
+        setTenant({ ...tenant, name: settings.companyName });
+      }
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }
   };
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (field: keyof typeof settings, value: any) => {
     setSettings({ ...settings, [field]: value });
     if (errors[field]) {
       setErrors({ ...errors, [field]: undefined });
@@ -157,7 +168,7 @@ export default function SettingsPage() {
                     />
                   </FormField>
 
-                  <FormField label="Company Email" required error={errors.companyEmail} helpText="Used for sending invoices and notifications">
+                  <FormField label="Company Email" error={errors.companyEmail} helpText="Used for sending invoices and notifications">
                     <Input
                       type="email"
                       placeholder="contact@yourcompany.com"
@@ -233,8 +244,8 @@ export default function SettingsPage() {
                         <div key={item.key} className="flex items-center space-x-2">
                           <Checkbox
                             id={item.key}
-                            checked={settings[item.key]}
-                            onCheckedChange={(checked) => handleFieldChange(item.key, checked)}
+                            checked={settings[item.key as keyof typeof settings]}
+                            onCheckedChange={(checked) => handleFieldChange(item.key as keyof typeof settings, checked)}
                           />
                           <Label htmlFor={item.key}>{item.label}</Label>
                         </div>

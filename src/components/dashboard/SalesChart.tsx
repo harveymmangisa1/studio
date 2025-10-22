@@ -3,15 +3,6 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 
-const chartData = [
-  { month: 'January', sales: 18600 },
-  { month: 'February', sales: 30500 },
-  { month: 'March', sales: 23700 },
-  { month: 'April', sales: 27300 },
-  { month: 'May', sales: 20900 },
-  { month: 'June', sales: 21400 },
-];
-
 const chartConfig = {
   sales: {
     label: 'Sales',
@@ -19,10 +10,14 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function SalesChart() {
+interface SalesChartProps {
+  data: { month: string; sales: number }[];
+}
+
+export default function SalesChart({ data }: SalesChartProps) {
   return (
     <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-      <BarChart accessibilityLayer data={chartData}>
+      <BarChart accessibilityLayer data={data}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="month"

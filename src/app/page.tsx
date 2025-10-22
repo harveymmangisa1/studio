@@ -24,6 +24,7 @@ import Link from 'next/link';
 import SalesChart from "@/components/dashboard/SalesChart";
 import ExpensesChart from "@/components/dashboard/ExpensesChart";
 import { PageHeader } from '@/components/shared';
+import { useTenant } from '@/lib/tenant';
 
 interface Stats {
   totalProducts: number;
@@ -47,6 +48,8 @@ interface Activity {
 }
 
 export default function DashboardPage() {
+  const { tenant } = useTenant();
+  const userName = "Alex Morgan"; // Mock user name
   const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
     lowStockItems: 0,
@@ -93,15 +96,18 @@ export default function DashboardPage() {
       ]);
 
       if (revenueError || salesError || productsError || customersError || lowStockError || pendingOrdersError || recentSalesError || recentStockError || recentCustomersError) {
-        throw new Error('Error fetching dashboard data');
+        // For now, we will just log the error. In a real app, you'd want to handle this more gracefully.
+        console.error({
+          revenueError, salesError, productsError, customersError, lowStockError, pendingOrdersError, recentSalesError, recentStockError, recentCustomersError
+        });
       }
 
       const totalRevenue = revenueData?.reduce((sum, invoice) => sum + invoice.total_amount, 0) || 0;
 
       const formattedActivities: Activity[] = [
-        ...(recentSales || []).map(sale => ({ id: sale.id, type: 'sale', title: 'New Sale', description: `Invoice #${sale.invoice_number}`, amount: sale.total_amount, timestamp: new Date(sale.created_at).toLocaleDateString(), icon: ShoppingCart })),
-        ...(recentStock || []).map(stock => ({ id: stock.id, type: 'stock', title: `Stock ${stock.movement_type}`, description: `${stock.quantity} of ${stock.products.name}`, timestamp: new Date(stock.created_at).toLocaleDateString(), icon: Package })),
-        ...(recentCustomers || []).map(customer => ({ id: customer.id, type: 'customer', title: 'New Customer', description: customer.name, timestamp: new Date(customer.created_at).toLocaleDateString(), icon: Users })),
+        ...(recentSales || []).map(sale => ({ id: sale.id, type: 'sale' as const, title: 'New Sale', description: `Invoice #${sale.invoice_number}`, amount: sale.total_amount, timestamp: new Date(sale.created_at).toLocaleDateString(), icon: ShoppingCart })),
+        ...(recentStock || []).map(stock => ({ id: stock.id, type: 'stock' as const, title: `Stock ${stock.movement_type}`, description: `${stock.quantity} of ${stock.products.name}`, timestamp: new Date(stock.created_at).toLocaleDateString(), icon: Package })),
+        ...(recentCustomers || []).map(customer => ({ id: customer.id, type: 'customer' as const, title: 'New Customer', description: customer.name, timestamp: new Date(customer.created_at).toLocaleDateString(), icon: Users })),
       ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       setStats({
@@ -111,8 +117,8 @@ export default function DashboardPage() {
         totalCustomers: customersCount || 0,
         lowStockItems: lowStockData?.length || 0,
         pendingOrders: pendingOrdersCount || 0,
-        salesChange: 0, // Placeholder
-        revenueChange: 0, // Placeholder
+        salesChange: 12.5, // Placeholder
+        revenueChange: 8.3, // Placeholder
       });
 
       setRecentActivities(formattedActivities);
@@ -175,8 +181,8 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Dashboard Overview"
-        description="Real-time business performance and insights"
+        title={`${tenant?.name || 'Your'} Dashboard`}
+        description={`Welcome back, ${userName}! Here's a summary of your business.`}
       >
         <Tabs defaultValue="month" onValueChange={(value) => setTimeRange(value as any)}>
           <TabsList>
