@@ -16,23 +16,70 @@ import {
   Shield, 
   Palette, 
   Database,
-  Building2
+  AlertCircle,
+  CheckCircle,
+  Building2,
+  ChevronRight,
+  ChevronLeft,
+  Upload,
+  Download,
+  Eye,
+  EyeOff,
+  RefreshCw
 } from "lucide-react";
 import { FormField, SuccessCard, PageHeader } from '@/components/shared';
-import { useTenant, Tenant } from '@/lib/tenant';
+
+// Types
+interface SettingsData {
+  companyName: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyAddress: string;
+  timezone: string;
+  currency: string;
+  emailNotifications: boolean;
+  lowStockAlerts: boolean;
+  paymentReminders: boolean;
+  weeklyReports: boolean;
+  twoFactorAuth: boolean;
+  sessionTimeout: number;
+  theme: string;
+  autoBackup: boolean;
+  backupFrequency: string;
+  password?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
+interface ValidationErrors {
+  [key: string]: string | undefined;
+}
+
+interface TabConfig {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+  completed?: boolean;
+}
 
 export default function SettingsPage() {
-  const { tenant, setTenant } = useTenant();
   const [currentTab, setCurrentTab] = useState('general');
-  const [errors, setErrors] = useState<Record<string,string>>({});
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [backupProgress, setBackupProgress] = useState(0);
 
-  const [settings, setSettings] = useState({
-    companyName: '',
-    companyEmail: '',
-    companyPhone: '',
-    companyAddress: '',
-    timezone: '',
+  // Initialize settings with default values
+  const [settings, setSettings] = useState<SettingsData>({
+    companyName: 'StockPaEasy Inc.',
+    companyEmail: 'contact@stockpaeasy.com',
+    companyPhone: '+1 (555) 123-4567',
+    companyAddress: '123 Business Street, Suite 100\nNew York, NY 10001',
+    timezone: 'America/New_York',
     currency: 'USD',
     emailNotifications: true,
     lowStockAlerts: true,
@@ -45,53 +92,144 @@ export default function SettingsPage() {
     backupFrequency: 'daily'
   });
 
-  useEffect(() => {
-    if (tenant) {
-      setSettings(prev => ({
-        ...prev,
-        companyName: tenant.name,
-      }));
-    }
-  }, [tenant]);
+  // Tab configuration with completion status
+  const tabs: TabConfig[] = [
+    { 
+      id: 'general', 
+      label: 'General', 
+      icon: Building2, 
+      description: 'Configure your company information and basic settings',
+      completed: !!settings.companyName && !!settings.companyEmail
+    },
+    { 
+      id: 'notifications', 
+      label: 'Notifications', 
+      icon: Bell, 
+      description: 'Manage your notification preferences',
+      completed: settings.emailNotifications || settings.lowStockAlerts
+    },
+    { 
+      id: 'security', 
+      label: 'Security', 
+      icon: Shield, 
+      description: 'Configure security settings and access controls',
+      completed: settings.twoFactorAuth || settings.sessionTimeout > 15
+    },
+    { 
+      id: 'appearance', 
+      label: 'Appearance', 
+      icon: Palette, 
+      description: 'Customize the look and feel of your application',
+      completed: settings.theme !== 'light'
+    },
+    { 
+      id: 'data', 
+      label: 'Data & Backup', 
+      icon: Database, 
+      description: 'Manage data backup and retention policies',
+      completed: settings.autoBackup
+    },
+  ];
 
-  const validateSettings = () => {
-    const newErrors: Record<string,string> = {};
+  // Calculate overall progress
+  useEffect(() => {
+    const completedTabs = tabs.filter(tab => tab.completed).length;
+    setProgress(Math.round((completedTabs / tabs.length) * 100));
+  }, [settings]);
+
+  // Warn about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  const validateSettings = (tab?: string): boolean => {
+    const newErrors: ValidationErrors = {};
     
-    if (!settings.companyName || settings.companyName.length < 2) {
-      newErrors.companyName = 'Company name must be at least 2 characters';
+    if (!tab || tab === 'general') {
+      if (!settings.companyName || settings.companyName.length < 2) {
+        newErrors.companyName = 'Company name must be at least 2 characters';
+      }
+      if (!settings.companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.companyEmail)) {
+        newErrors.companyEmail = 'Please enter a valid email address';
+      }
     }
-    if (settings.companyEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.companyEmail)) {
-      newErrors.companyEmail = 'Please enter a valid email address';
+
+    if (tab === 'security' && settings.twoFactorAuth) {
+      if (!settings.password) {
+        newErrors.password = 'Current password is required to enable 2FA';
+      }
+      if (settings.newPassword && settings.newPassword.length < 8) {
+        newErrors.newPassword = 'Password must be at least 8 characters';
+      }
+      if (settings.newPassword !== settings.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
-    if (validateSettings()) {
-      if (tenant) {
-        setTenant({ ...tenant, name: settings.companyName });
-      }
+  const handleSave = async () => {
+    if (validateSettings(currentTab)) {
+      setIsLoading(true);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setIsLoading(false);
+      setHasUnsavedChanges(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }
   };
 
-  const handleFieldChange = (field: keyof typeof settings, value: any) => {
-    setSettings({ ...settings, [field]: value });
+  const handleFieldChange = (field: keyof SettingsData, value: any) => {
+    setSettings(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
+    
     if (errors[field]) {
-      setErrors({ ...errors, [field]: undefined });
+      setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
-  const tabs = [
-    { id: 'general', label: 'General', icon: Building2 },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'data', label: 'Data & Backup', icon: Database },
-  ];
+  const handleTabChange = (tabId: string) => {
+    if (hasUnsavedChanges) {
+      const confirmChange = window.confirm(
+        'You have unsaved changes. Are you sure you want to switch tabs?'
+      );
+      if (!confirmChange) return;
+    }
+    setCurrentTab(tabId);
+  };
+
+  const simulateBackup = async () => {
+    setBackupProgress(0);
+    for (let i = 0; i <= 100; i += 10) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setBackupProgress(i);
+    }
+  };
+
+  const handleExportData = () => {
+    // Simulate data export
+    const dataStr = JSON.stringify(settings, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `stockpaeasy-settings-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (showSuccess) {
     return (
@@ -110,11 +248,49 @@ export default function SettingsPage() {
         title="Settings"
         description="Manage your application preferences and configuration."
       >
-        <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
-          <Save className="mr-2 h-4 w-4" />
-          Save Changes
-        </Button>
+        <div className="flex items-center gap-4">
+          {hasUnsavedChanges && (
+            <div className="flex items-center gap-2 text-amber-600 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              Unsaved changes
+            </div>
+          )}
+          <Button 
+            onClick={handleSave} 
+            disabled={isLoading || !hasUnsavedChanges}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
       </PageHeader>
+
+      {/* Progress Overview */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">Setup Progress</h3>
+              <p className="text-slate-600">Complete your configuration</p>
+            </div>
+            <div className="text-right">
+              <span className="text-2xl font-bold text-blue-600">{progress}%</span>
+              <p className="text-sm text-slate-500">Complete</p>
+            </div>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Navigation */}
@@ -122,19 +298,43 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-lg">Settings</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
+              const isActive = currentTab === tab.id;
+              
               return (
-                <Button
+                <button
                   key={tab.id}
-                  variant={currentTab === tab.id ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => setCurrentTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`
+                    w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left
+                    ${isActive 
+                      ? 'bg-blue-50 border border-blue-200 text-blue-700' 
+                      : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                    }
+                  `}
                 >
-                  <Icon className="mr-2 h-4 w-4" />
-                  {tab.label}
-                </Button>
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`
+                      p-2 rounded-lg transition-colors
+                      ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}
+                    `}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <span className="font-medium flex-1">{tab.label}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {tab.completed && (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    )}
+                    <ChevronRight className={`
+                      h-4 w-4 transition-transform
+                      ${isActive ? 'text-blue-600 rotate-90' : 'text-slate-400'}
+                    `} />
+                  </div>
+                </button>
               );
             })}
           </CardContent>
@@ -144,39 +344,60 @@ export default function SettingsPage() {
         <div className="lg:col-span-3">
           <Card>
             <CardHeader>
-              <CardTitle>
-                {tabs.find(tab => tab.id === currentTab)?.label} Settings
-              </CardTitle>
-              <CardDescription>
-                {currentTab === 'general' && "Configure your company information and basic settings"}
-                {currentTab === 'notifications' && "Manage your notification preferences"}
-                {currentTab === 'security' && "Configure security settings and access controls"}
-                {currentTab === 'appearance' && "Customize the look and feel of your application"}
-                {currentTab === 'data' && "Manage data backup and retention policies"}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    {tabs.find(tab => tab.id === currentTab)?.label}
+                    {tabs.find(tab => tab.id === currentTab)?.completed && (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {tabs.find(tab => tab.id === currentTab)?.description}
+                  </CardDescription>
+                </div>
+                {hasUnsavedChanges && (
+                  <div className="flex items-center gap-2 text-amber-600 text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    Unsaved
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* General Settings */}
               {currentTab === 'general' && (
-                <div className="space-y-4">
-                  <FormField label="Company Name" required error={errors.companyName} helpText="This will appear on invoices and reports">
-                    <Input
-                      placeholder="Your Company Name"
-                      value={settings.companyName}
-                      onChange={(e) => handleFieldChange('companyName', e.target.value)}
-                      className={errors.companyName ? 'border-red-500' : ''}
-                    />
-                  </FormField>
+                <div className="space-y-6">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <FormField 
+                      label="Company Name" 
+                      required 
+                      error={errors.companyName} 
+                      helpText="This will appear on invoices and reports"
+                    >
+                      <Input
+                        placeholder="Your Company Name"
+                        value={settings.companyName}
+                        onChange={(e) => handleFieldChange('companyName', e.target.value)}
+                        className={errors.companyName ? 'border-red-500' : ''}
+                      />
+                    </FormField>
 
-                  <FormField label="Company Email" error={errors.companyEmail} helpText="Used for sending invoices and notifications">
-                    <Input
-                      type="email"
-                      placeholder="contact@yourcompany.com"
-                      value={settings.companyEmail}
-                      onChange={(e) => handleFieldChange('companyEmail', e.target.value)}
-                      className={errors.companyEmail ? 'border-red-500' : ''}
-                    />
-                  </FormField>
+                    <FormField 
+                      label="Company Email" 
+                      required 
+                      error={errors.companyEmail} 
+                      helpText="Used for sending invoices and notifications"
+                    >
+                      <Input
+                        type="email"
+                        placeholder="contact@yourcompany.com"
+                        value={settings.companyEmail}
+                        onChange={(e) => handleFieldChange('companyEmail', e.target.value)}
+                        className={errors.companyEmail ? 'border-red-500' : ''}
+                      />
+                    </FormField>
+                  </div>
 
                   <FormField label="Company Phone" helpText="Contact number for customer support">
                     <Input
@@ -196,7 +417,7 @@ export default function SettingsPage() {
                     />
                   </FormField>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField label="Timezone" helpText="Your local timezone">
                       <Select value={settings.timezone} onValueChange={(value) => handleFieldChange('timezone', value)}>
                         <SelectTrigger>
@@ -232,42 +453,97 @@ export default function SettingsPage() {
 
               {/* Notification Settings */}
               {currentTab === 'notifications' && (
-                <div className="space-y-4">
-                  <FormField label="Email Notifications" helpText="Receive notifications via email">
-                    <div className="space-y-2">
+                <div className="space-y-6">
+                  <div className="bg-slate-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-3">Email Notifications</h4>
+                    <div className="space-y-3">
                       {[
-                        { key: 'emailNotifications', label: 'General email notifications' },
-                        { key: 'lowStockAlerts', label: 'Low stock alerts' },
-                        { key: 'paymentReminders', label: 'Payment reminders' },
-                        { key: 'weeklyReports', label: 'Weekly summary reports' },
+                        { key: 'emailNotifications', label: 'General email notifications', description: 'Receive important system updates' },
+                        { key: 'lowStockAlerts', label: 'Low stock alerts', description: 'Get notified when inventory is running low' },
+                        { key: 'paymentReminders', label: 'Payment reminders', description: 'Automatic payment due reminders' },
+                        { key: 'weeklyReports', label: 'Weekly summary reports', description: 'Weekly business performance reports' },
                       ].map((item) => (
-                        <div key={item.key} className="flex items-center space-x-2">
+                        <div key={item.key} className="flex items-start space-x-3 p-3 bg-white rounded-lg border">
                           <Checkbox
                             id={item.key}
-                            checked={settings[item.key as keyof typeof settings]}
-                            onCheckedChange={(checked) => handleFieldChange(item.key as keyof typeof settings, checked)}
+                            checked={settings[item.key as keyof SettingsData] as boolean}
+                            onCheckedChange={(checked) => handleFieldChange(item.key as keyof SettingsData, checked)}
                           />
-                          <Label htmlFor={item.key}>{item.label}</Label>
+                          <div className="flex-1">
+                            <Label htmlFor={item.key} className="font-medium cursor-pointer">
+                              {item.label}
+                            </Label>
+                            <p className="text-sm text-slate-600">{item.description}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
-                  </FormField>
+                  </div>
                 </div>
               )}
 
               {/* Security Settings */}
               {currentTab === 'security' && (
-                <div className="space-y-4">
-                  <FormField label="Two-Factor Authentication" helpText="Add an extra layer of security to your account">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="twoFactorAuth"
-                        checked={settings.twoFactorAuth}
-                        onCheckedChange={(checked) => handleFieldChange('twoFactorAuth', checked)}
-                      />
-                      <Label htmlFor="twoFactorAuth">Enable two-factor authentication</Label>
+                <div className="space-y-6">
+                  <div className="bg-slate-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-3">Authentication</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div>
+                          <Label htmlFor="twoFactorAuth" className="font-medium cursor-pointer">
+                            Two-Factor Authentication
+                          </Label>
+                          <p className="text-sm text-slate-600">Add an extra layer of security to your account</p>
+                        </div>
+                        <Checkbox
+                          id="twoFactorAuth"
+                          checked={settings.twoFactorAuth}
+                          onCheckedChange={(checked) => handleFieldChange('twoFactorAuth', checked)}
+                        />
+                      </div>
+
+                      {settings.twoFactorAuth && (
+                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <FormField label="Current Password" error={errors.password}>
+                              <div className="relative">
+                                <Input
+                                  type={showPassword ? "text" : "password"}
+                                  value={settings.password || ''}
+                                  onChange={(e) => handleFieldChange('password', e.target.value)}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                >
+                                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                              </div>
+                            </FormField>
+                            <div className="space-y-4">
+                              <FormField label="New Password" error={errors.newPassword}>
+                                <Input
+                                  type="password"
+                                  value={settings.newPassword || ''}
+                                  onChange={(e) => handleFieldChange('newPassword', e.target.value)}
+                                />
+                              </FormField>
+                              <FormField label="Confirm Password" error={errors.confirmPassword}>
+                                <Input
+                                  type="password"
+                                  value={settings.confirmPassword || ''}
+                                  onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
+                                />
+                              </FormField>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </FormField>
+                  </div>
 
                   <FormField label="Session Timeout" helpText="Automatically log out after inactivity">
                     <Select value={settings.sessionTimeout.toString()} onValueChange={(value) => handleFieldChange('sessionTimeout', parseInt(value))}>
@@ -288,21 +564,22 @@ export default function SettingsPage() {
 
               {/* Appearance Settings */}
               {currentTab === 'appearance' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <FormField label="Theme" helpText="Choose your preferred color scheme">
-                    <RadioGroup value={settings.theme} onValueChange={(value) => handleFieldChange('theme', value)}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="light" id="light" />
-                        <Label htmlFor="light">Light</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="dark" id="dark" />
-                        <Label htmlFor="dark">Dark</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="system" id="system" />
-                        <Label htmlFor="system">System</Label>
-                      </div>
+                    <RadioGroup value={settings.theme} onValueChange={(value) => handleFieldChange('theme', value)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[
+                        { value: 'light', label: 'Light', description: 'Clean and bright' },
+                        { value: 'dark', label: 'Dark', description: 'Easy on the eyes' },
+                        { value: 'system', label: 'System', description: 'Follows your device' },
+                      ].map((theme) => (
+                        <div key={theme.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                          <RadioGroupItem value={theme.value} id={theme.value} />
+                          <Label htmlFor={theme.value} className="cursor-pointer flex-1">
+                            <div className="font-medium">{theme.label}</div>
+                            <div className="text-sm text-slate-600">{theme.description}</div>
+                          </Label>
+                        </div>
+                      ))}
                     </RadioGroup>
                   </FormField>
                 </div>
@@ -310,30 +587,73 @@ export default function SettingsPage() {
 
               {/* Data Settings */}
               {currentTab === 'data' && (
-                <div className="space-y-4">
-                  <FormField label="Automatic Backup" helpText="Automatically backup your data">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="autoBackup"
-                        checked={settings.autoBackup}
-                        onCheckedChange={(checked) => handleFieldChange('autoBackup', checked)}
-                      />
-                      <Label htmlFor="autoBackup">Enable automatic backups</Label>
-                    </div>
-                  </FormField>
+                <div className="space-y-6">
+                  <div className="bg-slate-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-3">Backup Settings</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div>
+                          <Label htmlFor="autoBackup" className="font-medium cursor-pointer">
+                            Automatic Backup
+                          </Label>
+                          <p className="text-sm text-slate-600">Automatically backup your data</p>
+                        </div>
+                        <Checkbox
+                          id="autoBackup"
+                          checked={settings.autoBackup}
+                          onCheckedChange={(checked) => handleFieldChange('autoBackup', checked)}
+                        />
+                      </div>
 
-                  <FormField label="Backup Frequency" helpText="How often to create backups">
-                    <Select value={settings.backupFrequency} onValueChange={(value) => handleFieldChange('backupFrequency', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormField>
+                      {settings.autoBackup && (
+                        <FormField label="Backup Frequency" helpText="How often to create backups">
+                          <Select value={settings.backupFrequency} onValueChange={(value) => handleFieldChange('backupFrequency', value)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily">Daily</SelectItem>
+                              <SelectItem value="weekly">Weekly</SelectItem>
+                              <SelectItem value="monthly">Monthly</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button onClick={simulateBackup} variant="outline" className="h-auto py-4">
+                      <Download className="mr-2 h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">Backup Now</div>
+                        <div className="text-sm text-slate-600">Create manual backup</div>
+                      </div>
+                    </Button>
+
+                    <Button onClick={handleExportData} variant="outline" className="h-auto py-4">
+                      <Upload className="mr-2 h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">Export Data</div>
+                        <div className="text-sm text-slate-600">Download settings</div>
+                      </div>
+                    </Button>
+                  </div>
+
+                  {backupProgress > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Backup progress</span>
+                        <span>{backupProgress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${backupProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

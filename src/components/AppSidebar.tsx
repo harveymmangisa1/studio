@@ -31,6 +31,7 @@ import {
   Sun,
   Menu,
   X,
+  FileQuote,
 } from 'lucide-react';
 
 import {
@@ -40,6 +41,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useState, useEffect } from 'react';
 import { useTenant } from '@/lib/tenant';
@@ -47,6 +51,10 @@ import { useTenant } from '@/lib/tenant';
 // TODO: Integrate with a real useAuth hook once implemented
 // import { useAuth } from '../../contexts/AuthContext';
 
+interface SubMenuItem {
+  href: string;
+  label: string;
+}
 interface MenuItem {
   href: string;
   label: string;
@@ -57,6 +65,7 @@ interface MenuItem {
   description?: string;
   isNew?: boolean;
   isPro?: boolean;
+  subItems?: SubMenuItem[];
 }
 
 interface MenuGroup {
@@ -95,7 +104,11 @@ const menuGroups: MenuGroup[] = [
         label: 'Sales', 
         icon: ShoppingCart, 
         roles: ['Admin', 'Manager', 'Cashier', 'Accountant', 'Auditor'],
-        description: 'Sales orders and transactions'
+        description: 'Sales orders and transactions',
+        subItems: [
+          { href: '/sales', label: 'Invoices' },
+          { href: '/sales/quotes/new', label: 'Quotations' },
+        ]
       },
       { 
         href: '/purchases', 
@@ -320,7 +333,7 @@ export function AppSidebar() {
                   <SidebarMenu>
                     {group.items.map((item) => {
                       const Icon = item.icon;
-                      const isActive = pathname === item.href;
+                      const isActive = pathname === item.href || (item.subItems && item.subItems.some(sub => pathname.startsWith(sub.href)));
                       
                       return (
                         <SidebarMenuItem key={item.href}>
@@ -397,13 +410,24 @@ export function AppSidebar() {
                                     <ChevronRight className={`
                                       w-4 h-4 transition-transform duration-200 flex-shrink-0
                                       ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-500'}
-                                      ${isActive ? 'rotate-90' : ''}
+                                      ${isActive && item.subItems ? 'rotate-90' : ''}
                                     `} />
                                   )}
                                 </div>
                               )}
                             </Link>
                           </SidebarMenuButton>
+                           {isActive && item.subItems && !isCollapsed && (
+                            <SidebarMenuSub>
+                              {item.subItems.map(subItem => (
+                                <SidebarMenuSubItem key={subItem.href}>
+                                  <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
+                                    <Link href={subItem.href}>{subItem.label}</Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          )}
                         </SidebarMenuItem>
                       );
                     })}
