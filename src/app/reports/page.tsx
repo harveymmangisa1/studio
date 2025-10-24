@@ -79,8 +79,8 @@ export default function ReportsPage() {
       description: 'Revenue, expenses, and profitability analysis',
       icon: TrendingUp,
       href: '/reports/profit-loss',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: `$${reportStats.totalRevenue.toLocaleString()}`,
         change: 12.5,
@@ -92,8 +92,8 @@ export default function ReportsPage() {
       description: 'Assets, liabilities, and equity overview',
       icon: FileText,
       href: '/reports/balance-sheet',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: `${reportStats.totalProducts} items`,
         change: 8.2,
@@ -105,8 +105,8 @@ export default function ReportsPage() {
       description: 'Sales trends, top products, and performance',
       icon: BarChart3,
       href: '/reports/sales-analytics',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: `${reportStats.totalSales} orders`,
         change: -2.1,
@@ -118,8 +118,8 @@ export default function ReportsPage() {
       description: 'Stock levels, movements, and valuation',
       icon: Package,
       href: '/reports/inventory',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: `${reportStats.totalProducts} products`,
         change: 5.7,
@@ -131,8 +131,8 @@ export default function ReportsPage() {
       description: 'Customer insights and behavior analysis',
       icon: Users,
       href: '/reports/customers',
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: `${reportStats.totalCustomers} customers`,
         change: 15.3,
@@ -144,8 +144,8 @@ export default function ReportsPage() {
       description: 'Outstanding receivables by age',
       icon: Calendar,
       href: '/reports/ar-aging',
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: '$12,450',
         change: -8.9,
@@ -157,8 +157,8 @@ export default function ReportsPage() {
       description: 'Money in and out analysis',
       icon: Activity,
       href: '/reports/cash-flow',
-      color: 'text-teal-600',
-      bgColor: 'bg-teal-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: '$8,750',
         change: 22.1,
@@ -170,8 +170,8 @@ export default function ReportsPage() {
       description: 'Tax-ready reports and summaries',
       icon: PieChart,
       href: '/reports/tax',
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-50',
+      color: 'text-slate-700',
+      bgColor: 'bg-slate-100',
       stats: {
         value: 'Q4 2024',
         change: 0,
@@ -185,7 +185,7 @@ export default function ReportsPage() {
   };
 
   const getTrendColor = (trend: 'up' | 'down') => {
-    return trend === 'up' ? 'text-green-600' : 'text-red-600';
+    return 'text-muted-foreground';
   };
 
   return (
@@ -217,7 +217,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${reportStats.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <ArrowUpRight className="w-3 h-3" />
               +12.5% from last month
             </p>
@@ -229,7 +229,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reportStats.totalSales}</div>
-            <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <ArrowDownRight className="w-3 h-3" />
               -2.1% from last month
             </p>
@@ -241,7 +241,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reportStats.totalProducts}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <ArrowUpRight className="w-3 h-3" />
               +5.7% from last month
             </p>
@@ -253,7 +253,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reportStats.totalCustomers}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <ArrowUpRight className="w-3 h-3" />
               +15.3% from last month
             </p>
@@ -269,7 +269,7 @@ export default function ReportsPage() {
           
           return (
             <Link key={index} href={report.href}>
-              <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/20">
+              <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-border">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div className={`p-3 rounded-xl ${report.bgColor}`}>
@@ -287,13 +287,13 @@ export default function ReportsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-lg mb-2 group-hover:text-foreground transition-colors">
                     {report.title}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     {report.description}
                   </p>
-                  <div className="flex items-center text-sm text-primary group-hover:underline">
+                  <div className="flex items-center text-sm text-foreground group-hover:underline">
                     View Report
                     <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                   </div>

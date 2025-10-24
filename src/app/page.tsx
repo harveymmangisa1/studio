@@ -157,14 +157,8 @@ export default function DashboardPage() {
 
   const getActivityIcon = (activity: Activity) => {
     const Icon = activity.icon;
-    const iconColors: Record<Activity['type'], string> = {
-      sale: 'bg-emerald-100 text-emerald-600',
-      stock: 'bg-blue-100 text-blue-600',
-      customer: 'bg-amber-100 text-amber-600',
-    };
-    
     return (
-      <div className={`p-3 rounded-lg ${iconColors[activity.type]}`}>
+      <div className="p-3 rounded-lg bg-slate-100 text-slate-700">
         <Icon className="w-5 h-5" />
       </div>
     );
@@ -210,18 +204,12 @@ export default function DashboardPage() {
             <Card key={card.title} className="group hover:shadow-lg transition-shadow">
               <CardHeader className="pb-4">
                  <div className="flex items-start justify-between">
-                    <div className="p-3 rounded-xl bg-primary/10">
-                        <Icon className="w-6 h-6 text-primary" />
+                    <div className="p-3 rounded-xl bg-slate-100">
+                        <Icon className="w-6 h-6 text-slate-700" />
                     </div>
                      <div className="flex items-center gap-2">
                         {card.change !== 0 && (
-                            <div
-                            className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full ${
-                                isPositive
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}
-                            >
+                            <div className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-700`}>
                             {isPositive ? (
                                 <ArrowUp className="w-3 h-3" />
                             ) : (
@@ -276,7 +264,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     {activity.amount && (
-                      <p className="text-sm font-semibold text-green-600 whitespace-nowrap">
+                      <p className="text-sm font-semibold whitespace-nowrap">
                         +${activity.amount.toLocaleString()}
                       </p>
                     )}
@@ -305,43 +293,43 @@ export default function DashboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-amber-500" />
+                        <AlertCircle className="w-5 h-5 text-slate-600" />
                         Alerts & Notifications
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {stats.lowStockItems > 0 && (
-                        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <TrendingDown className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <TrendingDown className="w-5 h-5 text-slate-600 mt-0.5 flex-shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-amber-900">Low Stock Alert</p>
-                            <p className="text-xs text-amber-700 mt-1">{stats.lowStockItems} products are below their minimum stock level.</p>
+                            <p className="text-sm font-medium text-slate-900">Low Stock Alert</p>
+                            <p className="text-xs text-muted-foreground mt-1">{stats.lowStockItems} products are below their minimum stock level.</p>
                             <Link href="/inventory">
-                              <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-amber-600">View Products →</Button>
+                              <Button variant="link" size="sm" className="h-auto p-0 mt-2">View Products →</Button>
                             </Link>
                         </div>
                         </div>
                     )}
                     
                     {stats.pendingOrders > 0 && (
-                        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <ShoppingCart className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <ShoppingCart className="w-5 h-5 text-slate-600 mt-0.5 flex-shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-blue-900">Pending Orders</p>
-                            <p className="text-xs text-blue-700 mt-1">{stats.pendingOrders} sales orders await processing.</p>
+                            <p className="text-sm font-medium text-slate-900">Pending Orders</p>
+                            <p className="text-xs text-muted-foreground mt-1">{stats.pendingOrders} sales orders await processing.</p>
                              <Link href="/sales">
-                               <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-blue-600">Process Orders →</Button>
+                               <Button variant="link" size="sm" className="h-auto p-0 mt-2">Process Orders →</Button>
                              </Link>
                         </div>
                         </div>
                     )}
                     
-                    <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                        <TrendingUp className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-slate-600 mt-0.5 flex-shrink-0" />
                         <div>
-                        <p className="text-sm font-medium text-emerald-900">Sales Performance</p>
-                        <p className="text-xs text-emerald-700 mt-1">Revenue increased by {stats.revenueChange}% this {timeRange}.</p>
-                        <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-emerald-600">View Report →</Button>
+                        <p className="text-sm font-medium text-slate-900">Sales Performance</p>
+                        <p className="text-xs text-muted-foreground mt-1">Revenue increased by {stats.revenueChange}% this {timeRange}.</p>
+                        <Button variant="link" size="sm" className="h-auto p-0 mt-2">View Report →</Button>
                         </div>
                     </div>
                 </CardContent>
@@ -353,10 +341,10 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-3">
                      {[
-                        { label: 'New Sale', icon: ShoppingCart, color: 'bg-emerald-500', href: '/sales/new' },
-                        { label: 'Add Product', icon: Package, color: 'bg-blue-500', href: '/inventory' },
-                        { label: 'New Customer', icon: Users, color: 'bg-amber-500', href: '/customers' },
-                        { label: 'View Reports', icon: TrendingUp, color: 'bg-slate-500', href: '/reports/balance-sheet' },
+                        { label: 'New Sale', icon: ShoppingCart, color: 'bg-slate-900', href: '/sales/new' },
+                        { label: 'Add Product', icon: Package, color: 'bg-slate-900', href: '/inventory' },
+                        { label: 'New Customer', icon: Users, color: 'bg-slate-900', href: '/customers' },
+                        { label: 'View Reports', icon: TrendingUp, color: 'bg-slate-900', href: '/reports/balance-sheet' },
                     ].map((action, index) => (
                         <Link key={index} href={action.href}>
                           <Button variant="outline" className="flex-col h-24 gap-2 w-full">
