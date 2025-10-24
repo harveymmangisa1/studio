@@ -7,20 +7,14 @@ import {
   Package,
   ShoppingCart,
   ShoppingBag,
-  Receipt,
   DollarSign,
-  TrendingUp,
   Users,
   Settings,
   FileText,
   Warehouse,
-  CreditCard,
   BarChart3,
   Shield,
-  Lightbulb,
   ChevronRight,
-  Building,
-  User,
   LogOut,
   Bell,
   HelpCircle,
@@ -186,13 +180,13 @@ export function AppSidebar() {
   })).filter(group => group.items.length > 0);
 
   return (
-    <Sidebar className="bg-white border-r border-slate-200 shadow-lg">
+    <Sidebar className="bg-white border-r border-slate-200">
       {/* Header */}
       <SidebarHeader>
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Package className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-900 flex items-center justify-center">
+              <Package className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">StockPaEasy</h1>
@@ -208,7 +202,7 @@ export function AppSidebar() {
               placeholder="Search menu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
             />
           </div>
         </div>
@@ -246,18 +240,18 @@ export function AppSidebar() {
                           className={`
                             flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200
                             ${isActive 
-                              ? 'bg-blue-500/10 border border-blue-500/20 text-blue-600 shadow-lg shadow-blue-500/10' 
-                              : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
+                              ? 'bg-slate-100 border border-slate-200 text-slate-900' 
+                              : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
                             }
                             ${item.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}
                           `}
                         >
                           {/* Icon Container */}
                           <div className={`
-                            p-2 rounded-lg transition-colors
+                            p-2 rounded-lg transition-colors border
                             ${isActive 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-800'
+                              ? 'bg-slate-900 border-slate-900 text-white' 
+                              : 'bg-white border-slate-200 text-slate-600 group-hover:border-slate-300 group-hover:text-slate-900'
                             }
                           `}>
                             <Icon className="w-4 h-4" />
@@ -270,13 +264,7 @@ export function AppSidebar() {
                                 {item.label}
                               </span>
                               {item.badge && (
-                                <span className={`
-                                  px-1.5 py-0.5 text-xs font-medium rounded-full
-                                  ${item.badge === 'New' 
-                                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                                    : 'bg-blue-100 text-blue-700 border border-blue-200'
-                                  }
-                                `}>
+                                <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                                   {item.badge}
                                 </span>
                               )}
@@ -296,7 +284,7 @@ export function AppSidebar() {
                             {!item.comingSoon && (
                               <ChevronRight className={`
                                 w-4 h-4 transition-transform duration-200
-                                ${isActive ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-500'}
+                                text-slate-400 group-hover:text-slate-500
                                 ${isActive ? 'rotate-90' : ''}
                               `} />
                             )}
@@ -316,32 +304,32 @@ export function AppSidebar() {
       <div className="p-4 border-t border-slate-200 space-y-4">
         {/* Quick Actions */}
         <div className="flex items-center gap-2">
-          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 hover:text-slate-900 transition-colors text-sm">
+          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-700 hover:text-slate-900 transition-colors text-sm">
             <Bell className="w-4 h-4" />
             <span>Alerts</span>
           </button>
-          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 hover:text-slate-900 transition-colors text-sm">
+          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-700 hover:text-slate-900 transition-colors text-sm">
             <HelpCircle className="w-4 h-4" />
             <span>Help</span>
           </button>
         </div>
 
         {/* User Profile */}
-        <div className="flex items-center gap-3 p-3 bg-slate-100 rounded-lg">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+          <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center text-white text-sm font-medium">
             {userName.split(' ').map(n => n[0]).join('')}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-slate-900 truncate">{userName}</p>
             <p className="text-xs text-slate-500 truncate">{userRole}</p>
           </div>
-          <button className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-md transition-colors">
+          <button className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
 
         {/* System Status */}
-        <div className="px-3 py-2 bg-slate-100/50 rounded-lg">
+        <div className="px-3 py-2 bg-slate-50 rounded-lg">
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-500">System</span>
             <div className="flex items-center gap-1">
