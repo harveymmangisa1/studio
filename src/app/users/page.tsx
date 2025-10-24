@@ -143,16 +143,16 @@ export default function UsersPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'Active': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      'Pending': { color: 'bg-yellow-100 text-yellow-800', icon: Calendar },
-      'Inactive': { color: 'bg-red-100 text-red-800', icon: XCircle },
+      'Active': { color: 'bg-slate-100 text-slate-700', icon: CheckCircle },
+      'Pending': { color: 'bg-slate-100 text-slate-700', icon: Calendar },
+      'Inactive': { color: 'bg-slate-100 text-slate-700', icon: XCircle },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Active;
     const Icon = config.icon;
     
     return (
-      <Badge className={`${config.color} border-0`}>
+      <Badge className={`${config.color} border border-slate-200`}>
         <Icon className="w-3 h-3 mr-1" />
         {status}
       </Badge>
@@ -161,18 +161,18 @@ export default function UsersPage() {
 
   const getRoleBadge = (role: string) => {
     const roleConfig = {
-      'Admin': { color: 'bg-purple-100 text-purple-800' },
-      'Manager': { color: 'bg-blue-100 text-blue-800' },
-      'Accountant': { color: 'bg-green-100 text-green-800' },
-      'Store Clerk': { color: 'bg-orange-100 text-orange-800' },
-      'Cashier': { color: 'bg-teal-100 text-teal-800' },
-      'Auditor': { color: 'bg-gray-100 text-gray-800' },
+      'Admin': { color: 'bg-slate-100 text-slate-700' },
+      'Manager': { color: 'bg-slate-100 text-slate-700' },
+      'Accountant': { color: 'bg-slate-100 text-slate-700' },
+      'Store Clerk': { color: 'bg-slate-100 text-slate-700' },
+      'Cashier': { color: 'bg-slate-100 text-slate-700' },
+      'Auditor': { color: 'bg-slate-100 text-slate-700' },
     };
     
     const config = roleConfig[role as keyof typeof roleConfig] || roleConfig['Store Clerk'];
     
     return (
-      <Badge className={`${config.color} border-0`}>
+      <Badge className={`${config.color} border border-slate-200`}>
         {role}
       </Badge>
     );
@@ -237,7 +237,7 @@ export default function UsersPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeUsers}</div>
+            <div className="text-2xl font-bold">{activeUsers}</div>
           </CardContent>
         </Card>
         <Card>
@@ -245,7 +245,7 @@ export default function UsersPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Invites</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{pendingUsers}</div>
+            <div className="text-2xl font-bold">{pendingUsers}</div>
           </CardContent>
         </Card>
       </div>
@@ -318,7 +318,7 @@ export default function UsersPage() {
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         {user.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       <div>

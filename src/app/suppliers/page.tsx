@@ -175,7 +175,7 @@ export default function SuppliersPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Suppliers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{suppliers.length}</div>
+            <div className="text-2xl font-bold">{suppliers.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -183,7 +183,7 @@ export default function SuppliersPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Recent Additions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold">
               {suppliers.filter(s => new Date(s.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length}
             </div>
           </CardContent>
@@ -226,8 +226,8 @@ export default function SuppliersPage() {
                 <TableRow key={supplier.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-slate-700" />
                       </div>
                       <div>
                         <div className="font-medium">{supplier.name}</div>

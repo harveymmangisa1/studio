@@ -333,8 +333,8 @@ export function AppSidebar() {
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-500">System</span>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-emerald-600 font-medium">Online</span>
+              <div className="w-2 h-2 bg-slate-500 rounded-full animate-pulse"></div>
+              <span className="text-slate-600 font-medium">Online</span>
             </div>
           </div>
         </div>

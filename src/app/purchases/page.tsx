@@ -142,16 +142,16 @@ export default function PurchasesPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'Pending': { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      'Received': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      'Cancelled': { color: 'bg-red-100 text-red-800', icon: XCircle },
+      'Pending': { color: 'bg-slate-100 text-slate-700', icon: Clock },
+      'Received': { color: 'bg-slate-100 text-slate-700', icon: CheckCircle },
+      'Cancelled': { color: 'bg-slate-100 text-slate-700', icon: XCircle },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Pending;
     const Icon = config.icon;
     
     return (
-      <Badge className={`${config.color} border-0`}>
+      <Badge className={`${config.color} border border-slate-200`}>
         <Icon className="w-3 h-3 mr-1" />
         {status}
       </Badge>
@@ -217,7 +217,7 @@ export default function PurchasesPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{pendingOrders}</div>
+            <div className="text-2xl font-bold">{pendingOrders}</div>
           </CardContent>
         </Card>
         <Card>
@@ -225,7 +225,7 @@ export default function PurchasesPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Received Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{receivedOrders}</div>
+            <div className="text-2xl font-bold">{receivedOrders}</div>
           </CardContent>
         </Card>
       </div>
