@@ -7,31 +7,25 @@ import {
   Package,
   ShoppingCart,
   ShoppingBag,
-  Receipt,
   DollarSign,
   TrendingUp,
   Users,
   Settings,
   FileText,
   Warehouse,
-  CreditCard,
   BarChart3,
   Shield,
-  Lightbulb,
   ChevronRight,
-  Building,
   User,
   LogOut,
   Bell,
   HelpCircle,
   Search,
-  Zap,
-  Cloud,
-  Moon,
-  Sun,
-  Menu,
-  X,
-  FileQuote,
+  Building,
+  FileText as FileQuote,
+  CreditCard,
+  Receipt,
+  Briefcase,
 } from 'lucide-react';
 
 import {
@@ -47,14 +41,13 @@ import {
 } from '@/components/ui/sidebar';
 import { useState, useEffect } from 'react';
 import { useTenant } from '@/lib/tenant';
-
-// TODO: Integrate with a real useAuth hook once implemented
-// import { useAuth } from '../../contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 interface SubMenuItem {
   href: string;
   label: string;
 }
+
 interface MenuItem {
   href: string;
   label: string;
@@ -83,7 +76,6 @@ const menuGroups: MenuGroup[] = [
         icon: LayoutDashboard, 
         roles: ['Admin', 'Manager', 'Accountant', 'Cashier', 'Store Clerk', 'Auditor'],
         description: 'Business overview and analytics',
-        isNew: false
       },
     ]
   },
@@ -107,7 +99,7 @@ const menuGroups: MenuGroup[] = [
         description: 'Sales orders and transactions',
         subItems: [
           { href: '/sales', label: 'Invoices' },
-          { href: '/sales/quotes/new', label: 'Quotations' },
+          { href: '/sales/quotes', label: 'Quotations' },
         ]
       },
       { 
@@ -115,7 +107,6 @@ const menuGroups: MenuGroup[] = [
         label: 'Purchases', 
         icon: ShoppingBag, 
         roles: ['Admin', 'Manager', 'Store Clerk', 'Accountant', 'Auditor'], 
-        comingSoon: false,
         description: 'Purchase orders and suppliers'
       },
     ]
@@ -142,7 +133,6 @@ const menuGroups: MenuGroup[] = [
         label: 'Reports', 
         icon: BarChart3, 
         roles: ['Admin', 'Manager', 'Accountant', 'Auditor'], 
-        comingSoon: false,
         description: 'Analytics and insights',
         isPro: true
       },
@@ -156,7 +146,6 @@ const menuGroups: MenuGroup[] = [
         label: 'Customers', 
         icon: Users, 
         roles: ['Admin', 'Manager', 'Cashier', 'Accountant', 'Auditor'], 
-        comingSoon: false,
         description: 'Customer database and history'
       },
       { 
@@ -164,20 +153,37 @@ const menuGroups: MenuGroup[] = [
         label: 'Suppliers', 
         icon: Warehouse, 
         roles: ['Admin', 'Manager', 'Store Clerk', 'Accountant', 'Auditor'], 
-        comingSoon: false,
         description: 'Supplier management'
       },
     ]
   },
   {
-    title: 'Advanced',
+    title: 'Human Resources',
+    items: [
+      {
+        href: '/hr',
+        label: 'HR Dashboard',
+        icon: Briefcase,
+        roles: ['Admin', 'HR Manager'],
+        description: 'Human resources overview',
+        subItems: [
+          { href: '/hr/employees', label: 'Employees' },
+          { href: '/hr/payroll', label: 'Payroll' },
+          { href: '/hr/attendance', label: 'Attendance' },
+          { href: '/hr/performance', label: 'Performance' },
+          { href: '/hr/reports', label: 'Reports' },
+        ]
+      },
+    ]
+  },
+  {
+    title: 'Administration',
     items: [
       { 
         href: '/users', 
-        label: 'Team', 
+        label: 'Team Management', 
         icon: Shield, 
         roles: ['Admin'], 
-        comingSoon: false,
         description: 'User and role management'
       },
       { 
@@ -185,7 +191,6 @@ const menuGroups: MenuGroup[] = [
         label: 'Settings', 
         icon: Settings, 
         roles: ['Admin', 'Manager'], 
-        comingSoon: false,
         description: 'System configuration'
       },
     ]
@@ -198,12 +203,11 @@ export function AppSidebar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
-  // TODO: Replace with real authentication
-  const userRoles = ['Admin']; // Mock role for now
+  // Mock user data - replace with real authentication
+  const userRoles = ['Admin'];
   const userName = "Alex Morgan";
-  const userRole = "Admin";
+  const userRole = "Administrator";
 
   // Close mobile sidebar when route changes
   useEffect(() => {
@@ -221,94 +225,72 @@ export function AppSidebar() {
       )
   })).filter(group => group.items.length > 0);
 
-  // Toggle sidebar collapse
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
-  const toggleMobileSidebar = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // In a real app, you would persist this preference and apply it to the entire app
-  };
+  const toggleSidebar = () => setIsCollapsed(!isCollapsed);
+  const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
 
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 shadow-sm p-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={toggleMobileSidebar}
-              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
+              className="p-2 rounded-lg bg-corporate-blue/10 hover:bg-corporate-blue/20 transition-colors"
             >
-              {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Package className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-br from-corporate-blue to-corporate-blue/80 rounded-lg flex items-center justify-center">
+                <Building className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-slate-900">{tenant?.name || 'StockPaEasy'}</h1>
+                <h1 className="text-lg font-semibold text-corporate-blue">{tenant?.name || 'BusinessSuite'}</h1>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={toggleDarkMode}
-              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
-            >
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
           </div>
         </div>
       </div>
 
       {/* Desktop Sidebar */}
-      <div className={`
-        hidden lg:flex transition-all duration-300 ease-in-out
-        ${isCollapsed ? 'w-20' : 'w-80'}
-      `}>
-        <Sidebar className={`
-          bg-white border-r border-slate-200 shadow-lg transition-all duration-300
-          ${darkMode ? 'dark:bg-slate-900 dark:border-slate-700' : ''}
-        `}>
+      <div className={cn(
+        "hidden lg:flex transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-20" : "w-80"
+      )}>
+        <Sidebar className="bg-white border-r border-gray-200 shadow-sm">
           {/* Header */}
           <SidebarHeader>
-            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-              <div className={`flex items-center gap-3 mb-6 transition-all ${isCollapsed ? 'justify-center' : ''}`}>
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-                  <Package className="w-6 h-6 text-white" />
+            <div className="p-6 border-b border-gray-200">
+              <div className={cn("flex items-center gap-3 mb-6 transition-all", isCollapsed ? "justify-center" : "")}>
+                <div className="w-10 h-10 bg-gradient-to-br from-corporate-blue to-corporate-blue/80 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <Building className="w-6 h-6 text-white" />
                 </div>
                 {!isCollapsed && (
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-white">{tenant?.name || 'StockPaEasy'}</h1>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">Business Management</p>
+                    <h1 className="text-lg font-semibold text-corporate-blue truncate">{tenant?.name || 'BusinessSuite'}</h1>
+                    <p className="text-xs text-gray-500">Enterprise Management</p>
                   </div>
                 )}
                 {!isCollapsed && (
                   <button
                     onClick={toggleSidebar}
-                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
+                    className="p-1.5 rounded-lg bg-corporate-blue/10 hover:bg-corporate-blue/20 transition-colors"
                   >
-                    <ChevronRight className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+                    <ChevronRight className={cn("w-4 h-4 transition-transform", isCollapsed ? "rotate-180" : "")} />
                   </button>
                 )}
               </div>
 
-              {/* Search Bar - Hidden when collapsed */}
+              {/* Search Bar */}
               {!isCollapsed && (
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search menu..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-corporate-blue focus:border-transparent transition-colors"
                   />
                 </div>
               )}
@@ -317,13 +299,13 @@ export function AppSidebar() {
 
           {/* Navigation */}
           <SidebarContent className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-8">
+            <div className="p-4 space-y-6">
               {filteredGroups.map((group, groupIndex) => (
-                <div key={groupIndex} className="space-y-3">
-                  {/* Group Header - Hidden when collapsed */}
-                  {!isCollapsed && (
+                <div key={groupIndex} className="space-y-2">
+                  {/* Group Header */}
+                  {!isCollapsed && group.items.length > 0 && (
                     <div className="px-2">
-                      <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {group.title}
                       </h3>
                     </div>
@@ -333,7 +315,8 @@ export function AppSidebar() {
                   <SidebarMenu>
                     {group.items.map((item) => {
                       const Icon = item.icon;
-                      const isActive = pathname === item.href || (item.subItems && item.subItems.some(sub => pathname.startsWith(sub.href)));
+                      const isActive = pathname === item.href || 
+                        (item.subItems && item.subItems.some(sub => pathname.startsWith(sub.href)));
                       
                       return (
                         <SidebarMenuItem key={item.href}>
@@ -341,47 +324,42 @@ export function AppSidebar() {
                             asChild
                             isActive={isActive}
                             tooltip={isCollapsed ? item.label : undefined}
-                            disabled={item.comingSoon}
                             className="group relative"
                           >
                             <Link 
-                              href={item.comingSoon ? '#' : item.href}
-                              className={`
-                                flex items-center gap-3 rounded-xl transition-all duration-200
-                                ${isCollapsed ? 'justify-center px-3 py-4' : 'px-3 py-3'}
-                                ${isActive 
-                                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' 
-                                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white border border-transparent'
-                                }
-                                ${item.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}
-                              `}
+                              href={item.href}
+                              className={cn(
+                                "flex items-center gap-3 rounded-lg transition-all duration-200",
+                                isActive 
+                                  ? "bg-corporate-blue/10 text-corporate-blue border border-corporate-blue/30" 
+                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                              )}
                             >
-                              {/* Icon Container */}
-                              <div className="relative">
-                                <div className={`
-                                  p-2 rounded-lg transition-colors flex-shrink-0
-                                  ${isActive 
-                                    ? 'bg-white/20 text-white' 
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-800 dark:group-hover:text-slate-300'
-                                  }
-                                `}>
+                              {/* Icon */}
+                              <div className="relative flex-shrink-0">
+                                <div className={cn(
+                                  "p-2 rounded-md transition-colors",
+                                  isActive 
+                                    ? "bg-corporate-blue/20 text-corporate-blue" 
+                                    : "bg-gray-100 text-gray-600 group-hover:bg-gray-200 group-hover:text-gray-700"
+                                )}>
                                   <Icon className="w-4 h-4" />
                                 </div>
                                 
                                 {/* Badges */}
-                                {!isCollapsed && item.badge && (
-                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-slate-900">
+                                {item.badge && (
+                                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">
                                     {item.badge}
                                   </span>
                                 )}
-                                {item.isNew && !isCollapsed && (
-                                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[10px] px-1 rounded border-2 border-white dark:border-slate-900">
+                                {item.isNew && (
+                                  <span className="absolute -top-1 -right-1 bg-corporate-blue text-white text-[10px] px-1 rounded border-2 border-white">
                                     NEW
                                   </span>
                                 )}
                               </div>
 
-                              {/* Content - Hidden when collapsed */}
+                              {/* Content */}
                               {!isCollapsed && (
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
@@ -389,40 +367,47 @@ export function AppSidebar() {
                                       {item.label}
                                     </span>
                                     {item.isPro && (
-                                      <Zap className="w-3 h-3 text-amber-500" />
+                                      <span className="text-xs bg-gradient-to-r from-blue-500 to-blue-600 text-white px-1.5 py-0.5 rounded">
+                                        PRO
+                                      </span>
                                     )}
                                   </div>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                  <p className="text-xs text-gray-500 truncate">
                                     {item.description}
                                   </p>
                                 </div>
                               )}
 
-                              {/* Status Indicators - Hidden when collapsed */}
-                              {!isCollapsed && (
-                                <div className="flex items-center gap-1">
-                                  {item.comingSoon && (
-                                    <span className="text-xs text-slate-400 dark:text-slate-500 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md">
-                                      Soon
-                                    </span>
-                                  )}
-                                  {!item.comingSoon && (
-                                    <ChevronRight className={`
-                                      w-4 h-4 transition-transform duration-200 flex-shrink-0
-                                      ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-500'}
-                                      ${isActive && item.subItems ? 'rotate-90' : ''}
-                                    `} />
-                                  )}
-                                </div>
+                              {/* Chevron */}
+                              {!isCollapsed && item.subItems && (
+                                <ChevronRight className={cn(
+                                  "w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0",
+                                  isActive && item.subItems ? "rotate-90" : ""
+                                )} />
                               )}
                             </Link>
                           </SidebarMenuButton>
-                           {isActive && item.subItems && !isCollapsed && (
+
+                          {/* Sub Items */}
+                          {isActive && item.subItems && !isCollapsed && (
                             <SidebarMenuSub>
                               {item.subItems.map(subItem => (
                                 <SidebarMenuSubItem key={subItem.href}>
-                                  <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
-                                    <Link href={subItem.href}>{subItem.label}</Link>
+                                  <SidebarMenuSubButton 
+                                    asChild 
+                                    isActive={pathname === subItem.href}
+                                  >
+                                    <Link 
+                                      href={subItem.href}
+                                      className={cn(
+                                        "text-sm transition-colors",
+                                        pathname === subItem.href 
+                                          ? "text-corporate-blue font-medium" 
+                                          : "text-gray-600 hover:text-gray-900"
+                                      )}
+                                    >
+                                      {subItem.label}
+                                    </Link>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
                               ))}
@@ -437,63 +422,43 @@ export function AppSidebar() {
             </div>
           </SidebarContent>
 
-          {/* User Profile & Quick Actions */}
+          {/* Footer */}
           {!isCollapsed && (
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 space-y-4">
+            <div className="p-4 border-t border-gray-200 space-y-4">
               {/* Quick Actions */}
               <div className="flex items-center gap-2">
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors text-sm">
+                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 hover:text-gray-900 transition-colors text-sm">
                   <Bell className="w-4 h-4" />
-                  <span>Alerts</span>
+                  <span>Notifications</span>
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors text-sm">
+                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 hover:text-gray-900 transition-colors text-sm">
                   <HelpCircle className="w-4 h-4" />
-                  <span>Help</span>
+                  <span>Support</span>
                 </button>
               </div>
 
               {/* User Profile */}
-              <div className="flex items-center gap-3 p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
                   {userName.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{userName}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userRole}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{userName}</p>
+                  <p className="text-xs text-gray-500 truncate">{userRole}</p>
                 </div>
-                <button className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors">
+                <button className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-md transition-colors">
                   <LogOut className="w-4 h-4" />
                 </button>
-              </div>
-
-              {/* System Status & Theme Toggle */}
-              <div className="flex items-center justify-between px-3 py-2 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg">
-                <div className="flex items-center gap-2 text-xs">
-                  <Cloud className="w-3 h-3 text-slate-500" />
-                  <span className="text-slate-500 dark:text-slate-400">System</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={toggleDarkMode}
-                    className="p-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
-                  >
-                    {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  </button>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium text-xs">Online</span>
-                  </div>
-                </div>
               </div>
             </div>
           )}
 
           {/* Collapsed Footer */}
           {isCollapsed && (
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 space-y-4">
+            <div className="p-4 border-t border-gray-200">
               <button
                 onClick={toggleSidebar}
-                className="w-full flex items-center justify-center p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center p-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -511,32 +476,32 @@ export function AppSidebar() {
       )}
 
       {/* Mobile Sidebar */}
-      <div className={`
-        lg:hidden fixed top-16 left-0 bottom-0 z-30 w-80 bg-white border-r border-slate-200 shadow-xl transform transition-transform duration-300 ease-in-out
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      <div className={cn(
+        "lg:hidden fixed top-16 left-0 bottom-0 z-30 w-80 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out",
+        isMobileOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
         <Sidebar className="h-full bg-white">
-          {/* Mobile Search Bar */}
-          <div className="p-4 border-b border-slate-200">
+          {/* Mobile Search */}
+          <div className="p-4 border-b border-gray-200">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search menu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-corporate-blue focus:border-transparent"
               />
             </div>
           </div>
 
-          {/* Mobile Navigation Content */}
+          {/* Mobile Navigation */}
           <SidebarContent className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-8">
+            <div className="p-4 space-y-6">
               {filteredGroups.map((group, groupIndex) => (
-                <div key={groupIndex} className="space-y-3">
+                <div key={groupIndex} className="space-y-2">
                   <div className="px-2">
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {group.title}
                     </h3>
                   </div>
@@ -551,28 +516,24 @@ export function AppSidebar() {
                           <SidebarMenuButton
                             asChild
                             isActive={isActive}
-                            disabled={item.comingSoon}
                             className="group relative"
                           >
                             <Link 
-                              href={item.comingSoon ? '#' : item.href}
-                              className={`
-                                flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200
-                                ${isActive 
-                                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' 
-                                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
-                                }
-                                ${item.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}
-                              `}
+                              href={item.href}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                isActive 
+                                  ? "bg-corporate-blue/10 text-corporate-blue border border-corporate-blue/30" 
+                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                              )}
                             >
-                              <div className="relative">
-                                <div className={`
-                                  p-2 rounded-lg transition-colors
-                                  ${isActive 
-                                    ? 'bg-white/20 text-white' 
-                                    : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-800'
-                                  }
-                                `}>
+                              <div className="relative flex-shrink-0">
+                                <div className={cn(
+                                  "p-2 rounded-md transition-colors",
+                                  isActive 
+                                    ? "bg-corporate-blue/20 text-corporate-blue" 
+                                    : "bg-gray-100 text-gray-600 group-hover:bg-gray-200 group-hover:text-gray-700"
+                                )}>
                                   <Icon className="w-4 h-4" />
                                 </div>
                                 {item.badge && (
@@ -581,7 +542,7 @@ export function AppSidebar() {
                                   </span>
                                 )}
                                 {item.isNew && (
-                                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[10px] px-1 rounded border-2 border-white">
+                                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] px-1 rounded border-2 border-white">
                                     NEW
                                   </span>
                                 )}
@@ -593,28 +554,22 @@ export function AppSidebar() {
                                     {item.label}
                                   </span>
                                   {item.isPro && (
-                                    <Zap className="w-3 h-3 text-amber-500" />
+                                    <span className="text-xs bg-gradient-to-r from-corporate-blue to-corporate-blue/80 text-white px-1.5 py-0.5 rounded">
+                                      PRO
+                                    </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-slate-500 truncate">
+                                <p className="text-xs text-gray-500 truncate">
                                   {item.description}
                                 </p>
                               </div>
 
-                              <div className="flex items-center gap-1">
-                                {item.comingSoon && (
-                                  <span className="text-xs text-slate-400 px-2 py-1 bg-slate-100 rounded-md">
-                                    Soon
-                                  </span>
-                                )}
-                                {!item.comingSoon && (
-                                  <ChevronRight className={`
-                                    w-4 h-4 transition-transform duration-200
-                                    ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-500'}
-                                    ${isActive ? 'rotate-90' : ''}
-                                  `} />
-                                )}
-                              </div>
+                              {item.subItems && (
+                                <ChevronRight className={cn(
+                                  "w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0",
+                                  isActive ? "rotate-90" : ""
+                                )} />
+                              )}
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -633,3 +588,16 @@ export function AppSidebar() {
     </>
   );
 }
+
+// Add missing Menu and X icons
+const Menu = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
+
+const X = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);

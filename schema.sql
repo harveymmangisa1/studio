@@ -51,6 +51,7 @@ CREATE TABLE tenant_settings (
     business_address VARCHAR(255),
     business_phone VARCHAR(50),
     business_email VARCHAR(255),
+    settings JSONB,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );

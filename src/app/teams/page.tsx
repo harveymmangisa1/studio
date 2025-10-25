@@ -36,13 +36,97 @@ import {
   Zap,
   Eye,
   EyeOff,
-  RefreshCw
+  RefreshCw,
+  LucideProps
 } from 'lucide-react';
+import { ForwardRefExoticComponent, RefAttributes } from 'react';
 
 const STORAGE_KEY = 'teamMemberFormDraft';
 
+// Define TypeScript interfaces
+interface Step {
+  id: number;
+  title: string;
+  description: string;
+}
+
+interface ProgressBarProps {
+  currentStep: number;
+  totalSteps: number;
+  steps: Step[];
+}
+
+interface FormSectionProps {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  status?: 'completed' | 'current' | 'upcoming';
+}
+
+interface FormFieldProps {
+  label: string;
+  children: React.ReactNode;
+  error?: string;
+  required?: boolean;
+  helpText?: string;
+  icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+}
+
+interface RoleBadgeProps {
+  role: string;
+  size?: 'sm' | 'md';
+}
+
+interface PermissionCardProps {
+  title: string;
+  description?: string;
+  permissions: string[];
+  selectedPermissions: string[];
+  onPermissionChange: (permission: string, checked: boolean) => void;
+}
+
+interface TeamMember {
+  id?: number;
+  fullName: string;
+  email: string;
+  phone?: string;
+  role: string;
+  department: string;
+  permissions: string[];
+  sendInvite?: boolean;
+  startDate?: string;
+  notes?: string;
+  salary?: string;
+  employmentType?: string;
+}
+
+interface EnhancedTeamMemberFormProps {
+  initialData?: TeamMember | null;
+  onSuccess: (data: TeamMember) => void;
+  onCancel: () => void;
+}
+
+interface TeamMemberListProps {
+  members: TeamMember[];
+  onEdit: (member: TeamMember) => void;
+  onDelete: (member: TeamMember) => void;
+  onAdd: () => void;
+}
+
+interface ConfirmationDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: 'destructive' | 'warning' | 'info';
+  isLoading?: boolean;
+}
+
 // Enhanced Progress Bar with steps
-const ProgressBar = ({ currentStep, totalSteps, steps }) => (
+const ProgressBar = ({ currentStep, totalSteps, steps }: ProgressBarProps) => (
   <div className="space-y-4 mb-8">
     <div className="flex justify-between items-center">
       <div>
@@ -70,7 +154,7 @@ const ProgressBar = ({ currentStep, totalSteps, steps }) => (
 
     {/* Step Indicators */}
     <div className="flex justify-between">
-      {steps.map((step, index) => (
+      {steps.map((step: Step, index: number) => (
         <div key={step.id} className="flex flex-col items-center flex-1">
           <div className={`
             w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2
@@ -96,7 +180,7 @@ const ProgressBar = ({ currentStep, totalSteps, steps }) => (
   </div>
 );
 
-const FormSection = ({ title, description, children, status }) => (
+const FormSection = ({ title, description, children, status }: FormSectionProps) => (
   <Card className="shadow-lg border-0">
     <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b">
       <div className="flex items-center justify-between">
@@ -130,7 +214,7 @@ const FormSection = ({ title, description, children, status }) => (
   </Card>
 );
 
-const FormField = ({ label, children, error, required, helpText, icon: Icon }) => (
+const FormField = ({ label, children, error, required, helpText, icon: Icon }: FormFieldProps) => (
   <div className="space-y-2">
     <Label className="font-semibold text-gray-900 flex items-center gap-2">
       {Icon && <Icon className="w-4 h-4" />}
@@ -150,8 +234,12 @@ const FormField = ({ label, children, error, required, helpText, icon: Icon }) =
   </div>
 );
 
-const RoleBadge = ({ role, size = 'md' }) => {
-  const roleConfig = {
+const RoleBadge = ({ role, size = 'md' }: RoleBadgeProps) => {
+  const roleConfig: Record<string, { 
+    label: string; 
+    class: string;
+    icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+  }> = {
     admin: { 
       label: 'Administrator', 
       class: 'bg-red-100 text-red-700 border-red-200',
@@ -189,7 +277,7 @@ const RoleBadge = ({ role, size = 'md' }) => {
   );
 };
 
-const PermissionCard = ({ title, description, permissions, selectedPermissions, onPermissionChange }) => (
+const PermissionCard = ({ title, description, permissions, selectedPermissions, onPermissionChange }: PermissionCardProps) => (
   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
     <div>
       <h4 className="font-semibold text-gray-900 capitalize">{title}</h4>
@@ -198,12 +286,12 @@ const PermissionCard = ({ title, description, permissions, selectedPermissions, 
       )}
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      {permissions.map(permission => (
+      {permissions.map((permission: string) => (
         <div key={permission} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-blue-300 transition-colors">
           <Checkbox 
             id={permission} 
             checked={selectedPermissions.includes(permission)}
-            onCheckedChange={(checked) => onPermissionChange(permission, checked)}
+            onCheckedChange={(checked: boolean) => onPermissionChange(permission, checked)}
           />
           <Label htmlFor={permission} className="flex-1 text-sm cursor-pointer">
             <div className="font-medium capitalize">{permission.split(':')[1] || permission.split(':')[0]}</div>
@@ -215,9 +303,9 @@ const PermissionCard = ({ title, description, permissions, selectedPermissions, 
   </div>
 );
 
-export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel }) {
+export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel }: EnhancedTeamMemberFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TeamMember>({
     fullName: '',
     email: '',
     phone: '',
@@ -228,14 +316,15 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
     startDate: '',
     notes: '',
     salary: '',
-    employmentType: 'full-time'
+    employmentType: 'full-time',
+    ...initialData
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const steps = [
+  const steps: Step[] = [
     { id: 1, title: 'Basic Info', description: 'Add personal and contact information' },
     { id: 2, title: 'Role & Access', description: 'Set permissions and access levels' },
     { id: 3, title: 'Review & Send', description: 'Confirm details and send invitation' }
@@ -280,7 +369,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validateStep = (step: number) => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     
     if (step === 1) {
       if (!formData.fullName?.trim()) newErrors.fullName = "Full name is required";
@@ -331,7 +420,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
     }
   };
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (field: keyof TeamMember, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
     
@@ -340,7 +429,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
     }
   };
 
-  const handlePermissionChange = (permission, checked) => {
+  const handlePermissionChange = (permission: string, checked: boolean) => {
     handleFieldChange('permissions', 
       checked 
         ? [...formData.permissions, permission]
@@ -363,7 +452,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
     { value: 'general', label: 'General', icon: Building }
   ];
 
-  const allPermissions = {
+  const allPermissions: Record<string, { title: string; description: string; permissions: string[] }> = {
     inventory: {
       title: 'Inventory Management',
       description: 'Manage products, stock levels, and inventory',
@@ -387,7 +476,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
   };
 
   const getRolePermissions = (role: string) => {
-    const rolePermissions = {
+    const rolePermissions: Record<string, string[]> = {
       admin: Object.values(allPermissions).flatMap(group => group.permissions),
       manager: ['view:inventory', 'edit:inventory', 'view:sales', 'edit:sales', 'view:billing', 'view:reports'],
       editor: ['view:inventory', 'edit:inventory', 'view:sales'],
@@ -457,7 +546,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
               <Input 
                 type="tel"
                 placeholder="e.g., +1 (555) 123-4567" 
-                value={formData.phone}
+                value={formData.phone || ''}
                 onChange={(e) => handleFieldChange('phone', e.target.value)}
                 className="text-lg py-3"
               />
@@ -501,7 +590,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
                 <FormField label="Start Date" helpText="Employment start date">
                   <Input 
                     type="date"
-                    value={formData.startDate}
+                    value={formData.startDate || ''}
                     onChange={(e) => handleFieldChange('startDate', e.target.value)}
                     className="py-3"
                   />
@@ -526,7 +615,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
                     <Input 
                       type="number"
                       placeholder="e.g., 75000"
-                      value={formData.salary}
+                      value={formData.salary || ''}
                       onChange={(e) => handleFieldChange('salary', e.target.value)}
                       className="pl-8 py-3"
                     />
@@ -536,7 +625,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
                 <FormField label="Notes" helpText="Additional information">
                   <Textarea 
                     placeholder="Any additional notes or information..."
-                    value={formData.notes}
+                    value={formData.notes || ''}
                     onChange={(e) => handleFieldChange('notes', e.target.value)}
                     rows={3}
                   />
@@ -554,7 +643,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
           status={getStepStatus(2)}
         >
           <div className="space-y-8">
-            <FormField label="Team Role" error={errors.role}>
+            <FormField label="Team Role" required error={errors.role}>
               <RadioGroup 
                 value={formData.role} 
                 onValueChange={(val) => {
@@ -708,7 +797,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
                       <Checkbox 
                         id="sendInvite"
                         checked={formData.sendInvite}
-                        onCheckedChange={(checked) => handleFieldChange('sendInvite', checked)}
+                        onCheckedChange={(checked: boolean) => handleFieldChange('sendInvite', checked)}
                       />
                       <Label htmlFor="sendInvite" className="flex-1">
                         <div className="font-medium">Send invitation email</div>
@@ -815,7 +904,7 @@ export function EnhancedTeamMemberForm({ initialData = null, onSuccess, onCancel
 }
 
 // Enhanced Team Member List with improved UX
-export const TeamMemberList = ({ members, onEdit, onDelete, onAdd }) => {
+export const TeamMemberList = ({ members, onEdit, onDelete, onAdd }: TeamMemberListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterDepartment, setFilterDepartment] = useState('all');
@@ -827,7 +916,7 @@ export const TeamMemberList = ({ members, onEdit, onDelete, onAdd }) => {
     const matchesRole = filterRole === 'all' || member.role === filterRole;
     const matchesDepartment = filterDepartment === 'all' || member.department === filterDepartment;
     return matchesSearch && matchesRole && matchesDepartment;
-  }).sort((a, b) => {
+  }).sort((a: TeamMember, b: TeamMember) => {
     switch (sortBy) {
       case 'name': return a.fullName.localeCompare(b.fullName);
       case 'role': return a.role.localeCompare(b.role);
@@ -938,7 +1027,7 @@ export const TeamMemberList = ({ members, onEdit, onDelete, onAdd }) => {
 
         <CardContent className="p-0">
           <div className="divide-y">
-            {filteredMembers.map((member) => (
+            {filteredMembers.map((member: TeamMember) => (
               <div key={member.id} className="p-6 hover:bg-gray-50 transition-colors group">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -1024,10 +1113,14 @@ export const ConfirmationDialog = ({
   cancelText = "Cancel",
   variant = "destructive",
   isLoading = false
-}) => {
+}: ConfirmationDialogProps) => {
   if (!isOpen) return null;
 
-  const variantConfig = {
+  const variantConfig: Record<string, {
+    icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+    iconBg: string;
+    button: string;
+  }> = {
     destructive: {
       icon: AlertCircle,
       iconBg: 'bg-red-100 text-red-600',
@@ -1091,7 +1184,7 @@ export const ConfirmationDialog = ({
 
 // Usage example with enhanced state management
 export function TeamManagementDashboard() {
-  const [members, setMembers] = useState([
+  const [members, setMembers] = useState<TeamMember[]>([
     {
       id: 1,
       fullName: 'Sarah Johnson',
@@ -1100,7 +1193,8 @@ export function TeamManagementDashboard() {
       department: 'engineering',
       phone: '+1 (555) 123-4567',
       startDate: '2023-01-15',
-      employmentType: 'full-time'
+      employmentType: 'full-time',
+      permissions: []
     },
     {
       id: 2,
@@ -1110,7 +1204,8 @@ export function TeamManagementDashboard() {
       department: 'sales',
       phone: '+1 (555) 987-6543',
       startDate: '2023-03-20',
-      employmentType: 'full-time'
+      employmentType: 'full-time',
+      permissions: []
     },
     {
       id: 3,
@@ -1120,17 +1215,18 @@ export function TeamManagementDashboard() {
       department: 'marketing',
       phone: '+1 (555) 456-7890',
       startDate: '2023-06-10',
-      employmentType: 'full-time'
+      employmentType: 'full-time',
+      permissions: []
     }
   ]);
 
   const [showForm, setShowForm] = useState(false);
-  const [editingMember, setEditingMember] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<TeamMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSaveMember = (memberData) => {
-    if (editingMember) {
+  const handleSaveMember = (memberData: TeamMember) => {
+    if (editingMember && editingMember.id) {
       setMembers(members.map(m => m.id === editingMember.id 
         ? { ...m, ...memberData }
         : m
@@ -1142,16 +1238,18 @@ export function TeamManagementDashboard() {
     setEditingMember(null);
   };
 
-  const handleEdit = (member) => {
+  const handleEdit = (member: TeamMember) => {
     setEditingMember(member);
     setShowForm(true);
   };
 
-  const handleDelete = (member) => {
+  const handleDelete = (member: TeamMember) => {
     setDeleteConfirm(member);
   };
 
   const confirmDelete = async () => {
+    if (!deleteConfirm?.id) return;
+    
     setIsDeleting(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));

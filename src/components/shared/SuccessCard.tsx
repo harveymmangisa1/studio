@@ -10,24 +10,25 @@ interface SuccessCardProps {
   onButtonClick: () => void;
 }
 
-export const SuccessCard: React.FC<SuccessCardProps> = ({ 
-  title, 
-  description, 
-  buttonText, 
-  onButtonClick 
+export const SuccessCard: React.FC<SuccessCardProps> = ({
+  title,
+  description,
+  buttonText,
+  onButtonClick
 }) => (
   <Card className="max-w-md mx-auto">
     <CardContent className="text-center py-12">
       <div className="mb-4 flex justify-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-          <CheckCircle className="w-10 h-10 text-green-500" />
+        <div className="w-16 h-16 bg-corporate-blue/10 rounded-full flex items-center justify-center">
+          <CheckCircle className="w-10 h-10 text-corporate-blue" />
         </div>
       </div>
       <h3 className="text-2xl font-bold mb-2">{title}</h3>
-      <p className="text-gray-600 mb-6">{description}</p>
+      <p className="text-gray-700 mb-6">{description}</p>
       <Button onClick={onButtonClick} className="w-full">
         {buttonText}
       </Button>
     </CardContent>
   </Card>
 );
+
