@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,9 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { 
   Package, CalendarIcon, Save, CheckCircle, AlertCircle, 
   DollarSign, Warehouse, ClipboardList, Check,
-  ShoppingCart, Pill, Utensils, Store, Briefcase, Wrench,
-  Truck, Scale, FileText, Barcode, Thermometer, Clock,
-  Shield, Users, Zap, Cpu, TestTube
+  ShoppingCart, Pill, Utensils, Store, Briefcase, Wrench
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -27,17 +24,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 const STORAGE_KEY = 'productFormDraft';
 
-// Enhanced industry configurations with more comprehensive fields
+// Compact industry configurations
 const INDUSTRY_CONFIGS = {
   retail: {
     name: 'Retail',
     icon: ShoppingCart,
     fields: {
       warrantyPeriod: { 
-        label: 'Warranty Period (Months)', 
+        label: 'Warranty (Months)', 
         type: 'number', 
         default: 12,
-        helpText: 'Manufacturer warranty duration in months',
+        helpText: 'Manufacturer warranty',
         min: 0,
         max: 120
       },
@@ -45,37 +42,18 @@ const INDUSTRY_CONFIGS = {
         label: 'Return Policy (Days)', 
         type: 'number', 
         default: 30,
-        helpText: 'Number of days for customer returns',
+        helpText: 'Days for customer returns',
         min: 0,
         max: 365
       },
       serialNumber: { 
-        label: 'Serial Number Tracking', 
+        label: 'Serial Tracking', 
         type: 'boolean', 
         default: false,
-        helpText: 'Track individual item serial numbers'
-      },
-      supplierCode: {
-        label: 'Supplier Code',
-        type: 'text',
-        helpText: 'Internal supplier identification code',
-        required: true
-      },
-      shippingWeight: {
-        label: 'Shipping Weight (kg)',
-        type: 'number',
-        helpText: 'Product weight for shipping calculations',
-        min: 0,
-        max: 1000
-      },
-      dimensions: {
-        label: 'Dimensions (L×W×H cm)',
-        type: 'text',
-        helpText: 'Product dimensions in centimeters',
-        placeholder: '10×5×2'
+        helpText: 'Track serial numbers'
       }
     },
-    requiredFields: ['name', 'category', 'sku', 'cost', 'price', 'supplierCode'],
+    requiredFields: ['name', 'category', 'sku', 'cost', 'price'],
     defaultCategory: 'General Merchandise'
   },
   
@@ -87,52 +65,22 @@ const INDUSTRY_CONFIGS = {
         label: 'Expiry Date', 
         type: 'date', 
         required: true,
-        helpText: 'Mandatory expiry date for medications'
+        helpText: 'Mandatory expiry date'
       },
       batchNumber: { 
-        label: 'Batch/Lot Number', 
+        label: 'Batch Number', 
         type: 'text', 
         required: true,
-        helpText: 'Manufacturer batch identification number'
+        helpText: 'Manufacturer batch ID'
       },
       prescriptionRequired: { 
-        label: 'Prescription Required', 
+        label: 'Rx Required', 
         type: 'boolean', 
         default: false,
-        helpText: 'Whether this medication requires a prescription'
-      },
-      temperatureControl: { 
-        label: 'Cold Chain Storage', 
-        type: 'boolean', 
-        default: false,
-        helpText: 'Requires refrigerated storage (2-8°C)'
-      },
-      supplierLicense: { 
-        label: 'Supplier License Number', 
-        type: 'text', 
-        required: true,
-        helpText: 'Valid pharmaceutical supplier license number'
-      },
-      activeIngredients: {
-        label: 'Active Ingredients',
-        type: 'textarea',
-        helpText: 'List of active pharmaceutical ingredients',
-        required: true
-      },
-      dosageForm: {
-        label: 'Dosage Form',
-        type: 'select',
-        options: ['Tablet', 'Capsule', 'Liquid', 'Injection', 'Cream', 'Ointment', 'Inhaler'],
-        required: true,
-        helpText: 'Pharmaceutical dosage form'
-      },
-      storageConditions: {
-        label: 'Storage Conditions',
-        type: 'textarea',
-        helpText: 'Specific storage requirements and conditions'
+        helpText: 'Requires prescription'
       }
     },
-    requiredFields: ['name', 'category', 'sku', 'cost', 'price', 'expiryDate', 'batchNumber', 'supplierLicense', 'activeIngredients', 'dosageForm'],
+    requiredFields: ['name', 'category', 'sku', 'cost', 'price', 'expiryDate', 'batchNumber'],
     defaultCategory: 'Medications'
   },
   
@@ -144,43 +92,20 @@ const INDUSTRY_CONFIGS = {
         label: 'Best Before Date', 
         type: 'date', 
         required: true,
-        helpText: 'Food safety expiry date'
+        helpText: 'Food safety expiry'
       },
       allergenInfo: { 
-        label: 'Allergen Information', 
+        label: 'Allergen Info', 
         type: 'textarea', 
-        helpText: 'List of potential allergens (gluten, nuts, dairy, etc.)',
+        helpText: 'List of potential allergens',
         required: true
       },
       storageTemp: { 
-        label: 'Storage Temperature', 
+        label: 'Storage Temp', 
         type: 'select', 
-        options: ['Ambient (15-25°C)', 'Refrigerated (2-8°C)', 'Frozen (-18°C or below)'],
-        default: 'Ambient (15-25°C)',
-        helpText: 'Required storage temperature range'
-      },
-      preparationTime: { 
-        label: 'Prep Time (Minutes)', 
-        type: 'number', 
-        default: 0,
-        helpText: 'Average preparation time in minutes',
-        min: 0,
-        max: 480
-      },
-      nutritionInfo: {
-        label: 'Nutritional Information',
-        type: 'textarea',
-        helpText: 'Calories, protein, carbs, fat per serving'
-      },
-      cookingInstructions: {
-        label: 'Cooking Instructions',
-        type: 'textarea',
-        helpText: 'Preparation and cooking guidelines'
-      },
-      portionSize: {
-        label: 'Portion Size',
-        type: 'text',
-        helpText: 'Serving size description (e.g., 200g, 1 plate)'
+        options: ['Ambient', 'Refrigerated', 'Frozen'],
+        default: 'Ambient',
+        helpText: 'Storage temperature'
       }
     },
     requiredFields: ['name', 'category', 'cost', 'price', 'expiryDate', 'allergenInfo'],
@@ -188,48 +113,29 @@ const INDUSTRY_CONFIGS = {
   },
   
   wholesale: {
-    name: 'Wholesale Distribution',
+    name: 'Wholesale',
     icon: Store,
     fields: {
       minimumOrder: { 
-        label: 'Minimum Order Quantity', 
+        label: 'Min Order Qty', 
         type: 'number', 
         default: 1,
-        helpText: 'Minimum units per wholesale order',
+        helpText: 'Minimum units per order',
         min: 1
       },
       bulkPricing: { 
-        label: 'Bulk Pricing Tiers', 
+        label: 'Bulk Pricing', 
         type: 'boolean', 
         default: true,
-        helpText: 'Enable quantity-based pricing tiers'
+        helpText: 'Quantity-based pricing'
       },
       leadTime: { 
         label: 'Lead Time (Days)', 
         type: 'number', 
         default: 7,
-        helpText: 'Average delivery time in business days',
+        helpText: 'Delivery time',
         min: 0,
         max: 90
-      },
-      palletQuantity: {
-        label: 'Units per Pallet',
-        type: 'number',
-        helpText: 'Number of units that fit on a standard pallet',
-        min: 1
-      },
-      caseQuantity: {
-        label: 'Units per Case',
-        type: 'number',
-        helpText: 'Number of units per shipping case',
-        min: 1
-      },
-      supplierTerms: {
-        label: 'Supplier Payment Terms',
-        type: 'select',
-        options: ['Net 30', 'Net 60', 'Net 90', 'COD', '50% Advance'],
-        default: 'Net 30',
-        helpText: 'Payment terms with supplier'
       }
     },
     requiredFields: ['name', 'category', 'sku', 'cost', 'price', 'minimumOrder'],
@@ -237,48 +143,30 @@ const INDUSTRY_CONFIGS = {
   },
   
   services: {
-    name: 'Professional Services',
+    name: 'Services',
     icon: Briefcase,
     fields: {
       serviceDuration: { 
-        label: 'Service Duration (Hours)', 
+        label: 'Duration (Hours)', 
         type: 'number', 
         default: 1,
-        helpText: 'Typical service time required in hours',
+        helpText: 'Service time required',
         min: 0.5,
         max: 100,
         step: 0.5
       },
       qualifiedStaff: { 
-        label: 'Qualified Staff Required', 
+        label: 'Qualified Staff', 
         type: 'boolean', 
         default: false,
-        helpText: 'Service requires certified professionals'
-      },
-      recurringBilling: { 
-        label: 'Recurring Billing', 
-        type: 'boolean', 
-        default: false,
-        helpText: 'Service is billed on recurring basis'
+        helpText: 'Needs certified professionals'
       },
       serviceType: {
         label: 'Service Type',
         type: 'select',
         options: ['Consultation', 'Implementation', 'Support', 'Training', 'Maintenance'],
         required: true,
-        helpText: 'Type of professional service'
-      },
-      certificationRequired: {
-        label: 'Certification Required',
-        type: 'boolean',
-        default: false,
-        helpText: 'Service provider requires specific certifications'
-      },
-      serviceLevelAgreement: {
-        label: 'SLA Included',
-        type: 'boolean',
-        default: false,
-        helpText: 'Includes Service Level Agreement'
+        helpText: 'Type of service'
       }
     },
     requiredFields: ['name', 'category', 'price', 'serviceType'],
@@ -289,118 +177,28 @@ const INDUSTRY_CONFIGS = {
     name: 'Manufacturing',
     icon: Wrench,
     fields: {
-      rawMaterials: { 
-        label: 'Raw Material Tracking', 
-        type: 'boolean', 
-        default: true,
-        helpText: 'Track raw material inventory for production'
-      },
       productionTime: { 
         label: 'Production Time (Days)', 
         type: 'number', 
         default: 1,
-        helpText: 'Time required to manufacture in days',
+        helpText: 'Time to manufacture',
         min: 0,
         max: 365
       },
       qualityCheck: { 
-        label: 'Quality Control Required', 
+        label: 'Quality Control', 
         type: 'boolean', 
         default: true,
-        helpText: 'Item requires quality inspection before shipping'
-      },
-      bomRequired: {
-        label: 'Bill of Materials',
-        type: 'boolean',
-        default: true,
-        helpText: 'Product requires Bill of Materials'
+        helpText: 'Requires inspection'
       },
       complianceStandards: {
-        label: 'Compliance Standards',
+        label: 'Compliance',
         type: 'textarea',
-        helpText: 'Industry compliance standards (ISO, ASTM, etc.)'
-      },
-      equipmentRequirements: {
-        label: 'Equipment Requirements',
-        type: 'textarea',
-        helpText: 'Specialized equipment needed for production'
+        helpText: 'Industry standards'
       }
     },
     requiredFields: ['name', 'category', 'sku', 'cost', 'price'],
     defaultCategory: 'Manufactured Goods'
-  },
-
-  logistics: {
-    name: 'Logistics & Shipping',
-    icon: Truck,
-    fields: {
-      hazardousMaterial: {
-        label: 'Hazardous Material',
-        type: 'boolean',
-        default: false,
-        helpText: 'Contains hazardous materials requiring special handling'
-      },
-      storageRequirements: {
-        label: 'Storage Requirements',
-        type: 'textarea',
-        helpText: 'Special storage conditions and requirements'
-      },
-      handlingInstructions: {
-        label: 'Handling Instructions',
-        type: 'textarea',
-        helpText: 'Special handling and safety instructions'
-      },
-      customsInfo: {
-        label: 'Customs Information',
-        type: 'textarea',
-        helpText: 'Required customs documentation and codes'
-      },
-      insuranceRequired: {
-        label: 'Insurance Required',
-        type: 'boolean',
-        default: false,
-        helpText: 'Requires additional insurance coverage'
-      }
-    },
-    requiredFields: ['name', 'category', 'cost', 'price'],
-    defaultCategory: 'Logistics Services'
-  },
-
-  electronics: {
-    name: 'Electronics',
-    icon: Cpu,
-    fields: {
-      warrantyPeriod: {
-        label: 'Warranty Period (Months)',
-        type: 'number',
-        default: 24,
-        helpText: 'Manufacturer warranty duration',
-        min: 0,
-        max: 120
-      },
-      voltageRequirements: {
-        label: 'Voltage Requirements',
-        type: 'text',
-        helpText: 'Input voltage range (e.g., 100-240V)'
-      },
-      certification: {
-        label: 'Safety Certification',
-        type: 'text',
-        helpText: 'Safety certifications (CE, UL, FCC, etc.)'
-      },
-      technicalSpecs: {
-        label: 'Technical Specifications',
-        type: 'textarea',
-        helpText: 'Detailed technical specifications and features'
-      },
-      compatibility: {
-        label: 'Compatibility Information',
-        type: 'textarea',
-        helpText: 'Compatible devices and systems'
-      }
-    },
-    requiredFields: ['name', 'category', 'sku', 'cost', 'price'],
-    defaultCategory: 'Electronic Goods'
   }
 } as const;
 
@@ -418,7 +216,7 @@ type IndustryFieldConfig = {
   placeholder?: string;
 };
 
-// Enhanced validation schema with better industry-specific validation
+// Validation schema
 const createProductSchema = (industry: string) => {
   const industryConfig = INDUSTRY_CONFIGS[industry as IndustryType];
   
@@ -426,89 +224,58 @@ const createProductSchema = (industry: string) => {
     id: z.string().optional(),
     name: z.string()
       .min(1, 'Product name is required')
-      .min(2, 'Product name must be at least 2 characters')
-      .max(200, 'Product name must be less than 200 characters'),
-    description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
-    category: z.string().min(1, 'Category is required').max(100, 'Category must be less than 100 characters'),
+      .min(2, 'Product name must be at least 2 characters'),
+    category: z.string().min(1, 'Category is required'),
     sku: z.string()
       .min(1, 'SKU is required')
-      .max(50, 'SKU must be less than 50 characters')
-      .regex(/^[A-Za-z0-9-_.]+$/, 'SKU can only contain letters, numbers, hyphens, underscores, and periods'),
+      .regex(/^[A-Za-z0-9-]+$/, 'SKU can only contain letters, numbers, and hyphens'),
     cost: z.coerce.number()
       .min(0, 'Cost price must be non-negative')
-      .max(10000000, 'Cost price cannot exceed $10,000,000')
-      .refine(val => !isNaN(val), 'Cost must be a valid number'),
+      .max(1000000, 'Cost price seems too high'),
     price: z.coerce.number()
-      .min(0, 'Selling price must be non-negative')
-      .max(10000000, 'Selling price cannot exceed $10,000,000')
-      .refine(val => !isNaN(val), 'Price must be a valid number'),
+      .min(0, 'Selling price must be non-negative'),
     quantity: z.coerce.number()
       .int('Quantity must be a whole number')
       .min(0, 'Stock quantity must be non-negative')
-      .max(10000000, 'Quantity cannot exceed 10,000,000'),
+      .max(1000000, 'Quantity seems too high'),
     minStock: z.coerce.number()
       .int('Minimum stock must be a whole number')
-      .min(0, 'Minimum stock must be non-negative')
-      .max(100000, 'Minimum stock cannot exceed 100,000')
+      .min(0, 'Min. stock must be non-negative')
+      .max(10000, 'Min stock seems too high')
       .optional(),
     industry: z.string().min(1, 'Industry is required'),
-    industryFields: z.record(z.any()).optional(),
-    barcode: z.string().max(100, 'Barcode must be less than 100 characters').optional(),
-    supplier: z.string().max(200, 'Supplier name must be less than 200 characters').optional(),
   });
 
-  // Add industry-specific validations
-  if (industryConfig) {
-    const industryFieldsSchema: Record<string, any> = {};
-    
+  const industryFieldsSchema: Record<string, z.ZodType<any, any>> = {};
+  if (industryConfig?.fields) {
     Object.entries(industryConfig.fields).forEach(([field, config]) => {
-      const fieldConfig = config as IndustryFieldConfig;
-      
-      let fieldSchema: z.ZodTypeAny;
-
-      switch (fieldConfig.type) {
-        case 'number':
-          fieldSchema = z.coerce.number()
-            .min(fieldConfig.min ?? 0, `${fieldConfig.label} must be at least ${fieldConfig.min ?? 0}`)
-            .max(fieldConfig.max ?? 1000000, `${fieldConfig.label} cannot exceed ${fieldConfig.max ?? 1000000}`);
-          break;
-        case 'text':
-        case 'textarea':
-          fieldSchema = z.string();
-          break;
-        case 'date':
-          fieldSchema = z.string();
-          break;
-        case 'boolean':
-          fieldSchema = z.boolean();
-          break;
-        case 'select':
-          fieldSchema = z.string();
-          break;
-        default:
-          fieldSchema = z.any();
+      let fieldSchema: z.ZodType<any, any> = z.any(); // Default to any
+      if (config.type === 'text' || config.type === 'textarea') {
+        fieldSchema = z.string();
+      } else if (config.type === 'number') {
+        fieldSchema = z.coerce.number();
+      } else if (config.type === 'boolean') {
+        fieldSchema = z.boolean();
+      } else if (config.type === 'date') {
+        fieldSchema = z.string(); // Dates are handled as ISO strings
+      } else if (config.type === 'select') {
+        fieldSchema = z.string();
       }
 
-      if (fieldConfig.required) {
+      if (config.required && config.type !== 'boolean') {
         if (fieldSchema instanceof z.ZodString) {
-          fieldSchema = fieldSchema.min(1, `${fieldConfig.label} is required`);
+          fieldSchema = fieldSchema.min(1, `${config.label} is required`);
         }
-      } else {
-        fieldSchema = fieldSchema.optional();
       }
-      
       industryFieldsSchema[field] = fieldSchema;
     });
-
-    if (Object.keys(industryFieldsSchema).length > 0) {
-      baseSchema = baseSchema.extend({
-        industryFields: z.object(industryFieldsSchema)
-      });
-    }
   }
+  
+  let extendedSchema = baseSchema.extend({
+    industryFields: z.object(industryFieldsSchema)
+  });
 
-  // Apply refine at the end
-  return baseSchema.refine((data) => data.price >= data.cost, {
+  return extendedSchema.refine((data) => data.price >= data.cost, {
     message: "Selling price should be greater than or equal to cost price",
     path: ["price"],
   });
@@ -561,23 +328,23 @@ interface PriceComparisonProps {
 
 const PriceComparison = ({ cost, price }: PriceComparisonProps) => {
   const profit = price - cost;
-  const margin = cost > 0 ? ((profit / cost) * 100) : price > 0 ? 100 : 0;
+  const margin = cost > 0 ? ((profit / cost) * 100) : 0;
 
   return (
-    <div className="grid grid-cols-3 gap-4 text-sm bg-gray-50 p-4 rounded-lg border">
+    <div className="grid grid-cols-3 gap-2 text-xs bg-gray-50 p-3 rounded-lg">
       <div className="text-center">
         <div className="font-semibold text-gray-600">Cost</div>
-        <div className="text-red-600 font-medium">${cost.toFixed(2)}</div>
+        <div className="text-red-600">${cost.toFixed(2)}</div>
       </div>
       <div className="text-center">
         <div className="font-semibold text-gray-600">Profit</div>
-        <div className={profit >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+        <div className={profit >= 0 ? 'text-green-600' : 'text-red-600'}>
           ${profit.toFixed(2)}
         </div>
       </div>
       <div className="text-center">
         <div className="font-semibold text-gray-600">Margin</div>
-        <div className={margin >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+        <div className={margin >= 0 ? 'text-green-600' : 'text-red-600'}>
           {margin.toFixed(1)}%
         </div>
       </div>
@@ -595,41 +362,19 @@ const StockStatus = ({ quantity, minStock }: StockStatusProps) => {
                  quantity <= minStock ? 'low-stock' : 'in-stock';
   
   const statusConfig = {
-    'out-of-stock': { 
-      color: 'text-red-600', 
-      bg: 'bg-red-50', 
-      border: 'border-red-200',
-      label: 'Out of Stock',
-      icon: AlertCircle
-    },
-    'low-stock': { 
-      color: 'text-amber-600', 
-      bg: 'bg-amber-50', 
-      border: 'border-amber-200',
-      label: 'Low Stock',
-      icon: AlertCircle
-    },
-    'in-stock': { 
-      color: 'text-green-600', 
-      bg: 'bg-green-50', 
-      border: 'border-green-200',
-      label: 'In Stock',
-      icon: CheckCircle
-    }
+    'out-of-stock': { color: 'text-red-600', bg: 'bg-red-50', label: 'Out of Stock' },
+    'low-stock': { color: 'text-amber-600', bg: 'bg-amber-50', label: 'Low Stock' },
+    'in-stock': { color: 'text-green-600', bg: 'bg-green-50', label: 'In Stock' }
   };
 
   const config = statusConfig[status];
-  const StatusIcon = config.icon;
 
   return (
-    <div className={`${config.bg} ${config.color} border ${config.border} px-4 py-3 rounded-lg`}>
-      <div className="flex items-center gap-2 font-medium">
-        <StatusIcon className="w-4 h-4" />
-        {config.label} ({quantity.toLocaleString()} units)
-      </div>
+    <div className={`${config.bg} ${config.color} px-3 py-2 rounded-lg text-sm font-medium`}>
+      {config.label} ({quantity} units)
       {status === 'low-stock' && (
-        <div className="text-sm mt-1 opacity-90">
-          Below minimum stock level of {minStock.toLocaleString()}
+        <div className="text-xs mt-1">
+          Below minimum stock level of {minStock}
         </div>
       )}
     </div>
@@ -641,7 +386,6 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
   const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>(product?.industry as IndustryType || 'retail');
   const [showSuccess, setShowSuccess] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const industryConfig = INDUSTRY_CONFIGS[selectedIndustry];
   const IndustryIcon = industryConfig?.icon || Package;
@@ -653,8 +397,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
     
     if (config?.fields) {
       Object.entries(config.fields).forEach(([key, fieldConfig]) => {
-        const config = fieldConfig as IndustryFieldConfig;
-        defaultIndustryFields[key] = product?.industryFields?.[key] ?? config.default ?? '';
+        defaultIndustryFields[key] = fieldConfig.default ?? '';
       });
     }
     
@@ -665,11 +408,8 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
     resolver: zodResolver(createProductSchema(selectedIndustry)),
     defaultValues: product || {
       name: '',
-      description: '',
       category: industryConfig?.defaultCategory || '',
       sku: '',
-      barcode: '',
-      supplier: '',
       cost: 0,
       price: 0,
       quantity: 0,
@@ -745,8 +485,8 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
 
     if (fieldConfig.type === 'boolean') {
       return (
-        <div key={key} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white">
-          <div className="flex-1">
+        <div key={key} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+          <div>
             <Label className="text-sm font-medium text-gray-700">
               {fieldConfig.label}
               {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
@@ -760,7 +500,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
             onCheckedChange={(checked) => handleIndustryFieldChange(key, checked)}
           />
           {error && (
-            <div className="flex items-center gap-1 text-red-500 text-sm mt-1 col-span-2">
+            <div className="flex items-center gap-1 text-red-500 text-sm mt-1">
               <AlertCircle className="w-4 h-4" />
               {error.message}
             </div>
@@ -784,9 +524,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 variant="outline"
                 className={cn(
                   "w-full pl-3 text-left font-normal",
-                  !value && "text-muted-foreground",
-                  error && "border-red-500",
-                  value && !error && "border-green-500"
+                  !value && "text-muted-foreground"
                 )}
               >
                 {value ? (
@@ -823,7 +561,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
             value={value || ''} 
             onValueChange={(val) => handleIndustryFieldChange(key, val)}
           >
-            <SelectTrigger className={error ? 'border-red-500' : value ? 'border-green-500' : ''}>
+            <SelectTrigger>
               <SelectValue placeholder={`Select ${fieldConfig.label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>
@@ -851,9 +589,9 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
           <Textarea
             value={value || ''}
             onChange={(e) => handleIndustryFieldChange(key, e.target.value)}
-            placeholder={fieldConfig.placeholder || fieldConfig.helpText}
+            placeholder={fieldConfig.helpText}
             className={cn(
-              "min-h-[80px]",
+              "min-h-[60px]",
               error ? 'border-red-500' : value ? 'border-green-500' : ''
             )}
           />
@@ -878,7 +616,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
               (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value;
             handleIndustryFieldChange(key, newValue);
           }}
-          placeholder={fieldConfig.placeholder}
+          placeholder={fieldConfig.helpText}
           min={fieldConfig.min}
           max={fieldConfig.max}
           step={fieldConfig.step}
@@ -890,17 +628,14 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
 
   const handleSubmit = async (data: Product) => {
     try {
-      setIsSubmitting(true);
       setShowSuccess(true);
       localStorage.removeItem(STORAGE_KEY);
       setTimeout(() => {
         onSuccess(data);
-        setIsSubmitting(false);
-      }, 1500);
+      }, 2000);
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('There was an error saving the product. Please try again.');
-      setIsSubmitting(false);
     }
   };
 
@@ -908,14 +643,6 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
     const formData = form.getValues();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ formData }));
     alert('Product draft saved successfully! You can resume later.');
-  };
-
-  const handleClearDraft = () => {
-    if (confirm('Are you sure you want to clear your draft? This action cannot be undone.')) {
-      localStorage.removeItem(STORAGE_KEY);
-      form.reset();
-      setHasChanges(false);
-    }
   };
 
   if (showSuccess) {
@@ -947,14 +674,14 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="border-b border-gray-200 bg-white rounded-lg p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Package className="w-6 h-6 sm:w-8 sm:h-8" />
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Package className="w-8 h-8" />
                 {product ? 'Edit Product' : 'Add New Product'}
               </h1>
               <p className="mt-2 text-sm text-gray-500">
@@ -965,101 +692,85 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 {activeTab === 'review' && "Review all product details before saving"}
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-3 w-full md:w-auto">
               {hasChanges && (
                 <div className="flex items-center gap-2 text-amber-600 text-sm">
                   <AlertCircle className="h-4 w-4" />
-                  Unsaved changes
+                  Unsaved
                 </div>
               )}
-              <div className="flex gap-2">
-                {hasChanges && (
-                  <Button 
-                    onClick={handleClearDraft}
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                  >
-                    Clear Draft
-                  </Button>
-                )}
-                <Button 
-                  onClick={handleSaveDraft}
-                  variant="outline"
-                  type="button"
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Draft
-                </Button>
-              </div>
+              <Button 
+                onClick={handleSaveDraft}
+                variant="outline"
+                type="button"
+                className="flex-1 md:flex-initial"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save Draft
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-1">
-            <TabsList className="w-full justify-start bg-transparent">
-              <TabsTrigger value="basic" className="gap-2 flex-1 sm:flex-none">
-                <Package className="w-4 h-4" />
-                <span className="hidden sm:inline">Basic Info</span>
-              </TabsTrigger>
-              <TabsTrigger value="pricing" className="gap-2 flex-1 sm:flex-none">
-                <DollarSign className="w-4 h-4" />
-                <span className="hidden sm:inline">Pricing</span>
-              </TabsTrigger>
-              <TabsTrigger value="inventory" className="gap-2 flex-1 sm:flex-none">
-                <Warehouse className="w-4 h-4" />
-                <span className="hidden sm:inline">Inventory</span>
-              </TabsTrigger>
-              <TabsTrigger value="industry" className="gap-2 flex-1 sm:flex-none">
-                <IndustryIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">{industryConfig?.name}</span>
-              </TabsTrigger>
-              <TabsTrigger value="review" className="gap-2 flex-1 sm:flex-none">
-                <ClipboardList className="w-4 h-4" />
-                <span className="hidden sm:inline">Review</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="border-b border-gray-200 w-full justify-start bg-white rounded-lg p-1 overflow-x-auto">
+            <TabsTrigger value="basic" className="gap-2">
+              <Package className="w-4 h-4" />
+              Basic Info
+            </TabsTrigger>
+            <TabsTrigger value="pricing" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              Pricing
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="gap-2">
+              <Warehouse className="w-4 h-4" />
+              Inventory
+            </TabsTrigger>
+            <TabsTrigger value="industry" className="gap-2">
+              <IndustryIcon className="w-4 h-4" />
+              {industryConfig?.name} Settings
+            </TabsTrigger>
+            <TabsTrigger value="review" className="gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Review
+            </TabsTrigger>
+          </TabsList>
 
           {/* Basic Info Tab */}
-          <TabsContent value="basic" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Information</CardTitle>
-                <CardDescription>
-                  Enter the basic details that identify your product across all systems
-                </CardDescription>
+          <TabsContent value="basic" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
+                <CardTitle className="text-lg">Product Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField 
-                  label="Industry" 
-                  required 
-                  error={form.formState.errors.industry?.message}
-                  helpText="Select the primary industry for this product. This will determine available fields and requirements."
-                >
-                  <Select 
-                    value={form.watch('industry')} 
-                    onValueChange={(value) => form.setValue('industry', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(INDUSTRY_CONFIGS).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>
-                          <div className="flex items-center gap-2">
-                            <config.icon className="w-4 h-4" />
-                            {config.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
-
+              <CardContent className="pt-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField 
+                    label="Industry" 
+                    required 
+                    error={form.formState.errors.industry?.message}
+                    helpText="Select the primary industry for this product"
+                  >
+                    <Select 
+                      value={form.watch('industry')} 
+                      onValueChange={(value) => form.setValue('industry', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(INDUSTRY_CONFIGS).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            <div className="flex items-center gap-2">
+                              <config.icon className="w-4 h-4" />
+                              {config.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+
                   <FormField 
                     label="Product Category" 
                     required 
@@ -1073,17 +784,6 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                       className={form.formState.errors.category ? 'border-red-500' : form.watch('category') ? 'border-green-500' : ''}
                     />
                   </FormField>
-
-                  <FormField 
-                    label="Supplier"
-                    error={form.formState.errors.supplier?.message}
-                    helpText="Primary supplier or manufacturer"
-                  >
-                    <Input
-                      placeholder="Supplier name"
-                      {...form.register('supplier')}
-                    />
-                  </FormField>
                 </div>
 
                 <FormField 
@@ -1094,83 +794,50 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                   isValid={form.watch('name')?.length >= 2}
                 >
                   <Input
-                    placeholder="e.g., Logitech MX Master 3S Wireless Mouse"
+                    placeholder="e.g., Logitech MX Master 3S"
                     {...form.register('name')}
                     className={form.formState.errors.name ? 'border-red-500' : form.watch('name')?.length >= 2 ? 'border-green-500' : ''}
                   />
                 </FormField>
 
                 <FormField 
-                  label="Product Description"
-                  error={form.formState.errors.description?.message}
-                  helpText="Detailed description of the product features and benefits"
+                  label="SKU (Stock Keeping Unit)" 
+                  required 
+                  error={form.formState.errors.sku?.message}
+                  helpText="Unique identifier for internal tracking"
+                  isValid={!!form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku'))}
                 >
-                  <Textarea
-                    placeholder="Describe your product in detail..."
-                    {...form.register('description')}
-                    className="min-h-[100px]"
+                  <Input
+                    placeholder="LOG-MXM3S-BLK"
+                    {...form.register('sku')}
+                    className={form.formState.errors.sku ? 'border-red-500' : form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku')) ? 'border-green-500' : ''}
                   />
                 </FormField>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField 
-                    label="SKU (Stock Keeping Unit)" 
-                    required 
-                    error={form.formState.errors.sku?.message}
-                    helpText="Unique identifier for internal tracking"
-                    isValid={!!form.watch('sku') && /^[A-Za-z0-9-_.]+$/.test(form.watch('sku'))}
-                  >
-                    <Input
-                      placeholder="LOG-MXM3S-BLK"
-                      {...form.register('sku')}
-                      className={form.formState.errors.sku ? 'border-red-500' : form.watch('sku') && /^[A-Za-z0-9-_.]+$/.test(form.watch('sku')) ? 'border-green-500' : ''}
-                    />
-                  </FormField>
-
-                  <FormField 
-                    label="Barcode (UPC/EAN)"
-                    error={form.formState.errors.barcode?.message}
-                    helpText="Scannable barcode for point of sale"
-                  >
-                    <Input
-                      placeholder="123456789012"
-                      {...form.register('barcode')}
-                    />
-                  </FormField>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Pricing Tab */}
-          <TabsContent value="pricing" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Pricing</CardTitle>
-                <CardDescription>
-                  Set your pricing strategy and monitor profit margins
-                </CardDescription>
+          <TabsContent value="pricing" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
+                <CardTitle className="text-lg">Product Pricing</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CardContent className="pt-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField 
                     label="Cost Price" 
                     required 
                     error={form.formState.errors.cost?.message}
-                    helpText="Your cost to acquire or produce one unit"
-                    isValid={cost >= 0 && cost < 10000000}
+                    helpText="Your cost to acquire one unit"
+                    isValid={cost >= 0 && cost < 1000000}
                   >
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-                      <Input
-                        type="number"
-                        placeholder="15.00"
-                        {...form.register('cost')}
-                        className={`pl-8 ${form.formState.errors.cost ? 'border-red-500' : cost >= 0 ? 'border-green-500' : ''}`}
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
+                    <Input
+                      type="number"
+                      placeholder="15.00"
+                      {...form.register('cost')}
+                      className={form.formState.errors.cost ? 'border-red-500' : cost >= 0 ? 'border-green-500' : ''}
+                    />
                   </FormField>
 
                   <FormField 
@@ -1180,17 +847,12 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                     helpText="The price customers will pay"
                     isValid={price >= cost && price >= 0}
                   >
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-                      <Input
-                        type="number"
-                        placeholder="29.99"
-                        {...form.register('price')}
-                        className={`pl-8 ${form.formState.errors.price ? 'border-red-500' : price >= cost && price >= 0 ? 'border-green-500' : ''}`}
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
+                    <Input
+                      type="number"
+                      placeholder="29.99"
+                      {...form.register('price')}
+                      className={form.formState.errors.price ? 'border-red-500' : price >= cost && price >= 0 ? 'border-green-500' : ''}
+                    />
                   </FormField>
                 </div>
 
@@ -1203,19 +865,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                       <span className="font-medium">Warning: Selling below cost</span>
                     </div>
                     <p className="text-amber-700 text-sm mt-1">
-                      You are selling this product for ${(cost - price).toFixed(2)} less than it costs. This will result in a loss on every sale.
-                    </p>
-                  </div>
-                )}
-
-                {price === cost && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-blue-800">
-                      <AlertCircle className="w-4 h-4" />
-                      <span className="font-medium">Breaking Even</span>
-                    </div>
-                    <p className="text-blue-700 text-sm mt-1">
-                      You are selling this product at cost price. Consider adding a margin to generate profit.
+                      You are selling this product for less than it costs. This will result in a loss.
                     </p>
                   </div>
                 )}
@@ -1224,29 +874,25 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
           </TabsContent>
 
           {/* Inventory Tab */}
-          <TabsContent value="inventory" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Stock Management</CardTitle>
-                <CardDescription>
-                  Configure inventory levels and stock alerts
-                </CardDescription>
+          <TabsContent value="inventory" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
+                <CardTitle className="text-lg">Stock Management</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CardContent className="pt-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField 
-                    label="Current Stock Quantity" 
+                    label="Stock Quantity" 
                     required 
                     error={form.formState.errors.quantity?.message}
                     helpText="Current available stock on hand"
-                    isValid={quantity >= 0 && quantity < 10000000}
+                    isValid={quantity >= 0 && quantity < 1000000}
                   >
                     <Input
                       type="number"
                       placeholder="150"
                       {...form.register('quantity')}
                       className={form.formState.errors.quantity ? 'border-red-500' : quantity >= 0 ? 'border-green-500' : ''}
-                      min="0"
                     />
                   </FormField>
 
@@ -1254,7 +900,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                     label="Minimum Stock Level" 
                     error={form.formState.errors.minStock?.message}
                     helpText="Get an alert when stock drops to this level"
-                    isValid={minStock >= 0 && minStock < 100000}
+                    isValid={minStock >= 0 && minStock < 10000}
                   >
                     <Input
                       type="number"
@@ -1262,7 +908,6 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                       {...form.register('minStock')}
                       value={minStock || ''}
                       className={form.formState.errors.minStock ? 'border-red-500' : minStock >= 0 ? 'border-green-500' : ''}
-                      min="0"
                     />
                   </FormField>
                 </div>
@@ -1276,7 +921,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                       <span className="font-medium">Low Stock Alert</span>
                     </div>
                     <p className="text-amber-700 text-sm mt-1">
-                      Stock level is at or below minimum. Consider reordering soon to avoid stockouts.
+                      Stock level is at or below minimum. Consider reordering soon.
                     </p>
                   </div>
                 )}
@@ -1288,19 +933,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                       <span className="font-medium">Out of Stock</span>
                     </div>
                     <p className="text-red-700 text-sm mt-1">
-                      This product is currently out of stock. Update quantity when new stock arrives.
-                    </p>
-                  </div>
-                )}
-
-                {quantity > minStock * 2 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-green-800">
-                      <CheckCircle className="w-4 h-4" />
-                      <span className="font-medium">Healthy Stock Level</span>
-                    </div>
-                    <p className="text-green-700 text-sm mt-1">
-                      Stock level is well above minimum. No immediate reordering needed.
+                      This product is currently out of stock. Update quantity when available.
                     </p>
                   </div>
                 )}
@@ -1309,46 +942,40 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
           </TabsContent>
 
           {/* Industry-Specific Tab */}
-          <TabsContent value="industry" className="space-y-6">
-            <Card>
-              <CardHeader>
+          <TabsContent value="industry" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <IndustryIcon className="w-6 h-6 text-gray-700" />
                   <div>
-                    <CardTitle>{industryConfig?.name} Settings</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg">{industryConfig?.name} Settings</CardTitle>
+                    <p className="text-sm text-gray-500 mt-1">
                       Configure settings specific to {industryConfig?.name.toLowerCase()} products
-                    </CardDescription>
+                    </p>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {industryConfig.fields && 
-                    Object.entries(industryConfig.fields).map(([key, fieldConfig]) => 
-                      renderIndustryField(key, fieldConfig as IndustryFieldConfig)
-                    )
-                  }
-                </div>
+              <CardContent className="pt-6 space-y-4">
+                {industryConfig.fields && 
+                  Object.entries(industryConfig.fields).map(([key, fieldConfig]) => 
+                    renderIndustryField(key, fieldConfig as IndustryFieldConfig)
+                  )
+                }
 
                 {/* Required Fields Info */}
                 <div className="border-t pt-6">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Required Information for {industryConfig.name}</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Required Information</h3>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-900 mb-2">
-                      The following fields are required for {industryConfig.name.toLowerCase()} products to ensure compliance and proper management:
+                      The following fields are required for {industryConfig.name.toLowerCase()} products:
                     </p>
-                    <ul className="space-y-2">
-                      {industryConfig.requiredFields.map((field, idx) => {
-                        const fieldLabel = field === 'industryFields' ? '' : 
-                          field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1');
-                        return (
-                          <li key={idx} className="flex items-center gap-2 text-sm text-blue-900">
-                            <Check className="w-4 h-4 text-blue-600" />
-                            {fieldLabel || 'Industry-specific fields'}
-                          </li>
-                        );
-                      })}
+                    <ul className="space-y-1">
+                      {industryConfig.requiredFields.map((field, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm text-blue-900">
+                          <Check className="w-4 h-4 text-blue-600" />
+                          {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 </div>
@@ -1357,54 +984,19 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
           </TabsContent>
 
           {/* Review Tab */}
-          <TabsContent value="review" className="space-y-6">
+          <TabsContent value="review" className="mt-6">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Basic Information</CardTitle>
+              <Card className="border-gray-200">
+                <CardHeader className="border-b border-gray-200">
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-3 flex-1">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Industry</p>
-                          <p className="flex items-center gap-2">
-                            <IndustryIcon className="w-4 h-4" />
-                            {industryConfig.name}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Category</p>
-                          <p>{form.watch('category')}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Product Name</p>
-                          <p className="font-medium">{form.watch('name')}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">SKU</p>
-                          <p className="font-mono">{form.watch('sku')}</p>
-                        </div>
-                        {form.watch('supplier') && (
-                          <div>
-                            <p className="text-sm text-gray-500 font-medium">Supplier</p>
-                            <p>{form.watch('supplier')}</p>
-                          </div>
-                        )}
-                        {form.watch('barcode') && (
-                          <div>
-                            <p className="text-sm text-gray-500 font-medium">Barcode</p>
-                            <p className="font-mono">{form.watch('barcode')}</p>
-                          </div>
-                        )}
-                      </div>
-                      {form.watch('description') && (
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Description</p>
-                          <p className="text-sm">{form.watch('description')}</p>
-                        </div>
-                      )}
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                    <div className="space-y-2 flex-1">
+                      <p><span className="text-gray-500 font-medium">Industry:</span> {industryConfig.name}</p>
+                      <p><span className="text-gray-500 font-medium">Name:</span> {form.watch('name')}</p>
+                      <p><span className="text-gray-500 font-medium">Category:</span> {form.watch('category')}</p>
+                      <p><span className="text-gray-500 font-medium">SKU:</span> {form.watch('sku')}</p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => setActiveTab('basic')}>
                       Edit
@@ -1413,35 +1005,18 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pricing</CardTitle>
+              <Card className="border-gray-200">
+                <CardHeader className="border-b border-gray-200">
+                  <CardTitle className="text-lg">Pricing</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-3 flex-1">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Cost Price</p>
-                          <p className="text-lg font-semibold text-red-600">${form.watch('cost')?.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Selling Price</p>
-                          <p className="text-lg font-semibold text-green-600">${form.watch('price')?.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Profit</p>
-                          <p className={`text-lg font-semibold ${(price - cost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            ${((price || 0) - (cost || 0)).toFixed(2)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Margin</p>
-                          <p className={`text-lg font-semibold ${(price - cost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {cost > 0 ? (((price - cost) / cost) * 100).toFixed(1) : price > 0 ? '100' : '0'}%
-                          </p>
-                        </div>
-                      </div>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                    <div className="space-y-2 flex-1">
+                      <p><span className="text-gray-500 font-medium">Cost Price:</span> ${form.watch('cost')?.toFixed(2)}</p>
+                      <p><span className="text-gray-500 font-medium">Selling Price:</span> ${form.watch('price')?.toFixed(2)}</p>
+                      <p><span className="text-gray-500 font-medium">Profit Margin:</span> 
+                        {cost > 0 ? (((price - cost) / cost) * 100).toFixed(1) : '0'}%
+                      </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => setActiveTab('pricing')}>
                       Edit
@@ -1450,24 +1025,16 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Inventory</CardTitle>
+              <Card className="border-gray-200">
+                <CardHeader className="border-b border-gray-200">
+                  <CardTitle className="text-lg">Inventory</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-3 flex-1">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Stock Quantity</p>
-                          <p className="text-lg font-semibold">{form.watch('quantity')?.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium">Min Stock Level</p>
-                          <p className="text-lg font-semibold">{(form.watch('minStock') || 10)?.toLocaleString()}</p>
-                        </div>
-                      </div>
-                      <div className="max-w-md">
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                    <div className="space-y-2 flex-1">
+                      <p><span className="text-gray-500 font-medium">Stock Quantity:</span> {form.watch('quantity')}</p>
+                      <p><span className="text-gray-500 font-medium">Min Stock Level:</span> {form.watch('minStock') || 10}</p>
+                      <div className="mt-2">
                         <StockStatus quantity={quantity} minStock={minStock} />
                       </div>
                     </div>
@@ -1479,53 +1046,36 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
               </Card>
 
               {industryConfig.fields && Object.keys(industryFields).length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{industryConfig.name} Settings</CardTitle>
+                <Card className="border-gray-200">
+                  <CardHeader className="border-b border-gray-200">
+                    <CardTitle className="text-lg">{industryConfig.name} Settings</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-3 flex-1">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {Object.entries(industryConfig.fields).map(([key, fieldConfig]) => {
-                            const value = industryFields[key];
-                            const config = fieldConfig as IndustryFieldConfig;
-                            
-                            if (config.type === 'boolean') {
-                              return (
-                                <div key={key}>
-                                  <p className="text-sm text-gray-500 font-medium">{config.label}</p>
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${value ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                    <span>{value ? 'Yes' : 'No'}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            
-                            if (config.type === 'date' && value) {
-                              return (
-                                <div key={key}>
-                                  <p className="text-sm text-gray-500 font-medium">{config.label}</p>
-                                  <p>{format(new Date(value), "PPP")}</p>
-                                </div>
-                              );
-                            }
-                            
-                            if (value) {
-                              return (
-                                <div key={key}>
-                                  <p className="text-sm text-gray-500 font-medium">{config.label}</p>
-                                  <p className={config.type === 'textarea' ? 'whitespace-pre-wrap' : ''}>
-                                    {value}
-                                  </p>
-                                </div>
-                              );
-                            }
-                            
-                            return null;
-                          }).filter(Boolean)}
-                        </div>
+                  <CardContent className="pt-6 space-y-3">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                      <div className="space-y-2 flex-1">
+                        {Object.entries(industryConfig.fields).map(([key, fieldConfig]) => {
+                          const value = industryFields[key];
+                          const config = fieldConfig as IndustryFieldConfig;
+                          if (config.type === 'boolean') {
+                            return (
+                              <p key={key}>
+                                <span className="text-gray-500 font-medium">{config.label}:</span> {value ? 'Yes' : 'No'}
+                              </p>
+                            );
+                          }
+                          if (config.type === 'date' && value) {
+                            return (
+                              <p key={key}>
+                                <span className="text-gray-500 font-medium">{config.label}:</span> {format(new Date(value), "PPP")}
+                              </p>
+                            );
+                          }
+                          return (
+                            <p key={key}>
+                              <span className="text-gray-500 font-medium">{config.label}:</span> {value || 'Not set'}
+                            </p>
+                          );
+                        })}
                       </div>
                       <Button variant="ghost" size="sm" onClick={() => setActiveTab('industry')}>
                         Edit
@@ -1539,7 +1089,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
         </Tabs>
 
         {/* Navigation Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white rounded-lg p-6 border border-gray-200">
+        <div className="flex flex-col md:flex-row justify-between items-center bg-white rounded-lg p-6 border border-gray-200 gap-4">
           <div>
             {onCancel && (
               <Button variant="outline" onClick={onCancel} type="button">
@@ -1548,7 +1098,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
             )}
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             {activeTab !== 'basic' && (
               <Button 
                 variant="outline" 
@@ -1558,7 +1108,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                   setActiveTab(tabs[currentIndex - 1]);
                 }}
                 type="button"
-                className="order-2 sm:order-1"
+                className="w-full sm:w-auto"
               >
                 Previous
               </Button>
@@ -1572,28 +1122,18 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                   setActiveTab(tabs[currentIndex + 1]);
                 }}
                 type="button"
-                className="order-1 sm:order-2"
+                className="w-full sm:w-auto"
               >
                 Next
               </Button>
             ) : (
               <Button 
                 onClick={form.handleSubmit(handleSubmit)}
-                className="bg-green-600 hover:bg-green-700 order-1 sm:order-2"
+                className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                 type="button"
-                disabled={isSubmitting}
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    {product ? 'Updating...' : 'Creating...'}
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    {product ? 'Update Product' : 'Create Product'}
-                  </>
-                )}
+                <Check className="mr-2 h-4 w-4" />
+                {product ? 'Update Product' : 'Create Product'}
               </Button>
             )}
           </div>
