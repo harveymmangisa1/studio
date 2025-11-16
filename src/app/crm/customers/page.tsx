@@ -8,9 +8,11 @@ type Customer = {
   email?: string | null;
 };
 
-const TENANT_ID = 'default-tenant'; // Replace with dynamic tenant extraction in real app
+import { useTenant } from '@/lib/tenant';
 
 export default function CRMCustomerList() {
+  const { tenant } = useTenant();
+  const tenantId = (tenant?.id) ?? 'default-tenant';
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -19,7 +21,7 @@ export default function CRMCustomerList() {
 
   useEffect(() => {
     fetch('/api/crm/customers', {
-      headers: { 'X-Tenant-Id': TENANT_ID },
+      headers: { 'X-Tenant-Id': tenantId },
     })
       .then((res) => res.json())
       .then((data) => {
@@ -41,7 +43,7 @@ export default function CRMCustomerList() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-Id': TENANT_ID,
+          'X-Tenant-Id': tenantId,
         },
         body: JSON.stringify({ name: name.trim(), email: email?.trim() || null }),
       });
