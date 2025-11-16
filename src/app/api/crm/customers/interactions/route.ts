@@ -7,11 +7,10 @@ function generateUuid(): string {
     // @ts-ignore
     return crypto.randomUUID();
   }
-  return 'crm_' + Math.random().toString(36).slice(2, 8) + '_' + Date.now().toString(36);
+  return 'crm_interaction_' + Math.random().toString(36).slice(2, 8) + '_' + Date.now().toString(36);
 }
 
 function extractTenantFromRequest(req: Request): string {
-  // Priority: header, then cookie, then fallback
   const h = req.headers.get('X-Tenant-Id') || req.headers.get('x-tenant-id');
   if (h) return h;
   const cookieHeader = req.headers.get('cookie') || '';
@@ -23,7 +22,7 @@ function extractTenantFromRequest(req: Request): string {
 export async function GET(req: Request) {
   const tenantId = extractTenantFromRequest(req);
   const supabase = getSupabase(tenantId);
-  const { data, error } = await supabase.from('customers').select('*').order('name', { ascending: true });
+  const { data, error } = await supabase.from('customer_interactions').select('*');
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }
@@ -39,22 +38,23 @@ export async function POST(req: Request) {
   } catch {
     return new NextResponse(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });
   }
-  const { name, email } = body || {};
-  if (!name) {
-    return new NextResponse(JSON.stringify({ error: 'Name is required' }), { status: 400 });
+  const { customer_id, type, detail, interaction_date, created_by } = body || {};
+  if (!customer_id || !type || !detail) {
+    return new NextResponse(JSON.stringify({ error: 'customer_id, type, and detail are required' }), { status: 400 });
   }
   const id = generateUuid();
   const now = new Date().toISOString();
   const payload = {
     tenant_id: tenantId,
     id,
-    name,
-    email: email ?? null,
+    customer_id,
+    type,
+    detail,
+    interaction_date: interaction_date ?? now,
+    created_by: created_by ?? null,
     created_at: now,
-    updated_at: now,
   } as any;
-
-  const { data, error } = await supabase.from('customers').insert([payload]).single();
+  const { data, error } = await supabase.from('customer_interactions').insert([payload]).single();
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }
