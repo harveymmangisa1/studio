@@ -1,6 +1,6 @@
-# StockPaEasy User Guide
+# paeasybooks User Guide
 
-Welcome to StockPaEasy! This guide will help you get started with the core features of the application.
+Welcome to paeasybooks! This guide will help you get started with the core features of the application.
 
 ## 1. Dashboard
 
@@ -48,7 +48,7 @@ The expenses page is where you can track your business expenses.
 
 ## 6. Reports
 
-StockPaEasy provides several financial reports to help you understand your business performance.
+paeasybooks provides several financial reports to help you understand your business performance.
 
 *   **Profit & Loss Statement:** Shows your revenue, costs, and profit over a selected period.
 *   **Balance Sheet:** Provides a snapshot of your company's assets, liabilities, and equity.

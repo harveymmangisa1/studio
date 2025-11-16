@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { createDoubleEntryTransaction } from '../../lib/ledger';
+import { postARInvoice, postCOGS, postARPayment } from '../../lib/ledger';
 import { PageHeader } from '@/components/shared';
 
 interface Invoice {
@@ -92,10 +92,7 @@ export default function SalesPage() {
         throw new Error('Could not find required accounts for transaction.');
       }
 
-      await createDoubleEntryTransaction([
-        { accountId: cashAccountId, debit: totalAmount, credit: 0 },
-        { accountId: accountsReceivableAccountId, debit: 0, credit: totalAmount },
-      ]);
+      await postARPayment({ date: new Date().toISOString().slice(0,10), receiptId: `PMT-${invoiceId}`, amount: totalAmount, cashAccountName: 'Cash' });
 
       fetchSalesData();
     } catch (error: any) {
@@ -103,6 +100,32 @@ export default function SalesPage() {
     }
   };
   
+  const handlePostInvoice = async (invoice: Invoice) => {
+    try {
+      // Fetch line items for COGS calculation
+      const { data: inv, error } = await supabase
+        .from('sales_invoices')
+        .select('id, invoice_number, invoice_date, total_amount, tax_amount, sales_invoice_line_items(quantity, unit_cost)')
+        .eq('id', invoice.id)
+        .single();
+      if (error) throw error;
+
+      const taxAmount = inv.tax_amount ?? Math.max(0, inv.total_amount - (inv.sales_invoice_line_items?.reduce((s: number, li: any)=> s + (li.quantity * li.unit_cost), 0) || 0));
+      const cogs = (inv.sales_invoice_line_items || []).reduce((s: number, li: any) => s + (Number(li.quantity) * Number(li.unit_cost || 0)), 0);
+      const date = inv.invoice_date || new Date().toISOString().slice(0,10);
+
+      await postARInvoice({ date, invoiceId: inv.invoice_number, amount: inv.total_amount - taxAmount, taxAmount });
+      if (cogs > 0) {
+        await postCOGS({ date, referenceId: inv.invoice_number, cogsAmount: cogs });
+      }
+
+      await supabase.from('sales_invoices').update({ posting_status: 'Posted', posted_at: new Date().toISOString() }).eq('id', invoice.id);
+      await fetchSalesData();
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { variant: "outline" | "destructive" | "default"; icon?: React.ElementType }> = {
       'Paid': { variant: 'default' as any, icon: CheckCircle },
@@ -169,6 +192,7 @@ export default function SalesPage() {
                     <TableHead>Customer</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Posting</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead><span className="sr-only">Actions</span></TableHead>
                   </TableRow>
@@ -182,6 +206,11 @@ export default function SalesPage() {
                       <TableCell>
                         {getStatusBadge(invoice.payment_status)}
                       </TableCell>
+                      <TableCell>
+                        <Badge variant={invoice['posting_status' as any] === 'Posted' ? 'default' : 'outline'}>
+                          {invoice['posting_status' as any] || 'Draft'}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">${invoice.total_amount.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                          <DropdownMenu>
@@ -192,9 +221,14 @@ export default function SalesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {invoice['posting_status' as any] !== 'Posted' && (
+                              <DropdownMenuItem onClick={() => handlePostInvoice(invoice)}>
+                                <span>Post Invoice</span>
+                              </DropdownMenuItem>
+                            )}
                             {invoice.payment_status !== 'Paid' && (
                               <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id, invoice.total_amount)}>
-                                <span>Mark as Paid</span>
+                                <span>Receive Payment</span>
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem asChild>

@@ -10,6 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { CustomerSelector } from './CustomerSelector';
 import { InvoiceLineItems } from './InvoiceLineItems';
 import { useState, useEffect } from 'react';
+import { useTenant } from '@/lib/tenant';
+import { supabase } from '@/lib/supabase';
 import { recordSale } from '../lib/ledger';
 
 const invoiceSchema = z.object({
@@ -25,10 +27,22 @@ const invoiceSchema = z.object({
 
 export type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
+const currencySymbols = {
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  MWK: 'MK',
+};
+
 export function InvoiceForm() {
+  const { tenant } = useTenant();
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
+
+  const taxRate = tenant?.settings?.taxRate / 100 || 0;
+  const currency = tenant?.settings?.currency || 'USD';
+  const currencySymbol = currencySymbols[currency] || '$';
 
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
@@ -43,23 +57,40 @@ export function InvoiceForm() {
 
   useEffect(() => {
     const newSubtotal = lineItems.reduce((acc, item) => acc + (item.quantity * item.unit_price), 0);
-    const newTax = newSubtotal * 0.075; // 7.5% tax rate
+    const newTax = newSubtotal * taxRate;
     const newTotal = newSubtotal + newTax;
     setSubtotal(newSubtotal);
     setTax(newTax);
     setTotal(newTotal);
-  }, [lineItems]);
+  }, [lineItems, taxRate]);
 
   async function onSubmit(data: InvoiceFormData) {
     try {
+      const invoicePrefix = tenant?.settings?.invoicePrefix || 'INV';
+      const { data: lastInvoice, error: lastInvoiceError } = await supabase
+        .from('sales_invoices')
+        .select('invoice_number')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      let nextInvoiceNumber = 1;
+      if (lastInvoice) {
+        const lastNumber = parseInt(lastInvoice.invoice_number.replace(invoicePrefix, ''));
+        nextInvoiceNumber = lastNumber + 1;
+      }
+      const invoiceNumber = `${invoicePrefix}${String(nextInvoiceNumber).padStart(4, '0')}`;
+
       // Create the invoice
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('sales_invoices')
         .insert({
+          invoice_number: invoiceNumber,
           customer_id: data.customer_id,
           invoice_date: data.invoice_date,
           due_date: data.due_date,
           subtotal: subtotal,
+          tax_rate: taxRate,
           tax_amount: tax,
           total_amount: total,
           payment_status: 'Unpaid',
@@ -106,7 +137,7 @@ export function InvoiceForm() {
           product_id: item.product_id,
           quantity: -item.quantity,
           movement_type: 'sale',
-          reference_document: `Invoice #${invoiceData.id}`,
+          reference_document: `Invoice #${invoiceNumber}`,
         });
 
         if (movementError) throw movementError;
@@ -198,15 +229,15 @@ export function InvoiceForm() {
           <div className="w-full md:w-1/3 space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{currencySymbol}{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Tax (7.5%)</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>Tax ({(taxRate * 100).toFixed(1)}%)</span>
+              <span>{currencySymbol}{tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>{currencySymbol}{total.toFixed(2)}</span>
             </div>
           </div>
         </div>

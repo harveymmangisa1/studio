@@ -1,6 +1,6 @@
-# Project Summary: StockPaEasy
+# Project Summary: paeasybooks
 
-This is a Next.js application named "StockPaEasy" built with TypeScript. It appears to be an inventory and sales management tool.
+This is a Next.js application named "paeasybooks" built with TypeScript. It appears to be an inventory and sales management tool.
 
 ## Key Features
 

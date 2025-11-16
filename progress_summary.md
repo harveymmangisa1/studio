@@ -1,6 +1,6 @@
-# Project Progress Summary: StockPaEasy
+# Project Progress Summary: paeasybooks
 
-This document summarizes the progress and current status of the StockPaEasy application.
+This document summarizes the progress and current status of the paeasybooks application.
 
 ## Current Status: MVP Complete
 

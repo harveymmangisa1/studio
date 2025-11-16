@@ -1,8 +1,8 @@
-# StockPilot Authentication & Role-Based Access Control (RBAC) Prompt
+# paeasybooks Authentication & Role-Based Access Control (RBAC) Prompt
 ## Production-Grade Authentication, Authorization, and Permission Management
 
 ## Project Overview
-This prompt provides a complete, production-grade authentication and authorization system for StockPilot. It implements:
+This prompt provides a complete, production-grade authentication and authorization system for paeasybooks. It implements:
 - **Multi-layer authentication** with protected routes
 - **Role-Based Access Control (RBAC)** with granular permissions
 - **Email-based user invitations** with permission pre-assignment
@@ -386,7 +386,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow">
-        <h1 className="text-2xl font-bold mb-6">StockPilot Login</h1>
+        <h1 className="text-2xl font-bold mb-6">paeasybooks Login</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -709,7 +709,7 @@ export async function inviteUser(payload: InvitationPayload) {
   await sendInvitationEmail({
     to: payload.email,
     invitationToken,
-    companyName: tenant?.company_name || 'StockPilot',
+    companyName: tenant?.company_name || 'paeasybooks',
     inviterName: inviter?.name || inviter?.email,
     role: payload.role
   })
@@ -843,7 +843,7 @@ export async function sendInvitationEmail({
 
   const htmlContent = `
     <h2>You're invited to join ${companyName}!</h2>
-    <p>${inviterName} has invited you to join their StockPilot workspace as a <strong>${role}</strong>.</p>
+    <p>${inviterName} has invited you to join their paeasybooks workspace as a <strong>${role}</strong>.</p>
     
     <p><a href="${acceptLink}" style="background-color: #3B82F6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
       Accept Invitation
@@ -860,7 +860,7 @@ export async function sendInvitationEmail({
   // Send via your email provider (SendGrid, Resend, etc.)
   await sendEmail({
     to,
-    subject: `You're invited to ${companyName} on StockPilot`,
+    subject: `You're invited to ${companyName} on paeasybooks`,
     html: htmlContent
   })
 }

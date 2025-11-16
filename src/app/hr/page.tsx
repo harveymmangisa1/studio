@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -901,44 +902,39 @@ const ProgressiveEmployeeForm = ({ onSuccess, onCancel, initialData }: Progressi
 export default function HRPage() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'form'>('dashboard');
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: '1',
-      firstName: 'Sarah',
-      lastName: 'Johnson',
-      email: 'sarah.johnson@company.com',
-      phone: '+1 (555) 123-4567',
-      jobTitle: 'Senior Software Engineer',
-      department: 'engineering',
-      employmentType: 'full_time',
-      startDate: '2023-01-15',
-      status: 'active'
-    },
-    {
-      id: '2',
-      firstName: 'Mike',
-      lastName: 'Chen',
-      email: 'mike.chen@company.com',
-      phone: '+1 (555) 987-6543',
-      jobTitle: 'Sales Manager',
-      department: 'sales',
-      employmentType: 'full_time',
-      startDate: '2023-03-20',
-      status: 'active'
-    },
-    {
-      id: '3',
-      firstName: 'Emma',
-      lastName: 'Davis',
-      email: 'emma.davis@company.com',
-      phone: '+1 (555) 456-7890',
-      jobTitle: 'Marketing Specialist',
-      department: 'marketing',
-      employmentType: 'full_time',
-      startDate: '2023-06-10',
-      status: 'pending'
-    }
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('id, first_name, last_name, email, phone, job_title, department, employment_type, start_date, status')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        const mapped: Employee[] = (data || []).map((e: any) => ({
+          id: e.id,
+          firstName: e.first_name,
+          lastName: e.last_name,
+          email: e.email,
+          phone: e.phone,
+          jobTitle: e.job_title,
+          department: e.department,
+          employmentType: e.employment_type,
+          startDate: e.start_date,
+          status: (e.status as Employee['status']) || 'active',
+        }));
+        setEmployees(mapped);
+      } catch (e) {
+        console.error('Failed to load employees', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const handleAddEmployee = () => {
     setEditingEmployee(null);
@@ -950,48 +946,82 @@ export default function HRPage() {
     setCurrentView('form');
   };
 
-  const handleDeleteEmployee = (employee: Employee) => {
-    if (window.confirm(`Are you sure you want to delete ${employee.firstName} ${employee.lastName}?`)) {
+  const handleDeleteEmployee = async (employee: Employee) => {
+    if (!window.confirm(`Are you sure you want to delete ${employee.firstName} ${employee.lastName}?`)) return;
+    try {
+      const { error } = await supabase.from('employees').delete().eq('id', employee.id);
+      if (error) throw error;
       setEmployees(employees.filter(emp => emp.id !== employee.id));
+    } catch (e) {
+      console.error('Failed to delete employee', e);
     }
   };
 
-  const handleFormSuccess = (formData: EmployeeFormData) => {
-    if (editingEmployee) {
-      // Update existing employee
-      setEmployees(employees.map(emp => 
-        emp.id === editingEmployee.id 
-          ? {
-              ...emp,
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              email: formData.email,
-              phone: formData.phone,
-              jobTitle: formData.jobTitle,
-              department: formData.department,
-              employmentType: formData.employmentType,
-              startDate: formData.startDate
-            }
-          : emp
-      ));
-    } else {
-      // Add new employee
-      const newEmployee: Employee = {
-        id: Date.now().toString(),
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        jobTitle: formData.jobTitle,
-        department: formData.department,
-        employmentType: formData.employmentType,
-        startDate: formData.startDate,
-        status: 'pending'
-      };
-      setEmployees([...employees, newEmployee]);
+  const handleFormSuccess = async (formData: EmployeeFormData) => {
+    try {
+      if (editingEmployee) {
+        const { error } = await supabase
+          .from('employees')
+          .update({
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            job_title: formData.jobTitle,
+            department: formData.department,
+            employment_type: formData.employmentType,
+            start_date: formData.startDate,
+          })
+          .eq('id', editingEmployee.id);
+        if (error) throw error;
+        setEmployees(employees.map(emp => emp.id === editingEmployee.id ? {
+          ...emp,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          jobTitle: formData.jobTitle,
+          department: formData.department,
+          employmentType: formData.employmentType,
+          startDate: formData.startDate,
+        } : emp));
+      } else {
+        const { data, error } = await supabase
+          .from('employees')
+          .insert({
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            job_title: formData.jobTitle,
+            department: formData.department,
+            employment_type: formData.employmentType,
+            start_date: formData.startDate,
+            status: 'pending',
+          })
+          .select('id, first_name, last_name, email, phone, job_title, department, employment_type, start_date, status')
+          .single();
+        if (error) throw error;
+        const newEmp: Employee = {
+          id: data.id,
+          firstName: data.first_name,
+          lastName: data.last_name,
+          email: data.email,
+          phone: data.phone,
+          jobTitle: data.job_title,
+          department: data.department,
+          employmentType: data.employment_type,
+          startDate: data.start_date,
+          status: data.status,
+        };
+        setEmployees([...employees, newEmp]);
+      }
+    } catch (e) {
+      console.error('Failed to save employee', e);
+    } finally {
+      setCurrentView('dashboard');
+      setEditingEmployee(null);
     }
-    setCurrentView('dashboard');
-    setEditingEmployee(null);
   };
 
   const handleFormCancel = () => {

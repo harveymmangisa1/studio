@@ -41,6 +41,7 @@ import { supabase } from '@/lib/supabase';
 import { toCsv } from '@/lib/utils';
 import { PageHeader } from '@/components/shared';
 import dynamic from 'next/dynamic';
+import { useToast } from '@/hooks/use-toast';
 
 const Select = dynamic(() => import('@/components/ui/select').then(mod => mod.Select), { ssr: false });
 const SelectContent = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectContent), { ssr: false });
@@ -49,48 +50,10 @@ const SelectTrigger = dynamic(() => import('@/components/ui/select').then(mod =>
 const SelectValue = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectValue), { ssr: false });
 
 
-const initialUsers: TeamUser[] = [
-  { 
-    id: '1', 
-    name: 'Alex Morgan',
-    email: 'alex@company.com',
-    role: 'Admin',
-    status: 'Active',
-    last_login: '2024-01-15T10:30:00Z',
-    created_at: '2024-01-01T09:00:00Z'
-  },
-  { 
-    id: '2', 
-    name: 'Sarah Johnson',
-    email: 'sarah@company.com',
-    role: 'Manager',
-    status: 'Active',
-    last_login: '2024-01-14T16:45:00Z',
-    created_at: '2024-01-05T10:30:00Z'
-  },
-  { 
-    id: '3', 
-    name: 'Mike Chen',
-    email: 'mike@company.com',
-    role: 'Accountant',
-    status: 'Pending',
-    last_login: null,
-    created_at: '2024-01-10T14:20:00Z'
-  },
-  { 
-    id: '4', 
-    name: 'Emily Davis',
-    email: 'emily@company.com',
-    role: 'Store Clerk',
-    status: 'Inactive',
-    last_login: '2024-01-05T09:15:00Z',
-    created_at: '2024-01-08T11:00:00Z'
-  },
-];
-
 export default function UsersPage() {
-  const [users, setUsers] = useState<TeamUser[]>(initialUsers);
-  const [filteredUsers, setFilteredUsers] = useState<TeamUser[]>(initialUsers);
+  const [users, setUsers] = useState<TeamUser[]>([]);
+  const { toast } = useToast();
+  const [filteredUsers, setFilteredUsers] = useState<TeamUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -101,6 +64,36 @@ export default function UsersPage() {
   useEffect(() => {
     filterUsers();
   }, [searchTerm, roleFilter, statusFilter, users]);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      setLoading(true);
+      try {
+        // Adjust table/columns as per your schema
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, name, email, role, status, last_login, created_at')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        const mapped: TeamUser[] = (data || []).map((u: any) => ({
+          id: u.id,
+          name: u.name || u.email || 'User',
+          email: u.email,
+          role: u.role || 'Member',
+          status: u.status || 'Active',
+          last_login: u.last_login || null,
+          created_at: u.created_at || new Date().toISOString(),
+        }));
+        setUsers(mapped);
+        setFilteredUsers(mapped);
+      } catch (e) {
+        console.error('Failed to load users', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUsers();
+  }, []);
 
   const filterUsers = () => {
     let filtered = users;
@@ -123,19 +116,44 @@ export default function UsersPage() {
     setFilteredUsers(filtered);
   };
 
-  const handleSaveUser = (user: TeamUser) => {
-    if(editingUser) {
-      setUsers(users.map(u => u.id === user.id ? user : u));
-    } else {
-      const newUser = {
-        ...user,
-        id: Date.now().toString(),
-        created_at: new Date().toISOString(),
-      };
-      setUsers([newUser, ...users]);
+  const handleSaveUser = async (user: TeamUser) => {
+    try {
+      setLoading(true);
+      if (editingUser) {
+        const { error } = await supabase
+          .from('users')
+          .update({ name: user.name, email: user.email, role: user.role, status: user.status })
+          .eq('id', user.id);
+        if (error) throw error;
+        setUsers(users.map(u => u.id === user.id ? user : u));
+      } else {
+        const toInsert = { name: user.name, email: user.email, role: user.role, status: user.status };
+        const { data, error } = await supabase
+          .from('users')
+          .insert(toInsert)
+          .select('id, name, email, role, status, last_login, created_at')
+          .single();
+        if (error) throw error;
+        const newUser: TeamUser = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          status: data.status,
+          last_login: data.last_login,
+          created_at: data.created_at,
+        };
+        setUsers([newUser, ...users]);
+      }
+      toast({ title: editingUser ? 'User updated' : 'User created' });
+    } catch (e: any) {
+      console.error('Failed to save user', e);
+      toast({ title: 'Failed to save user', description: e.message || String(e), variant: 'destructive' });
+    } finally {
+      setIsFormOpen(false);
+      setEditingUser(null);
+      setLoading(false);
     }
-    setIsFormOpen(false);
-    setEditingUser(null);
   };
 
   const handleEditUser = (user: TeamUser) => {
@@ -143,8 +161,19 @@ export default function UsersPage() {
     setIsFormOpen(true);
   };
 
-  const handleDeleteUser = (id: string) => {
-    setUsers(users.filter(user => user.id !== id));
+  const handleDeleteUser = async (id: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.from('users').delete().eq('id', id);
+      if (error) throw error;
+      setUsers(users.filter(user => user.id !== id));
+      toast({ title: 'User deleted' });
+    } catch (e: any) {
+      console.error('Failed to delete user', e);
+      toast({ title: 'Failed to delete user', description: e.message || String(e), variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {

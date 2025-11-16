@@ -8,6 +8,7 @@ export default function NewInvoicePage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="New Invoice"
+        data-tour-id="sales-new-invoice"
         description="Create a new sales invoice for a customer."
       />
       <InvoiceForm />

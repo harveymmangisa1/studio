@@ -1,9 +1,9 @@
-# StockPilot Accounts Page - Comprehensive Specification
+# paeasybooks Accounts Page - Comprehensive Specification
 ## Production-Grade Financial Accounting Interface
 
 ## Page Overview
 
-The **Accounts Page** (`/app/[tenantId]/accounts`) is the financial nerve center of StockPilot, managing the complete double-entry accounting system. It provides accountants and admins with tools to:
+The **Accounts Page** (`/app/[tenantId]/accounts`) is the financial nerve center of paeasybooks, managing the complete double-entry accounting system. It provides accountants and admins with tools to:
 
 1. **Manage Chart of Accounts** - Create, organize, and maintain all GL accounts
 2. **Record Transactions** - Create journal entries and view all ledger transactions

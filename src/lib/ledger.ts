@@ -1,108 +1,168 @@
 import { supabase } from './supabase';
+import type { JournalEntry, JournalBatch, UUID } from './types';
 
-interface LedgerTransaction {
-  accountId: string;
-  debit: number;
-  credit: number;
-  date: string;
-  description: string;
-  referenceType?: string;
-  referenceId?: string;
-}
-
-/**
- * Creates a double-entry transaction and ensures it is balanced.
- * @param entries - An array of ledger entries for the transaction.
- * @param description - A description of the overall transaction.
- * @param date - The date of the transaction.
- */
-export async function createDoubleEntryTransaction(entries: Omit<LedgerTransaction, 'date' | 'description'>[]) {
-  const totalDebits = entries.reduce((sum, entry) => sum + entry.debit, 0);
-  const totalCredits = entries.reduce((sum, entry) => sum + entry.credit, 0);
-
-  if (totalDebits !== totalCredits) {
-    throw new Error('Transaction is not balanced. Debits must equal credits.');
+// Core: Create a journal batch and its entries atomically
+export async function createJournalBatch(batch: Omit<JournalBatch, 'id'>): Promise<{ batchId: UUID }> {
+  // Validate balanced
+  const totalDebit = batch.entries.reduce((s, e) => s + (e.debit || 0), 0);
+  const totalCredit = batch.entries.reduce((s, e) => s + (e.credit || 0), 0);
+  if (Number(totalDebit.toFixed(2)) !== Number(totalCredit.toFixed(2))) {
+    throw new Error('Journal is not balanced: debits must equal credits');
   }
 
-  const transactionDate = new Date().toISOString();
+  // Period locking check
+  const period = (batch.date || new Date().toISOString().slice(0,10)).slice(0,7);
+  const { data: p, error: pErr } = await supabase
+    .from('fiscal_periods')
+    .select('status')
+    .eq('period', period)
+    .single();
+  if (pErr && (pErr as any).code !== 'PGRST116') throw pErr; // ignore not found
+  if (p && (p as any).status === 'Closed') {
+    throw new Error(`Fiscal period ${period} is closed`);
+  }
 
-  const ledgerEntries = entries.map(entry => ({
-    account_id: entry.accountId,
-    debit_amount: entry.debit,
-    credit_amount: entry.credit,
-    transaction_date: transactionDate,
-    description: `Transaction created on ${transactionDate}`,
-    reference_type: entry.referenceType,
-    reference_id: entry.referenceId,
+  const { data: batchRows, error: bErr } = await supabase
+    .from('journal_batches')
+    .insert({
+      date: batch.date,
+      description: batch.description,
+      source_type: batch.source_type,
+      source_id: batch.source_id,
+    })
+    .select('id')
+    .single();
+  if (bErr) throw bErr;
+
+  const entriesPayload = batch.entries.map((e: JournalEntry) => ({
+    batch_id: batchRows.id,
+    account_id: e.account_id ?? e.account_id, // kept for clarity if evolving types
+    debit: e.debit ?? 0,
+    credit: e.credit ?? 0,
+    memo: e.memo ?? null,
   }));
 
-  const { data, error } = await supabase.from('ledger_entries').insert(ledgerEntries).select();
+  const { error: eErr } = await supabase
+    .from('journal_entries')
+    .insert(entriesPayload);
+  if (eErr) throw eErr;
 
-  if (error) {
-    throw error;
-  }
-
-  // After inserting, update account balances
-  for (const entry of entries) {
-    await updateAccountBalance(entry.accountId, entry.debit, entry.credit);
-  }
-
-  return data;
+  return { batchId: batchRows.id as UUID };
 }
 
-/**
- * Updates the balance of a single account.
- * @param accountId - The ID of the account to update.
- * @param debit - The debit amount to apply.
- * @param credit - The credit amount to apply.
- */
-async function updateAccountBalance(accountId: string, debit: number, credit: number) {
-  const { data: account, error: fetchError } = await supabase
+// Utility to fetch account id by name (simple helper; in production use caching)
+export async function getAccountIdByName(name: string): Promise<UUID> {
+  const { data, error } = await supabase
     .from('accounts')
-    .select('balance, account_type')
-    .eq('id', accountId)
+    .select('id')
+    .eq('account_name', name)
     .single();
-
-  if (fetchError) throw fetchError;
-
-  let newBalance = account.balance;
-  // Asset and Expense accounts increase with debits
-  if (['Asset', 'Expense'].includes(account.account_type)) {
-    newBalance += debit - credit;
-  } 
-  // Liability, Equity, and Revenue accounts increase with credits
-  else {
-    newBalance += credit - debit;
-  }
-
-  const { error: updateError } = await supabase
-    .from('accounts')
-    .update({ balance: newBalance })
-    .eq('id', accountId);
-
-  if (updateError) throw updateError;
+  if (error || !data) throw new Error(`Account not found: ${name}`);
+  return data.id as UUID;
 }
 
-// Example of how to use createDoubleEntryTransaction for a sale
-export async function recordSale(invoiceId: string, customerId: string, totalAmount: number, cogs: number) {
-  // This is a simplified example. You would need to fetch the correct account IDs for
-  // Accounts Receivable, Sales Revenue, Cost of Goods Sold, and Inventory.
-  const accountsReceivableAccountId = '... a real account ID ...';
-  const salesRevenueAccountId = '... a real account ID ...';
-  const cogsAccountId = '... a real account ID ...';
-  const inventoryAccountId = '... a real account ID ...';
+// Posting helpers
+export async function postARInvoice(params: {
+  date: string;
+  invoiceId: string;
+  customerName?: string;
+  amount: number;
+  taxAmount?: number;
+  revenueAccountName?: string; // default 'Sales Revenue'
+  taxLiabilityAccountName?: string; // default from tax code; fallback 'Tax Payable'
+}): Promise<{ batchId: UUID }> {
+  const revenueAccount = await getAccountIdByName(params.revenueAccountName ?? 'Sales Revenue');
+  const arAccount = await getAccountIdByName('Accounts Receivable');
+  const taxAccount = params.taxAmount && params.taxAmount > 0
+    ? await getAccountIdByName(params.taxLiabilityAccountName ?? 'Tax Payable')
+    : null;
 
-  const entries = [
-    // Debit Accounts Receivable to increase it
-    { accountId: accountsReceivableAccountId, debit: totalAmount, credit: 0, referenceType: 'sales_invoice', referenceId: invoiceId },
-    // Credit Sales Revenue to increase it
-    { accountId: salesRevenueAccountId, debit: 0, credit: totalAmount, referenceType: 'sales_invoice', referenceId: invoiceId },
-    
-    // Debit COGS to recognize the expense
-    { accountId: cogsAccountId, debit: cogs, credit: 0, referenceType: 'sales_invoice', referenceId: invoiceId },
-    // Credit Inventory to decrease it
-    { accountId: inventoryAccountId, debit: 0, credit: cogs, referenceType: 'sales_invoice', referenceId: invoiceId },
+  const entries: JournalEntry[] = [] as any;
+  // Dr A/R total
+  entries.push({ account_id: arAccount, debit: params.amount + (params.taxAmount ?? 0), credit: 0, memo: `Invoice ${params.invoiceId}` });
+  // Cr Revenue amount
+  entries.push({ account_id: revenueAccount, debit: 0, credit: params.amount, memo: `Invoice ${params.invoiceId}` });
+  // Cr Tax if any
+  if (taxAccount && params.taxAmount) {
+    entries.push({ account_id: taxAccount, debit: 0, credit: params.taxAmount, memo: `Invoice tax ${params.invoiceId}` });
+  }
+
+  return createJournalBatch({
+    date: params.date,
+    description: `AR Invoice ${params.invoiceId}${params.customerName ? ' - ' + params.customerName : ''}`,
+    source_type: 'AR_INVOICE',
+    source_id: params.invoiceId,
+    entries,
+  });
+}
+
+export async function postCOGS(params: {
+  date: string;
+  referenceId: string;
+  cogsAmount: number;
+}): Promise<{ batchId: UUID }> {
+  const cogsAccount = await getAccountIdByName('Cost of Goods Sold');
+  const inventoryAccount = await getAccountIdByName('Inventory');
+
+  const entries: JournalEntry[] = [
+    { account_id: cogsAccount, debit: params.cogsAmount, credit: 0, memo: `COGS ${params.referenceId}` },
+    { account_id: inventoryAccount, debit: 0, credit: params.cogsAmount, memo: `COGS ${params.referenceId}` },
   ];
 
-  await createDoubleEntryTransaction(entries);
+  return createJournalBatch({
+    date: params.date,
+    description: `COGS for ${params.referenceId}`,
+    source_type: 'COGS',
+    source_id: params.referenceId,
+    entries,
+  });
+}
+
+export async function postARPayment(params: {
+  date: string;
+  receiptId: string;
+  amount: number;
+  cashAccountName?: string; // 'Cash' or 'Bank'
+}): Promise<{ batchId: UUID }> {
+  const cashAccount = await getAccountIdByName(params.cashAccountName ?? 'Cash');
+  const arAccount = await getAccountIdByName('Accounts Receivable');
+
+  const entries: JournalEntry[] = [
+    { account_id: cashAccount, debit: params.amount, credit: 0, memo: `Payment ${params.receiptId}` },
+    { account_id: arAccount, debit: 0, credit: params.amount, memo: `Payment ${params.receiptId}` },
+  ];
+
+  return createJournalBatch({
+    date: params.date,
+    description: `AR Payment ${params.receiptId}`,
+    source_type: 'AR_PAYMENT',
+    source_id: params.receiptId,
+    entries,
+  });
+}
+
+// Reverse a batch by creating a new batch with flipped debits/credits
+export async function reverseJournalBatch(batchId: UUID, date: string, reason = 'Reversal') {
+  const { data: entries, error } = await supabase
+    .from('journal_entries')
+    .select('account_id, debit, credit, journal_batches!inner(id, description, source_type, source_id)')
+    .eq('journal_batches.id', batchId);
+  if (error || !entries || entries.length === 0) throw new Error('Batch not found or empty');
+
+  const first = entries[0] as any;
+  const description = `${reason}: ${first.journal_batches.description ?? ''}`.trim();
+  const reversed: JournalEntry[] = entries.map((e: any) => ({
+    account_id: e.account_id,
+    debit: e.credit,
+    credit: e.debit,
+    memo: `Reversal of batch ${batchId}`,
+  }));
+
+  return createJournalBatch({
+    date,
+    description,
+    source_type: `REVERSAL:${first.journal_batches.source_type}`,
+    source_id: first.journal_batches.source_id,
+    entries: reversed,
+  });
 }

@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'StockPaEasy',
+  title: 'paeasybooks',
   description: 'Stock management and accounting system',
 };
 

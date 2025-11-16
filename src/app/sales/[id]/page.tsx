@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { DocumentHeader } from '@/components/DocumentHeader';
+import { postARInvoice, postCOGS, postARPayment } from '@/lib/ledger';
 
 interface InvoiceDetails {
   id: string;
@@ -87,10 +88,44 @@ export default function InvoiceDetailsPage() {
     return <div>Invoice not found.</div>;
   }
 
+  const handlePost = async () => {
+    try {
+      const date = invoice.invoice_date || new Date().toISOString().slice(0,10);
+      const taxAmount = invoice.tax || Math.max(0, invoice.total_amount - invoice.subtotal);
+      const cogs = (invoice.line_items || []).reduce((s: number, li: any) => s + (Number(li.quantity) * Number(li.unit_cost || 0)), 0);
+      await postARInvoice({ date, invoiceId: invoice.invoice_number, amount: invoice.total_amount - taxAmount, taxAmount });
+      if (cogs > 0) {
+        await postCOGS({ date, referenceId: invoice.invoice_number, cogsAmount: cogs });
+      }
+      await supabase.from('sales_invoices').update({ posting_status: 'Posted', posted_at: new Date().toISOString() }).eq('id', invoice.id);
+      toast({ title: 'Posted', description: `Invoice ${invoice.invoice_number} posted.` });
+      await fetchInvoiceDetails();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const handleReceivePayment = async () => {
+    try {
+      await postARPayment({ date: new Date().toISOString().slice(0,10), receiptId: `PMT-${invoice.id}`, amount: invoice.total_amount, cashAccountName: 'Cash' });
+      await supabase.from('sales_invoices').update({ payment_status: 'Paid', payment_date: new Date().toISOString() }).eq('id', invoice.id);
+      toast({ title: 'Payment received', description: `Payment recorded for ${invoice.invoice_number}.` });
+      await fetchInvoiceDetails();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto p-4 sm:p-8">
       <div className="flex justify-end gap-2 no-print">
         <Button variant="outline" onClick={() => window.print()}>Download PDF</Button>
+        {((invoice as any).posting_status !== 'Posted') && (
+          <Button variant="default" onClick={handlePost}>Post Invoice</Button>
+        )}
+        {invoice.payment_status !== 'Paid' && (
+          <Button variant="default" onClick={handleReceivePayment}>Receive Payment</Button>
+        )}
         <Button onClick={() => {
           console.log('Sending invoice...');
           toast({ title: 'Invoice Sent', description: `Invoice ${invoice.invoice_number} has been sent to ${invoice.customer_name}.` });

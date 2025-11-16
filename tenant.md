@@ -1,6 +1,6 @@
-# StockPaEasy Business Setup & Onboarding Prompt
+# paeasybooks Business Setup & Onboarding Prompt
 
-This prompt defines the **post-authentication setup flow** for new StockPaEasy tenants (businesses), including guided business profile creation, branding configuration, user management with granular role/permission controls, and consistent branding integration across the platform. The goal is to deliver an intuitive, delightful onboarding experience while giving admins complete control over team access and capabilities.
+This prompt defines the **post-authentication setup flow** for new paeasybooks tenants (businesses), including guided business profile creation, branding configuration, user management with granular role/permission controls, and consistent branding integration across the platform. The goal is to deliver an intuitive, delightful onboarding experience while giving admins complete control over team access and capabilities.
 
 ---
 
@@ -111,7 +111,7 @@ Logo Upload Area (optional but recommended)
 ```
 Primary Brand Color (required)
   - Color picker with predefined brand colors
-  - Default: StockPaEasy blue (#3B82F6)
+  - Default: paeasybooks blue (#3B82F6)
   - Applied to: Buttons, links, headers, KPI cards
   - Real-time preview showing color in UI components
   - Option to use custom color via hex input

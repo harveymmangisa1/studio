@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -6,9 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, ArrowLeft, ArrowRight, Check, AlertCircle, Save, CheckCircle, Package } from 'lucide-react';
+import { 
+  Package, CalendarIcon, Save, CheckCircle, AlertCircle, 
+  DollarSign, Warehouse, ClipboardList, Check,
+  ShoppingCart, Pill, Utensils, Store, Briefcase, Wrench
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import * as z from 'zod';
@@ -17,24 +22,235 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 const STORAGE_KEY = 'productFormDraft';
 
-// Enhanced schema with better validation
-const productSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, 'Product name is required').min(2, 'Product name must be at least 2 characters'),
-  category: z.string().min(1, 'Category is required'),
-  sku: z.string().min(1, 'SKU is required').regex(/^[A-Za-z0-9-]+$/, 'SKU can only contain letters, numbers, and hyphens'),
-  cost: z.coerce.number().min(0, 'Cost price must be non-negative').max(1000000, 'Cost price seems too high'),
-  price: z.coerce.number().min(0, 'Selling price must be non-negative'),
-  quantity: z.coerce.number().int().min(0, 'Stock quantity must be non-negative').max(1000000, 'Quantity seems too high'),
-  minStock: z.coerce.number().int().min(0, 'Min. stock must be non-negative').max(10000, 'Min stock seems too high').optional(),
-  industryCategory: z.string().min(1, 'Industry category is required'),
-  expiryDate: z.date().optional(),
-}).refine((data) => data.price >= data.cost, {
-  message: "Selling price should be greater than or equal to cost price",
-  path: ["price"],
-});
+// Industry-specific configurations
+const INDUSTRY_CONFIGS = {
+  retail: {
+    name: 'Retail',
+    icon: ShoppingCart,
+    fields: {
+      warrantyPeriod: { 
+        label: 'Warranty Period (Months)', 
+        type: 'number', 
+        default: 12,
+        helpText: 'Manufacturer warranty duration'
+      },
+      returnPolicy: { 
+        label: 'Return Policy (Days)', 
+        type: 'number', 
+        default: 30,
+        helpText: 'Number of days for customer returns'
+      },
+      serialNumber: { 
+        label: 'Serial Number Tracking', 
+        type: 'boolean', 
+        default: false,
+        helpText: 'Track individual item serial numbers'
+      }
+    },
+    requiredFields: ['name', 'category', 'sku', 'cost', 'price'],
+    defaultCategory: 'General Merchandise'
+  },
+  
+  pharmacy: {
+    name: 'Pharmacy/Pharmaceutical',
+    icon: Pill,
+    fields: {
+      expiryDate: { 
+        label: 'Expiry Date', 
+        type: 'date', 
+        required: true,
+        helpText: 'Required for pharmaceutical products'
+      },
+      batchNumber: { 
+        label: 'Batch/Lot Number', 
+        type: 'text', 
+        required: true,
+        helpText: 'Manufacturer batch identification'
+      },
+      prescriptionRequired: { 
+        label: 'Prescription Required', 
+        type: 'boolean', 
+        default: false,
+        helpText: 'Whether this medication requires a prescription'
+      },
+      temperatureControl: { 
+        label: 'Cold Chain Storage', 
+        type: 'boolean', 
+        default: false,
+        helpText: 'Requires refrigerated storage'
+      },
+      supplierLicense: { 
+        label: 'Supplier License Number', 
+        type: 'text', 
+        required: true,
+        helpText: 'Licensed pharmaceutical supplier'
+      }
+    },
+    requiredFields: ['name', 'category', 'sku', 'cost', 'price', 'expiryDate', 'batchNumber', 'supplierLicense'],
+    defaultCategory: 'Medications'
+  },
+  
+  restaurant: {
+    name: 'Restaurant/Food Service',
+    icon: Utensils,
+    fields: {
+      expiryDate: { 
+        label: 'Best Before Date', 
+        type: 'date', 
+        required: true,
+        helpText: 'Food safety expiry date'
+      },
+      allergenInfo: { 
+        label: 'Allergen Information', 
+        type: 'text', 
+        helpText: 'List of potential allergens'
+      },
+      storageTemp: { 
+        label: 'Storage Temperature', 
+        type: 'select', 
+        options: ['Ambient', 'Refrigerated', 'Frozen'],
+        default: 'Ambient',
+        helpText: 'Required storage conditions'
+      },
+      preparationTime: { 
+        label: 'Prep Time (Minutes)', 
+        type: 'number', 
+        default: 0,
+        helpText: 'Average preparation time'
+      }
+    },
+    requiredFields: ['name', 'category', 'cost', 'price', 'expiryDate'],
+    defaultCategory: 'Food Items'
+  },
+  
+  wholesale: {
+    name: 'Wholesale Distribution',
+    icon: Store,
+    fields: {
+      minimumOrder: { 
+        label: 'Minimum Order Quantity', 
+        type: 'number', 
+        default: 1,
+        helpText: 'Minimum units per order'
+      },
+      bulkPricing: { 
+        label: 'Bulk Pricing Tiers', 
+        type: 'boolean', 
+        default: true,
+        helpText: 'Enable quantity-based pricing'
+      },
+      leadTime: { 
+        label: 'Lead Time (Days)', 
+        type: 'number', 
+        default: 7,
+        helpText: 'Average delivery time'
+      }
+    },
+    requiredFields: ['name', 'category', 'sku', 'cost', 'price'],
+    defaultCategory: 'Wholesale Goods'
+  },
+  
+  services: {
+    name: 'Professional Services',
+    icon: Briefcase,
+    fields: {
+      serviceDuration: { 
+        label: 'Service Duration (Hours)', 
+        type: 'number', 
+        default: 1,
+        helpText: 'Typical service time required'
+      },
+      qualifiedStaff: { 
+        label: 'Qualified Staff Required', 
+        type: 'boolean', 
+        default: false,
+        helpText: 'Service requires certified professionals'
+      },
+      recurringBilling: { 
+        label: 'Recurring Billing', 
+        type: 'boolean', 
+        default: false,
+        helpText: 'Service is billed on recurring basis'
+      }
+    },
+    requiredFields: ['name', 'category', 'price'],
+    defaultCategory: 'Professional Services'
+  },
+  
+  manufacturing: {
+    name: 'Manufacturing',
+    icon: Wrench,
+    fields: {
+      rawMaterials: { 
+        label: 'Raw Material Tracking', 
+        type: 'boolean', 
+        default: true,
+        helpText: 'Track raw material inventory'
+      },
+      productionTime: { 
+        label: 'Production Time (Days)', 
+        type: 'number', 
+        default: 1,
+        helpText: 'Time required to manufacture'
+      },
+      qualityCheck: { 
+        label: 'Quality Control Required', 
+        type: 'boolean', 
+        default: true,
+        helpText: 'Item requires quality inspection'
+      }
+    },
+    requiredFields: ['name', 'category', 'sku', 'cost', 'price'],
+    defaultCategory: 'Manufactured Goods'
+  }
+} as const;
 
-export type Product = z.infer<typeof productSchema>;
+type IndustryType = keyof typeof INDUSTRY_CONFIGS;
+type IndustryFieldConfig = {
+  label: string;
+  type: 'text' | 'number' | 'boolean' | 'date' | 'select';
+  required?: boolean;
+  default?: any;
+  helpText?: string;
+  options?: string[];
+};
+
+// Dynamic schema based on selected industry
+const createProductSchema = (industry: string) => {
+  const industryConfig = INDUSTRY_CONFIGS[industry as IndustryType];
+  
+  let schema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, 'Product name is required').min(2, 'Product name must be at least 2 characters'),
+    category: z.string().min(1, 'Category is required'),
+    sku: z.string().min(1, 'SKU is required').regex(/^[A-Za-z0-9-]+$/, 'SKU can only contain letters, numbers, and hyphens'),
+    cost: z.coerce.number().min(0, 'Cost price must be non-negative').max(1000000, 'Cost price seems too high'),
+    price: z.coerce.number().min(0, 'Selling price must be non-negative'),
+    quantity: z.coerce.number().int().min(0, 'Stock quantity must be non-negative').max(1000000, 'Quantity seems too high'),
+    minStock: z.coerce.number().int().min(0, 'Min. stock must be non-negative').max(10000, 'Min stock seems too high').optional(),
+    industry: z.string().min(1, 'Industry is required'),
+    industryFields: z.record(z.any()).optional(),
+  }).refine((data) => data.price >= data.cost, {
+    message: "Selling price should be greater than or equal to cost price",
+    path: ["price"],
+  });
+
+  // Add industry-specific validations
+  if (industryConfig) {
+    Object.entries(industryConfig.fields).forEach(([field, config]) => {
+      if ((config as IndustryFieldConfig).required && (config as IndustryFieldConfig).type !== 'boolean') {
+        schema = schema.refine((data) => data.industryFields?.[field], {
+          message: `${(config as IndustryFieldConfig).label} is required for ${industryConfig.name} products`,
+          path: ["industryFields", field],
+        });
+      }
+    });
+  }
+
+  return schema;
+};
+
+export type Product = z.infer<ReturnType<typeof createProductSchema>>;
 
 interface ProductFormProps {
   product: Product | null;
@@ -42,61 +258,20 @@ interface ProductFormProps {
   onCancel?: () => void;
 }
 
-const ProgressBar = ({ currentStep, completedSteps }) => {
-  const steps = [
-    { number: 1, label: 'Basic Info' },
-    { number: 2, label: 'Pricing' },
-    { number: 3, label: 'Inventory' },
-    { number: 4, label: 'Review' }
-  ];
+interface FormFieldProps {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+  required?: boolean;
+  helpText?: string;
+  isValid?: boolean;
+}
 
-  return (
-    <div className="mb-6 lg:mb-8">
-      <div className="flex items-center justify-between mb-2 px-2 sm:px-0">
-        {steps.map((step, index) => (
-          <React.Fragment key={step.number}>
-            <div className="flex flex-col items-center flex-1 max-w-[80px] sm:max-w-none">
-              <div
-                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-sm sm:text-base transition-all ${
-                  completedSteps.includes(step.number)
-                    ? 'bg-green-500 text-white'
-                    : step.number === currentStep
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-500'
-                }`}
-              >
-                {completedSteps.includes(step.number) ? (
-                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                ) : (
-                  step.number
-                )}
-              </div>
-              <span className="text-xs mt-1 font-medium text-center hidden xs:block">{step.label}</span>
-            </div>
-            {index < steps.length - 1 && (
-              <div className="flex-1 h-1 mx-1 sm:mx-2 bg-gray-200 rounded">
-                <div
-                  className={`h-full rounded transition-all ${
-                    completedSteps.includes(step.number) ? 'bg-green-500' : 'bg-gray-200'
-                  }`}
-                  style={{ width: completedSteps.includes(step.number) ? '100%' : '0%' }}
-                />
-              </div>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-      <div className="text-center text-sm text-gray-600 px-2">
-        Step {currentStep} of 4 ({Math.round((currentStep / 4) * 100)}% complete)
-      </div>
-    </div>
-  );
-};
-
-const FormField = ({ label, error, children, required, helpText, isValid }) => (
+const FormField = ({ label, error, children, required, helpText, isValid }: FormFieldProps) => (
   <div className="space-y-2">
-    <Label className="text-sm font-medium">
-      {label} {required && <span className="text-red-500">*</span>}
+    <Label className="text-sm font-medium text-gray-700">
+      {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </Label>
     {children}
     {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
@@ -115,7 +290,12 @@ const FormField = ({ label, error, children, required, helpText, isValid }) => (
   </div>
 );
 
-const PriceComparison = ({ cost, price }) => {
+interface PriceComparisonProps {
+  cost: number;
+  price: number;
+}
+
+const PriceComparison = ({ cost, price }: PriceComparisonProps) => {
   const profit = price - cost;
   const margin = cost > 0 ? ((profit / cost) * 100) : 0;
 
@@ -141,7 +321,12 @@ const PriceComparison = ({ cost, price }) => {
   );
 };
 
-const StockStatus = ({ quantity, minStock }) => {
+interface StockStatusProps {
+  quantity: number;
+  minStock: number;
+}
+
+const StockStatus = ({ quantity, minStock }: StockStatusProps) => {
   const status = quantity === 0 ? 'out-of-stock' : 
                  quantity <= minStock ? 'low-stock' : 'in-stock';
   
@@ -166,116 +351,250 @@ const StockStatus = ({ quantity, minStock }) => {
 };
 
 export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [activeTab, setActiveTab] = useState('basic');
+  const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>(product?.industry as IndustryType || 'retail');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const industryConfig = INDUSTRY_CONFIGS[selectedIndustry];
+  const IndustryIcon = industryConfig?.icon || Package;
+
+  // Initialize industry fields with defaults
+  const initializeIndustryFields = (industry: IndustryType) => {
+    const config = INDUSTRY_CONFIGS[industry];
+    const defaultIndustryFields: Record<string, any> = {};
+    
+    if (config?.fields) {
+      Object.entries(config.fields).forEach(([key, fieldConfig]) => {
+        defaultIndustryFields[key] = fieldConfig.default ?? '';
+      });
+    }
+    
+    return defaultIndustryFields;
+  };
 
   const form = useForm<Product>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(createProductSchema(selectedIndustry)),
     defaultValues: product || {
       name: '',
-      category: '',
+      category: industryConfig?.defaultCategory || '',
       sku: '',
       cost: 0,
       price: 0,
       quantity: 0,
       minStock: 10,
-      industryCategory: 'General Retail',
+      industry: selectedIndustry,
+      industryFields: initializeIndustryFields(selectedIndustry),
     },
   });
 
-  const industryCategory = form.watch('industryCategory');
-  const cost = form.watch('cost');
-  const price = form.watch('price');
-  const quantity = form.watch('quantity');
+  const industry = form.watch('industry') as IndustryType;
+  const cost = form.watch('cost') || 0;
+  const price = form.watch('price') || 0;
+  const quantity = form.watch('quantity') || 0;
   const minStock = form.watch('minStock') || 0;
+  const industryFields = form.watch('industryFields') || {};
 
+  // Update form validation when industry changes
+  useEffect(() => {
+    if (industry !== selectedIndustry) {
+      setSelectedIndustry(industry);
+      const newConfig = INDUSTRY_CONFIGS[industry];
+      
+      // Reset industry-specific fields
+      const defaultIndustryFields = initializeIndustryFields(industry);
+
+      form.setValue('industryFields', defaultIndustryFields);
+      form.setValue('category', newConfig?.defaultCategory || '');
+      
+      // Update form validation schema
+      form.setValue('industry', industry);
+    }
+  }, [industry, form, selectedIndustry]);
+
+  // Load draft on component mount
   useEffect(() => {
     if (!product) {
       const savedDraft = localStorage.getItem(STORAGE_KEY);
       if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        if (confirm('You have unsaved product changes. Would you like to resume?')) {
-          form.reset(draft.formData);
-          setCurrentStep(draft.currentStep);
-          setCompletedSteps(draft.completedSteps);
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (confirm('You have unsaved product changes. Would you like to resume?')) {
+            form.reset(draft.formData);
+            setSelectedIndustry(draft.formData.industry);
+          }
+        } catch (error) {
+          console.error('Error loading draft:', error);
+          localStorage.removeItem(STORAGE_KEY);
         }
       }
     }
   }, [product, form]);
 
+  // Save draft when form changes
   useEffect(() => {
-    if (!showSuccess) {
+    if (!showSuccess && form.formState.isDirty) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         formData: form.getValues(),
-        currentStep,
-        completedSteps
       }));
+      setHasChanges(true);
     }
-  }, [form, currentStep, completedSteps, showSuccess]);
+  }, [form, showSuccess]);
 
-  const validateStep = (step: number): boolean => {
-    const values = form.getValues();
-    const errors: Record<string, string> = {};
-
-    if (step === 1) {
-      if (!values.name || values.name.length < 2) {
-        errors.name = 'Product name must be at least 2 characters';
-      }
-      if (!values.category) {
-        errors.category = 'Category is required';
-      }
-      if (!values.sku) {
-        errors.sku = 'SKU is required';
-      } else if (!/^[A-Za-z0-9-]+$/.test(values.sku)) {
-        errors.sku = 'SKU can only contain letters, numbers, and hyphens';
-      }
-    }
-
-    if (step === 2) {
-      if (values.cost < 0) errors.cost = 'Cost must be non-negative';
-      if (values.price < 0) errors.price = 'Price must be non-negative';
-      if (values.price < values.cost) errors.price = 'Price should be greater than cost';
-    }
-
-    if (step === 3) {
-      if (values.quantity < 0) errors.quantity = 'Quantity must be non-negative';
-      if (values.minStock && values.minStock < 0) errors.minStock = 'Min stock must be non-negative';
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+  const handleIndustryFieldChange = (field: string, value: any) => {
+    form.setValue('industryFields', {
+      ...industryFields,
+      [field]: value
+    }, { shouldDirty: true });
   };
 
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (!completedSteps.includes(currentStep)) {
-        setCompletedSteps([...completedSteps, currentStep]);
-      }
-      setCurrentStep(currentStep + 1);
+  const renderIndustryField = (key: string, fieldConfig: IndustryFieldConfig) => {
+    const value = industryFields[key];
+    const error = form.formState.errors.industryFields?.[key] as { message?: string } | undefined;
+
+    if (fieldConfig.type === 'boolean') {
+      return (
+        <div key={key} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+          <div>
+            <Label className="text-sm font-medium text-gray-700">
+              {fieldConfig.label}
+              {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            {fieldConfig.helpText && (
+              <p className="text-xs text-gray-500 mt-1">{fieldConfig.helpText}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => handleIndustryFieldChange(key, !value)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              value ? 'bg-gray-900' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                value ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+          {error && (
+            <div className="flex items-center gap-1 text-red-500 text-sm mt-1">
+              <AlertCircle className="w-4 h-4" />
+              {error.message}
+            </div>
+          )}
+        </div>
+      );
     }
+
+    if (fieldConfig.type === 'date') {
+      return (
+        <FormField 
+          key={key}
+          label={fieldConfig.label}
+          error={error?.message}
+          helpText={fieldConfig.helpText}
+          required={fieldConfig.required}
+        >
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full pl-3 text-left font-normal",
+                  !value && "text-muted-foreground"
+                )}
+              >
+                {value ? (
+                  format(new Date(value), "PPP")
+                ) : (
+                  <span>Pick a date</span>
+                )}
+                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={value ? new Date(value) : undefined}
+                onSelect={(date) => handleIndustryFieldChange(key, date)}
+                disabled={(date) => date < new Date()}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </FormField>
+      );
+    }
+
+    if (fieldConfig.type === 'select') {
+      return (
+        <FormField 
+          key={key}
+          label={fieldConfig.label}
+          error={error?.message}
+          helpText={fieldConfig.helpText}
+          required={fieldConfig.required}
+        >
+          <Select 
+            value={value || ''} 
+            onValueChange={(val) => handleIndustryFieldChange(key, val)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={`Select ${fieldConfig.label.toLowerCase()}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {fieldConfig.options?.map((option: string) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+      );
+    }
+
+    return (
+      <FormField 
+        key={key}
+        label={fieldConfig.label}
+        error={error?.message}
+        helpText={fieldConfig.helpText}
+        required={fieldConfig.required}
+        isValid={value && !error}
+      >
+        <Input
+          type={fieldConfig.type}
+          value={value || ''}
+          onChange={(e) => {
+            const newValue = fieldConfig.type === 'number' ? 
+              (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value;
+            handleIndustryFieldChange(key, newValue);
+          }}
+          placeholder={fieldConfig.helpText}
+          className={error ? 'border-red-500' : value ? 'border-green-500' : ''}
+        />
+      </FormField>
+    );
   };
 
-  const handleBack = () => {
-    setCurrentStep(currentStep - 1);
-    setFormErrors({});
-  };
-
-  const handleSubmit = async () => {
-    if (validateStep(4)) {
-      const result = await form.handleSubmit((data) => {
-        setShowSuccess(true);
-        localStorage.removeItem(STORAGE_KEY);
-        setTimeout(() => {
-          onSuccess(data);
-        }, 2000);
-      })();
-      return result;
+  const handleSubmit = async (data: Product) => {
+    try {
+      setShowSuccess(true);
+      localStorage.removeItem(STORAGE_KEY);
+      setTimeout(() => {
+        onSuccess(data);
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('There was an error saving the product. Please try again.');
     }
   };
 
   const handleSaveDraft = () => {
+    const formData = form.getValues();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ formData }));
     alert('Product draft saved successfully! You can resume later.');
   };
 
@@ -308,375 +627,468 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 lg:px-6">
-      <Card className="w-full border-0 shadow-sm sm:shadow-md lg:shadow-lg">
-        <CardHeader className="px-4 sm:px-6">
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl lg:text-2xl">
-            <Package className="w-5 h-5 sm:w-6 sm:h-6" />
-            {product ? 'Edit Product' : 'Add New Product'}
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
-            {currentStep === 1 && "Enter basic product information and categorization"}
-            {currentStep === 2 && "Set pricing and profit margins"}
-            {currentStep === 3 && "Configure inventory levels and stock management"}
-            {currentStep === 4 && "Review all product details before saving"}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="px-3 sm:px-6">
-          <ProgressBar currentStep={currentStep} completedSteps={completedSteps} />
-
-          <form onSubmit={form.handleSubmit(onSuccess)} className="space-y-6 lg:space-y-8">
-            {/* Step 1: Basic Information */}
-            {currentStep === 1 && (
-              <div className="space-y-4 lg:space-y-6">
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 px-4 sm:px-6">
-                    <CardTitle className="text-base sm:text-lg">Product Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <FormField 
-                      label="Product Name" 
-                      required 
-                      error={formErrors.name}
-                      helpText="Descriptive name that customers will see"
-                      isValid={form.watch('name')?.length >= 2}
-                    >
-                      <Input
-                        placeholder="e.g., Logitech MX Master 3S"
-                        {...form.register('name')}
-                        className={formErrors.name ? 'border-red-500' : form.watch('name')?.length >= 2 ? 'border-green-500' : ''}
-                      />
-                    </FormField>
-
-                    <FormField 
-                      label="SKU (Stock Keeping Unit)" 
-                      required 
-                      error={formErrors.sku}
-                      helpText="Unique identifier for internal tracking"
-                      isValid={!!form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku'))}
-                    >
-                      <Input
-                        placeholder="LOG-MXM3S-BLK"
-                        {...form.register('sku')}
-                        className={formErrors.sku ? 'border-red-500' : form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku')) ? 'border-green-500' : ''}
-                      />
-                    </FormField>
-                  </CardContent>
-                </Card>
-
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 px-4 sm:px-6">
-                    <CardTitle className="text-base sm:text-lg">Categorization</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <FormField 
-                      label="Industry Category" 
-                      required 
-                      error={formErrors.industryCategory}
-                      helpText="Select the primary industry for this product"
-                      isValid={!!form.watch('industryCategory')}
-                    >
-                      <Select
-                        value={form.watch('industryCategory')}
-                        onValueChange={(value) => form.setValue('industryCategory', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="General Retail">General Retail</SelectItem>
-                          <SelectItem value="Pharmacy">Pharmacy</SelectItem>
-                          <SelectItem value="Food & Beverage">Food & Beverage</SelectItem>
-                          <SelectItem value="Electronics">Electronics</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormField>
-                    <FormField 
-                      label="Product Category" 
-                      required 
-                      error={formErrors.category}
-                      helpText="Specific category within the industry"
-                      isValid={!!form.watch('category')}
-                    >
-                      <Input
-                        placeholder="e.g., Computer Accessories"
-                        {...form.register('category')}
-                        className={formErrors.category ? 'border-red-500' : form.watch('category') ? 'border-green-500' : ''}
-                      />
-                    </FormField>
-                    {industryCategory === 'Pharmacy' && (
-                      <FormField 
-                        label="Expiry Date" 
-                        helpText="Required for pharmaceutical products"
-                      >
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !form.watch('expiryDate') && "text-muted-foreground"
-                              )}
-                            >
-                              {form.watch('expiryDate') ? (
-                                format(form.watch('expiryDate')!, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={form.watch('expiryDate')}
-                              onSelect={(date) => form.setValue('expiryDate', date)}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </FormField>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Step 2: Pricing */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 px-4 sm:px-6">
-                    <CardTitle className="text-base sm:text-lg">Product Pricing</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <FormField 
-                        label="Cost Price" 
-                        required 
-                        error={formErrors.cost}
-                        helpText="Your cost to acquire one unit of the product."
-                        isValid={cost >= 0 && cost < 1000000}
-                      >
-                        <Input
-                          type="number"
-                          placeholder="15.00"
-                          {...form.register('cost')}
-                          className={formErrors.cost ? 'border-red-500' : cost >= 0 ? 'border-green-500' : ''}
-                        />
-                      </FormField>
-
-                      <FormField 
-                        label="Selling Price" 
-                        required 
-                        error={formErrors.price}
-                        helpText="The price customers will pay."
-                        isValid={price >= cost && price >= 0}
-                      >
-                        <Input
-                          type="number"
-                          placeholder="29.99"
-                          {...form.register('price')}
-                          className={formErrors.price ? 'border-red-500' : price >= cost && price >= 0 ? 'border-green-500' : ''}
-                        />
-                      </FormField>
-                    </div>
-
-                    <PriceComparison cost={cost || 0} price={price || 0} />
-
-                    {price < cost && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-amber-800">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="font-medium">Warning: Selling below cost</span>
-                        </div>
-                        <p className="text-amber-700 text-sm mt-1">
-                          You are selling this product for less than it costs. This will result in a loss.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Step 3: Inventory */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 px-4 sm:px-6">
-                    <CardTitle className="text-base sm:text-lg">Stock Management</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <FormField 
-                        label="Opening Stock Quantity" 
-                        required 
-                        error={formErrors.quantity}
-                        helpText="Current available stock on hand."
-                        isValid={quantity >= 0 && quantity < 1000000}
-                      >
-                        <Input
-                          type="number"
-                          placeholder="150"
-                          {...form.register('quantity')}
-                          className={formErrors.quantity ? 'border-red-500' : quantity >= 0 ? 'border-green-500' : ''}
-                        />
-                      </FormField>
-
-                      <FormField 
-                        label="Minimum Stock Level" 
-                        error={formErrors.minStock}
-                        helpText="Get an alert when stock drops to this level."
-                        isValid={minStock >= 0 && minStock < 10000}
-                      >
-                        <Input
-                          type="number"
-                          placeholder="10"
-                          {...form.register('minStock')}
-                          value={minStock || ''}
-                          className={formErrors.minStock ? 'border-red-500' : minStock >= 0 ? 'border-green-500' : ''}
-                        />
-                      </FormField>
-                    </div>
-
-                    <StockStatus quantity={quantity || 0} minStock={minStock || 10} />
-
-                    {quantity <= minStock && quantity > 0 && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-amber-800">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="font-medium">Low Stock Alert</span>
-                        </div>
-                        <p className="text-amber-700 text-sm mt-1">
-                          Stock level is at or below minimum. Consider reordering soon.
-                        </p>
-                      </div>
-                    )}
-
-                    {quantity === 0 && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-red-800">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="font-medium">Out of Stock</span>
-                        </div>
-                        <p className="text-red-700 text-sm mt-1">
-                          This product is currently out of stock. Update quantity when available.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Step 4: Review */}
-            {currentStep === 4 && (
-              <div className="space-y-4 lg:space-y-6">
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 px-4 sm:px-6">
-                    <CardTitle className="text-base sm:text-lg">Basic Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2 flex-1">
-                        <p><span className="text-gray-500 font-medium">Industry:</span> {form.watch('industryCategory')}</p>
-                        <p><span className="text-gray-500 font-medium">Name:</span> {form.watch('name')}</p>
-                        <p><span className="text-gray-500 font-medium">Category:</span> {form.watch('category')}</p>
-                        <p><span className="text-gray-500 font-medium">SKU:</span> {form.watch('sku')}</p>
-                        {form.watch('expiryDate') && (
-                          <p><span className="text-gray-500 font-medium">Expiry:</span> {format(form.watch('expiryDate')!, "PPP")}</p>
-                        )}
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)} className="shrink-0">
-                        Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 px-4 sm:px-6">
-                    <CardTitle className="text-base sm:text-lg">Pricing</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2 flex-1">
-                        <p><span className="text-gray-500 font-medium">Cost Price:</span> ${form.watch('cost')?.toFixed(2)}</p>
-                        <p><span className="text-gray-500 font-medium">Selling Price:</span> ${form.watch('price')?.toFixed(2)}</p>
-                        <p><span className="text-gray-500 font-medium">Profit Margin:</span> 
-                          {cost > 0 ? (((price - cost) / cost) * 100).toFixed(1) : '0'}%
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)} className="shrink-0">
-                        Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 px-4 sm:px-6">
-                    <CardTitle className="text-base sm:text-lg">Inventory</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2 flex-1">
-                        <p><span className="text-gray-500 font-medium">Stock Quantity:</span> {form.watch('quantity')}</p>
-                        <p><span className="text-gray-500 font-medium">Min Stock Level:</span> {form.watch('minStock') || 10}</p>
-                        <div className="mt-2">
-                          <StockStatus quantity={quantity} minStock={minStock} />
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setCurrentStep(3)} className="shrink-0">
-                        Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </form>
-
-          {/* Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 lg:mt-8 pt-4 sm:pt-6 border-t">
-            <div className="flex gap-2">
-              {currentStep > 1 && (
-                <Button variant="outline" onClick={handleBack} className="flex-1 sm:flex-none">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              )}
-              {onCancel && currentStep === 1 && (
-                <Button variant="outline" onClick={onCancel} className="flex-1 sm:flex-none">
-                  Cancel
-                </Button>
-              )}
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="border-b border-gray-200 bg-white rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Package className="w-8 h-8" />
+                {product ? 'Edit Product' : 'Add New Product'}
+              </h1>
+              <p className="mt-2 text-sm text-gray-500">
+                {activeTab === 'basic' && "Enter basic product information and industry classification"}
+                {activeTab === 'pricing' && "Set pricing, costs, and profit margins"}
+                {activeTab === 'inventory' && "Configure stock levels and inventory management"}
+                {activeTab === 'industry' && industryConfig && `Configure ${industryConfig.name}-specific settings`}
+                {activeTab === 'review' && "Review all product details before saving"}
+              </p>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={handleSaveDraft} className="order-2 sm:order-1">
+            <div className="flex gap-3">
+              {hasChanges && (
+                <div className="flex items-center gap-2 text-amber-600 text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  Unsaved changes
+                </div>
+              )}
+              <Button 
+                onClick={handleSaveDraft}
+                variant="outline"
+                type="button"
+              >
                 <Save className="mr-2 h-4 w-4" />
                 Save Draft
               </Button>
-
-              {currentStep < 4 ? (
-                <Button onClick={handleNext} className="order-1 sm:order-2 flex-1">
-                  Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              ) : (
-                <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 order-1 sm:order-2 flex-1">
-                  <Check className="mr-2 h-4 w-4" />
-                  {product ? 'Update Product' : 'Create Product'}
-                </Button>
-              )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="border-b border-gray-200 w-full justify-start bg-white rounded-lg p-1">
+            <TabsTrigger value="basic" className="gap-2">
+              <Package className="w-4 h-4" />
+              Basic Info
+            </TabsTrigger>
+            <TabsTrigger value="pricing" className="gap-2">
+              <DollarSign className="w-4 h-4" />
+              Pricing
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="gap-2">
+              <Warehouse className="w-4 h-4" />
+              Inventory
+            </TabsTrigger>
+            <TabsTrigger value="industry" className="gap-2">
+              <IndustryIcon className="w-4 h-4" />
+              {industryConfig?.name} Settings
+            </TabsTrigger>
+            <TabsTrigger value="review" className="gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Review
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Basic Info Tab */}
+          <TabsContent value="basic" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
+                <CardTitle className="text-lg">Product Information</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <FormField 
+                    label="Industry" 
+                    required 
+                    error={form.formState.errors.industry?.message}
+                    helpText="Select the primary industry for this product"
+                  >
+                    <Select 
+                      value={form.watch('industry')} 
+                      onValueChange={(value) => form.setValue('industry', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(INDUSTRY_CONFIGS).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            <div className="flex items-center gap-2">
+                              <config.icon className="w-4 h-4" />
+                              {config.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+
+                  <FormField 
+                    label="Product Category" 
+                    required 
+                    error={form.formState.errors.category?.message}
+                    helpText="Specific category within the industry"
+                    isValid={!!form.watch('category')}
+                  >
+                    <Input
+                      placeholder={industryConfig?.defaultCategory}
+                      {...form.register('category')}
+                      className={form.formState.errors.category ? 'border-red-500' : form.watch('category') ? 'border-green-500' : ''}
+                    />
+                  </FormField>
+                </div>
+
+                <FormField 
+                  label="Product Name" 
+                  required 
+                    error={form.formState.errors.name?.message}
+                  helpText="Descriptive name that customers will see"
+                  isValid={form.watch('name')?.length >= 2}
+                >
+                  <Input
+                    placeholder="e.g., Logitech MX Master 3S"
+                    {...form.register('name')}
+                    className={form.formState.errors.name ? 'border-red-500' : form.watch('name')?.length >= 2 ? 'border-green-500' : ''}
+                  />
+                </FormField>
+
+                <FormField 
+                  label="SKU (Stock Keeping Unit)" 
+                  required 
+                  error={form.formState.errors.sku?.message}
+                  helpText="Unique identifier for internal tracking"
+                  isValid={!!form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku'))}
+                >
+                  <Input
+                    placeholder="LOG-MXM3S-BLK"
+                    {...form.register('sku')}
+                    className={form.formState.errors.sku ? 'border-red-500' : form.watch('sku') && /^[A-Za-z0-9-]+$/.test(form.watch('sku')) ? 'border-green-500' : ''}
+                  />
+                </FormField>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pricing Tab */}
+          <TabsContent value="pricing" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
+                <CardTitle className="text-lg">Product Pricing</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <FormField 
+                    label="Cost Price" 
+                    required 
+                    error={form.formState.errors.cost?.message}
+                    helpText="Your cost to acquire one unit"
+                    isValid={cost >= 0 && cost < 1000000}
+                  >
+                    <Input
+                      type="number"
+                      placeholder="15.00"
+                      {...form.register('cost')}
+                      className={form.formState.errors.cost ? 'border-red-500' : cost >= 0 ? 'border-green-500' : ''}
+                    />
+                  </FormField>
+
+                  <FormField 
+                    label="Selling Price" 
+                    required 
+                    error={form.formState.errors.price?.message}
+                    helpText="The price customers will pay"
+                    isValid={price >= cost && price >= 0}
+                  >
+                    <Input
+                      type="number"
+                      placeholder="29.99"
+                      {...form.register('price')}
+                      className={form.formState.errors.price ? 'border-red-500' : price >= cost && price >= 0 ? 'border-green-500' : ''}
+                    />
+                  </FormField>
+                </div>
+
+                <PriceComparison cost={cost || 0} price={price || 0} />
+
+                {price < cost && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-amber-800">
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="font-medium">Warning: Selling below cost</span>
+                    </div>
+                    <p className="text-amber-700 text-sm mt-1">
+                      You are selling this product for less than it costs. This will result in a loss.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Inventory Tab */}
+          <TabsContent value="inventory" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
+                <CardTitle className="text-lg">Stock Management</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <FormField 
+                    label="Opening Stock Quantity" 
+                    required 
+                    error={form.formState.errors.quantity?.message}
+                    helpText="Current available stock on hand"
+                    isValid={quantity >= 0 && quantity < 1000000}
+                  >
+                    <Input
+                      type="number"
+                      placeholder="150"
+                      {...form.register('quantity')}
+                      className={form.formState.errors.quantity ? 'border-red-500' : quantity >= 0 ? 'border-green-500' : ''}
+                    />
+                  </FormField>
+
+                  <FormField 
+                    label="Minimum Stock Level" 
+                    error={form.formState.errors.minStock?.message}
+                    helpText="Get an alert when stock drops to this level"
+                    isValid={minStock >= 0 && minStock < 10000}
+                  >
+                    <Input
+                      type="number"
+                      placeholder="10"
+                      {...form.register('minStock')}
+                      value={minStock || ''}
+                      className={form.formState.errors.minStock ? 'border-red-500' : minStock >= 0 ? 'border-green-500' : ''}
+                    />
+                  </FormField>
+                </div>
+
+                <StockStatus quantity={quantity || 0} minStock={minStock || 10} />
+
+                {quantity <= minStock && quantity > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-amber-800">
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="font-medium">Low Stock Alert</span>
+                    </div>
+                    <p className="text-amber-700 text-sm mt-1">
+                      Stock level is at or below minimum. Consider reordering soon.
+                    </p>
+                  </div>
+                )}
+
+                {quantity === 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-red-800">
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="font-medium">Out of Stock</span>
+                    </div>
+                    <p className="text-red-700 text-sm mt-1">
+                      This product is currently out of stock. Update quantity when available.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Industry-Specific Tab */}
+          <TabsContent value="industry" className="mt-6">
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <IndustryIcon className="w-6 h-6 text-gray-700" />
+                  <div>
+                    <CardTitle className="text-lg">{industryConfig?.name} Settings</CardTitle>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Configure settings specific to {industryConfig?.name.toLowerCase()} products
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                {industryConfig.fields && 
+                  Object.entries(industryConfig.fields).map(([key, fieldConfig]) => 
+                    renderIndustryField(key, fieldConfig as IndustryFieldConfig)
+                  )
+                }
+
+                {/* Required Fields Info */}
+                <div className="border-t pt-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Required Information</h3>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-900 mb-2">
+                      The following fields are required for {industryConfig.name.toLowerCase()} products:
+                    </p>
+                    <ul className="space-y-1">
+                      {industryConfig.requiredFields.map((field, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm text-blue-900">
+                          <Check className="w-4 h-4 text-blue-600" />
+                          {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Review Tab */}
+          <TabsContent value="review" className="mt-6">
+            <div className="space-y-6">
+              <Card className="border-gray-200">
+                <CardHeader className="border-b border-gray-200">
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <p><span className="text-gray-500 font-medium">Industry:</span> {industryConfig.name}</p>
+                      <p><span className="text-gray-500 font-medium">Name:</span> {form.watch('name')}</p>
+                      <p><span className="text-gray-500 font-medium">Category:</span> {form.watch('category')}</p>
+                      <p><span className="text-gray-500 font-medium">SKU:</span> {form.watch('sku')}</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('basic')}>
+                      Edit
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-gray-200">
+                <CardHeader className="border-b border-gray-200">
+                  <CardTitle className="text-lg">Pricing</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <p><span className="text-gray-500 font-medium">Cost Price:</span> ${form.watch('cost')?.toFixed(2)}</p>
+                      <p><span className="text-gray-500 font-medium">Selling Price:</span> ${form.watch('price')?.toFixed(2)}</p>
+                      <p><span className="text-gray-500 font-medium">Profit Margin:</span> 
+                        {cost > 0 ? (((price - cost) / cost) * 100).toFixed(1) : '0'}%
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('pricing')}>
+                      Edit
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-gray-200">
+                <CardHeader className="border-b border-gray-200">
+                  <CardTitle className="text-lg">Inventory</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <p><span className="text-gray-500 font-medium">Stock Quantity:</span> {form.watch('quantity')}</p>
+                      <p><span className="text-gray-500 font-medium">Min Stock Level:</span> {form.watch('minStock') || 10}</p>
+                      <div className="mt-2">
+                        <StockStatus quantity={quantity} minStock={minStock} />
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('inventory')}>
+                      Edit
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {industryConfig.fields && Object.keys(industryFields).length > 0 && (
+                <Card className="border-gray-200">
+                  <CardHeader className="border-b border-gray-200">
+                    <CardTitle className="text-lg">{industryConfig.name} Settings</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2 flex-1">
+                        {Object.entries(industryConfig.fields).map(([key, fieldConfig]) => {
+                          const value = industryFields[key];
+                          const config = fieldConfig as IndustryFieldConfig;
+                          if (config.type === 'boolean') {
+                            return (
+                              <p key={key}>
+                                <span className="text-gray-500 font-medium">{config.label}:</span> {value ? 'Yes' : 'No'}
+                              </p>
+                            );
+                          }
+                          if (config.type === 'date' && value) {
+                            return (
+                              <p key={key}>
+                                <span className="text-gray-500 font-medium">{config.label}:</span> {format(new Date(value), "PPP")}
+                              </p>
+                            );
+                          }
+                          return (
+                            <p key={key}>
+                              <span className="text-gray-500 font-medium">{config.label}:</span> {value || 'Not set'}
+                            </p>
+                          );
+                        })}
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setActiveTab('industry')}>
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between items-center bg-white rounded-lg p-6 border border-gray-200">
+          <div>
+            {onCancel && (
+              <Button variant="outline" onClick={onCancel} type="button">
+                Cancel
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex gap-3">
+            {activeTab !== 'basic' && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  const tabs = ['basic', 'pricing', 'inventory', 'industry', 'review'];
+                  const currentIndex = tabs.indexOf(activeTab);
+                  setActiveTab(tabs[currentIndex - 1]);
+                }}
+                type="button"
+              >
+                Previous
+              </Button>
+            )}
+            
+            {activeTab !== 'review' ? (
+              <Button 
+                onClick={() => {
+                  const tabs = ['basic', 'pricing', 'inventory', 'industry', 'review'];
+                  const currentIndex = tabs.indexOf(activeTab);
+                  setActiveTab(tabs[currentIndex + 1]);
+                }}
+                type="button"
+              >
+                Next
+              </Button>
+            ) : (
+              <Button 
+                onClick={form.handleSubmit(handleSubmit)}
+                className="bg-green-600 hover:bg-green-700"
+                type="button"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                {product ? 'Update Product' : 'Create Product'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

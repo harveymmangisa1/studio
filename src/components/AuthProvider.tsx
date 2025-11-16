@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 type AuthContextType = {
   session: Session | null;
   supabase: SupabaseClient;
+  userProfile: { id: string; name: string | null; email: string; role?: string | null } | null;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<{ id: string; name: string | null; email: string; role?: string | null } | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -37,6 +39,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Load user profile from users table once session is available
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const authUser = session.user;
+        if (!authUser) return;
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, name, email, role')
+          .eq('id', authUser.id)
+          .single();
+        if (!error && data) {
+          setUserProfile({ id: data.id, name: data.name, email: data.email, role: data.role });
+        } else {
+          // fallback to auth values
+          setUserProfile({ id: authUser.id, name: authUser.user_metadata?.name || null, email: authUser.email || '', role: null });
+        }
+      } catch (e) {
+        setUserProfile({ id: session.user.id, name: session.user.user_metadata?.name || null, email: session.user.email || '', role: null });
+      }
+    };
+    loadProfile();
+  }, [session]);
+
   if (loading) {
     return <div>Loading...</div>; // Or a proper loading spinner
   }
@@ -48,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // If there is a session, show the main app layout.
   return (
-    <AuthContext.Provider value={{ session, supabase }}>
+    <AuthContext.Provider value={{ session, supabase, userProfile }}>
       <TenantProvider>
         <SidebarProvider>
           <AppSidebar />

@@ -1,6 +1,6 @@
 Enterprise-Grade Stock Management & Accounts System
 Project Context
-StockPaEasy is a multi-tenant SaaS platform built with Next.js 15, TypeScript, Supabase backend, Tailwind CSS, and shadcn/ui components. It combines essential inventory management with enterprise-grade financial accounting to serve small to medium-sized enterprises. Each tenant operates in complete data isolation with customizable settings and independent user management.
+paeasybooks is a multi-tenant SaaS platform built with Next.js 15, TypeScript, Supabase backend, Tailwind CSS, and shadcn/ui components. It combines essential inventory management with enterprise-grade financial accounting to serve small to medium-sized enterprises. Each tenant operates in complete data isolation with customizable settings and independent user management.
 
 MVP Feature Priority Tiers
 Tier 1: Core Functionality (MUST HAVE - Launch Ready)
@@ -350,14 +350,14 @@ User logs in → Supabase Auth returns user ID + custom claims with tenant_id
 Tenant Identification Methods
 Option 1: URL Subdomain (Recommended for SaaS)
 
-acme.stockpaeasy.com → Extract "acme" as tenant identifier
+acme.paeasybooks.com → Extract "acme" as tenant identifier
 User logs in with email password (not tenant-specific)
 System looks up user's tenants and uses primary/requested tenant
 Cleaner UX, easier branding per tenant
 
 Option 2: URL Path
 
-stockpaeasy.com/tenant/acme → Extract "acme" from path
+paeasybooks.com/tenant/acme → Extract "acme" from path
 Works with single domain, easier to deploy initially
 Less elegant UX but simpler infrastructure
 

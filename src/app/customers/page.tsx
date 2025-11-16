@@ -481,7 +481,7 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
+              <Button data-tour-id="customers-add" onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
                 <Check className="mr-2 h-4 w-4" />
                 Create Customer
               </Button>

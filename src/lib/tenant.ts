@@ -13,13 +13,27 @@ export interface Tenant {
 export const TenantContext = createContext<{
   tenant: Tenant | null;
   setTenant: (tenant: Tenant | null) => void;
+  updateTenantSettings: (settings: any) => Promise<void>;
   theme: string;
   setTheme: (theme: string) => void;
-}>({ 
-  tenant: null, 
-  setTenant: () => {},
+}>({
+  tenant: null,
+  setTenant: (/* tenant */) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('TenantContext.setTenant called outside of Provider');
+    }
+  },
+  updateTenantSettings: async (/* settings */) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('TenantContext.updateTenantSettings called outside of Provider');
+    }
+  },
   theme: 'light',
-  setTheme: () => {}
+  setTheme: (/* theme */) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('TenantContext.setTheme called outside of Provider');
+    }
+  },
 });
 
 export function useTenant() {

@@ -1,8 +1,8 @@
 Building a Robust, Professional Business Management System
-Based on industry leaders (Xero, QuickBooks, Zoho Books) and your existing architecture, here's what StockPilot should implement to become enterprise-grade:
+Based on industry leaders (Xero, QuickBooks, Zoho Books) and your existing architecture, here's what paeasybooks should implement to become enterprise-grade:
 
 TIER 1: MUST HAVE (MVP - Weeks 1-8)
-Core features that make StockPilot viable for launch
+Core features that make paeasybooks viable for launch
 ✅ Already Specified
 
 Multi-tenant SaaS architecture with complete data isolation
@@ -330,7 +330,7 @@ Features:
 Features:
 - Custom domain per tenant
 - Custom branding (logo, colors, fonts)
-- Remove "Powered by StockPilot" branding
+- Remove "Powered by paeasybooks" branding
 - Custom email templates
 - Reseller portal for agencies
 - Commission tracking for resellers
@@ -441,9 +441,9 @@ Phase 4 (Months 7-12): Market Leadership
 🔧 White-label features
 
 COMPETITIVE POSITIONING
-What Makes StockPilot Competitive:
-FeatureXeroQuickBooksZoho BooksStockPilotMulti-tenant SaaS✓✓✓✓Unlimited users✓✗ (limited)✗ (limited)✓Double-entry accounting✓✓✓✓Inventory managementBasicBasicAdvancedAdvancedMulti-warehouseAdd-onNoYesYes (MVP)Project costing✓✓✓✓ (Phase 2)Mobile app✓✓✓✓ (Phase 3)Bank feeds✓ ($$$)✓✓✓ (Phase 2)Custom brandingLimitedNoLimitedFull (MVP)White-labelNoNoNoYes (Phase 4)AI insightsNoBasicNoYes (Phase 4)Pricing$15-78/mo$30-200/mo$15-275/mo$10-150/mo
-StockPilot's Unique Selling Points:
+What Makes paeasybooks Competitive:
+FeatureXeroQuickBooksZoho BookspaeasybooksMulti-tenant SaaS✓✓✓✓Unlimited users✓✗ (limited)✗ (limited)✓Double-entry accounting✓✓✓✓Inventory managementBasicBasicAdvancedAdvancedMulti-warehouseAdd-onNoYesYes (MVP)Project costing✓✓✓✓ (Phase 2)Mobile app✓✓✓✓ (Phase 3)Bank feeds✓ ($$$)✓✓✓ (Phase 2)Custom brandingLimitedNoLimitedFull (MVP)White-labelNoNoNoYes (Phase 4)AI insightsNoBasicNoYes (Phase 4)Pricing$15-78/mo$30-200/mo$15-275/mo$10-150/mo
+paeasybooks' Unique Selling Points:
 
 True multi-tenant with complete data isolation (more secure)
 Unlimited users on all plans (vs. competitors' limits)
@@ -530,5 +530,5 @@ Reports = validates all data flows correctly
 Receipt capture = modern UX expectation
 Multi-currency = positions for global market
 
-With these 8 features + your existing specs, StockPilot becomes a credible Xero/QuickBooks alternative for SMEs.
+With these 8 features + your existing specs, paeasybooks becomes a credible Xero/QuickBooks alternative for SMEs.
   

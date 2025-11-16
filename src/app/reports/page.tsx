@@ -195,7 +195,7 @@ export default function ReportsPage() {
         title="Reports & Analytics"
         description="Comprehensive business insights and financial reports"
       >
-        <Button variant="outline">
+        <Button variant="outline" data-tour-id="reports-entry">
           <Download className="w-4 h-4 mr-2" />
           Export All
         </Button>

@@ -193,7 +193,7 @@ export default function InventoryPage() {
           <Download className="mr-2 h-4 w-4" />
           Export
         </Button>
-        <Button onClick={() => { setEditingProduct(null); setShowForm(true); }}>
+        <Button data-tour-id="inventory-add" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Product
         </Button>

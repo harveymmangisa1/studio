@@ -1,4 +1,4 @@
-# **App Name**: StockPaEasy
+# **App Name**: paeasybooks
 
 ## Core Features:
 

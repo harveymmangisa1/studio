@@ -4,6 +4,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Walkthrough, WalkthroughStep } from '@/components/onboarding/Walkthrough';
+import { useWalkthrough } from '@/hooks/use-walkthrough';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -186,10 +189,31 @@ export default function DashboardPage() {
       customer: 'bg-amber-100 text-amber-600',
     };
     
-    return (
+    const { isOpen, currentStep, setCurrentStep, close } = useWalkthrough();
+    const router = useRouter();
+
+  const steps: WalkthroughStep[] = [
+    { id: 'welcome', target: '[data-tour-id="sidebar-brand"]', title: 'Welcome to paeasybooks', content: 'You\'re logged in. Let\'s get your company ready.' },
+    { id: 'settings', target: '[data-tour-id="settings-company"]', title: 'Set company info', content: 'Fill out company details and branding in Settings.', actionLabel: 'Open', onAction: () => router.push('/settings') },
+    { id: 'inventory', target: '[data-tour-id="inventory-add"]', title: 'Add your first product', content: 'Add a product or service to start selling.', actionLabel: 'Open', onAction: () => router.push('/inventory') },
+    { id: 'customers', target: '[data-tour-id="customers-add"]', title: 'Add a customer', content: 'Create a customer so you can issue an invoice.', actionLabel: 'Open', onAction: () => router.push('/customers') },
+    { id: 'invoice', target: '[data-tour-id="sales-new-invoice"]', title: 'Create your first invoice', content: 'Generate an invoice for a customer with products.', actionLabel: 'Open', onAction: () => router.push('/sales/new') },
+    { id: 'reports', target: '[data-tour-id="reports-entry"]', title: 'See your reports', content: 'View P&L and AR Aging for business insights.', actionLabel: 'Open', onAction: () => router.push('/reports') },
+  ];
+
+  return (
       <div className={`p-3 rounded-lg ${iconColors[activity.type]}`}>
         <Icon className="w-5 h-5" />
-      </div>
+        {isOpen && (
+        <Walkthrough
+          steps={steps}
+          isOpen={isOpen}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          onClose={close}
+        />
+      )}
+    </div>
     );
   };
 
