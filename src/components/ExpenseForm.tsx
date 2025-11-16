@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabase';
-import { createDoubleEntryTransaction } from '@/lib/ledger';
+import { createJournalBatch } from '@/lib/ledger';
 
 const expenseSchema = z.object({
   id: z.string().optional(),
@@ -60,10 +60,16 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
         throw new Error('Could not find required accounts for transaction.');
       }
 
-      await createDoubleEntryTransaction([
-        { accountId: expenseAccountId, debit: data.amount, credit: 0 },
-        { accountId: cashAccountId, debit: 0, credit: data.amount },
-      ]);
+      await createJournalBatch({
+        date: data.expense_date,
+        description: `Expense: ${data.description || data.category}`,
+        source_type: 'EXPENSE',
+        source_id: expenseData.id,
+        entries: [
+          { account_id: expenseAccountId, debit: data.amount, credit: 0 },
+          { account_id: cashAccountId, debit: 0, credit: data.amount },
+        ],
+      });
 
       onSuccess();
     } catch (error: any) {
