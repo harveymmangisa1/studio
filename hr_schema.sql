@@ -29,6 +29,10 @@ CREATE TABLE employees (
     hire_date DATE,
     termination_date DATE,
     employment_status VARCHAR(50), -- e.g., 'Active', 'On Leave', 'Terminated'
+    contract_url VARCHAR(255),
+    id_document_url VARCHAR(255),
+    resume_url VARCHAR(255),
+    certificates_urls TEXT[],
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
     FOREIGN KEY (tenant_id, department_id) REFERENCES departments (tenant_id, id),

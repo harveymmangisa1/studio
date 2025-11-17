@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -201,11 +202,13 @@ export default function InventoryPage() {
 
       {/* Dialog for Product Form */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
           </DialogHeader>
-          <ProductForm product={editingProduct} onSuccess={handleFormSuccess} />
+          <div className="flex-grow overflow-y-auto pr-6 -mr-6">
+            <ProductForm product={editingProduct} onSuccess={handleFormSuccess} />
+          </div>
         </DialogContent>
       </Dialog>
 

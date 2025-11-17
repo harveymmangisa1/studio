@@ -19,8 +19,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-
+import { zodResolver } from '@hookform/resolvers/zod';\nimport { getMergedIndustryDefaults, setIndustryDefaultsOverride } from '@/config/industryDefaults';\n
 const STORAGE_KEY = 'productFormDraft';
 
 // Industry-specific configurations
