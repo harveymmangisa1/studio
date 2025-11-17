@@ -1,9 +1,11 @@
-'use client'
+
+'use client';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { EmployeeDashboard } from '@/components/hr/EmployeeDashboard';
 import { ProgressiveEmployeeForm, EmployeeFormData } from '@/components/hr/employee-form/ProgressiveEmployeeForm';
 import { Employee } from '@/lib/hr/types';
+import AppLayout from '@/components/AppLayout';
 
 const UPLOAD_KEY = 'employee-documents';
 
@@ -197,61 +199,63 @@ export default function HRPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {currentView === 'dashboard' ? (
-          <EmployeeDashboard
-            employees={employees}
-            onAddEmployee={handleAddEmployee}
-            onEditEmployee={handleEditEmployee}
-            onDeleteEmployee={handleDeleteEmployee}
-          />
-        ) : (
-          <ProgressiveEmployeeForm
-            onSuccess={handleFormSuccess}
-            onCancel={handleFormCancel}
-            initialData={editingEmployee ? {
-              // Convert Employee to EmployeeFormData
-              firstName: editingEmployee.firstName,
-              lastName: editingEmployee.lastName,
-              email: editingEmployee.email,
-              phone: editingEmployee.phone,
-              dateOfBirth: editingEmployee.dateOfBirth,
-              gender: editingEmployee.gender,
-              nationalId: editingEmployee.nationalId,
-              maritalStatus: editingEmployee.maritalStatus,
-              address: editingEmployee.address,
-              city: editingEmployee.city,
-              state: editingEmployee.state,
-              postalCode: editingEmployee.postalCode,
-              country: editingEmployee.country,
-              emergencyContactName: editingEmployee.emergencyContactName,
-              emergencyContactPhone: editingEmployee.emergencyContactPhone,
-              emergencyContactRelationship: editingEmployee.emergencyContactRelationship,
-              employeeNumber: editingEmployee.employeeNumber,
-              jobTitle: editingEmployee.jobTitle,
-              department: editingEmployee.department,
-              employmentType: editingEmployee.employmentType,
-              startDate: editingEmployee.startDate,
-              reportingManager: editingEmployee.reportingManager,
-              workLocation: editingEmployee.workLocation,
-              baseSalary: editingEmployee.baseSalary,
-              currency: editingEmployee.currency,
-              paymentFrequency: editingEmployee.paymentFrequency,
-              paymentMethod: editingEmployee.paymentMethod,
-              bankName: editingEmployee.bankName,
-              accountNumber: editingEmployee.accountNumber,
-              routingNumber: editingEmployee.routingNumber,
-              taxId: editingEmployee.taxId,
-              notes: editingEmployee.notes,
-              contractFile: null,
-              idDocumentFile: null,
-              resumeFile: null,
-              certificatesFiles: [],
-            } : null}
-          />
-        )}
+    <AppLayout>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          {currentView === 'dashboard' ? (
+            <EmployeeDashboard
+              employees={employees}
+              onAddEmployee={handleAddEmployee}
+              onEditEmployee={handleEditEmployee}
+              onDeleteEmployee={handleDeleteEmployee}
+            />
+          ) : (
+            <ProgressiveEmployeeForm
+              onSuccess={handleFormSuccess}
+              onCancel={handleFormCancel}
+              initialData={editingEmployee ? {
+                // Convert Employee to EmployeeFormData
+                firstName: editingEmployee.firstName,
+                lastName: editingEmployee.lastName,
+                email: editingEmployee.email,
+                phone: editingEmployee.phone,
+                dateOfBirth: editingEmployee.dateOfBirth,
+                gender: editingEmployee.gender,
+                nationalId: editingEmployee.nationalId,
+                maritalStatus: editingEmployee.maritalStatus,
+                address: editingEmployee.address,
+                city: editingEmployee.city,
+                state: editingEmployee.state,
+                postalCode: editingEmployee.postalCode,
+                country: editingEmployee.country,
+                emergencyContactName: editingEmployee.emergencyContactName,
+                emergencyContactPhone: editingEmployee.emergencyContactPhone,
+                emergencyContactRelationship: editingEmployee.emergencyContactRelationship,
+                employeeNumber: editingEmployee.employeeNumber,
+                jobTitle: editingEmployee.jobTitle,
+                department: editingEmployee.department,
+                employmentType: editingEmployee.employmentType,
+                startDate: editingEmployee.startDate,
+                reportingManager: editingEmployee.reportingManager,
+                workLocation: editingEmployee.workLocation,
+                baseSalary: editingEmployee.baseSalary,
+                currency: editingEmployee.currency,
+                paymentFrequency: editingEmployee.paymentFrequency,
+                paymentMethod: editingEmployee.paymentMethod,
+                bankName: editingEmployee.bankName,
+                accountNumber: editingEmployee.accountNumber,
+                routingNumber: editingEmployee.routingNumber,
+                taxId: editingEmployee.taxId,
+                notes: editingEmployee.notes,
+                contractFile: null,
+                idDocumentFile: null,
+                resumeFile: null,
+                certificatesFiles: [],
+              } : null}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

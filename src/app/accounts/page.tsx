@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/select';
 import AccountTreeTable from '@/components/AccountTreeTable';
 import { MoreHorizontal } from 'lucide-react';
+import AppLayout from '@/components/AppLayout';
 
 interface Account {
   id: string;
@@ -262,192 +264,194 @@ export default function ChartOfAccountsPage() {
   const parentAccounts = accounts.filter(acc => acc.account_type === newAccountType && !acc.parent_account_id);
 
   return (
-    <div className="p-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Chart of Accounts</CardTitle>
-          <CardDescription>Manage your company's financial accounts.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-4 mb-4">
-            <Input
-              placeholder="Search accounts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-            <Select onValueChange={setFilterAccountType} value={filterAccountType}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Types</SelectItem>
-                <SelectItem value="Asset">Asset</SelectItem>
-                <SelectItem value="Liability">Liability</SelectItem>
-                <SelectItem value="Equity">Equity</SelectItem>
-                <SelectItem value="Revenue">Revenue</SelectItem>
-                <SelectItem value="Expense">Expense</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select onValueChange={(value: 'All' | 'true' | 'false') => setFilterIsActive(value === 'All' ? 'All' : value === 'true')} value={String(filterIsActive)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Statuses</SelectItem>
-                <SelectItem value="true">Active</SelectItem>
-                <SelectItem value="false">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>Add New Account</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Account</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAddAccount} className="space-y-4">
-                    <div>
-                      <Label htmlFor="account_code">Account Code</Label>
-                      <Input
-                        id="account_code"
-                        value={newAccountCode}
-                        onChange={(e) => setNewAccountCode(e.target.value)}
-                        required
-                      />
-                      {addFormErrors.account_code && <p className="text-red-500 text-sm">{addFormErrors.account_code}</p>}
-                    </div>
-                    <div>
-                      <Label htmlFor="account_name">Account Name</Label>
-                      <Input
-                        id="account_name"
-                        value={newAccountName}
-                        onChange={(e) => setNewAccountName(e.target.value)}
-                        required
-                      />
-                      {addFormErrors.account_name && <p className="text-red-500 text-sm">{addFormErrors.account_name}</p>}
-                    </div>
-                    <div>
-                      <Label htmlFor="account_type">Account Type</Label>
-                      <Select onValueChange={setNewAccountType} value={newAccountType}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an account type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Asset">Asset</SelectItem>
-                          <SelectItem value="Liability">Liability</SelectItem>
-                          <SelectItem value="Equity">Equity</SelectItem>
-                          <SelectItem value="Revenue">Revenue</SelectItem>
-                          <SelectItem value="Expense">Expense</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {addFormErrors.account_type && <p className="text-red-500 text-sm">{addFormErrors.account_type}</p>}
-                    </div>
-                    {newAccountType && parentAccounts.length > 0 && (
+    <AppLayout>
+      <div className="p-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Chart of Accounts</CardTitle>
+            <CardDescription>Manage your company's financial accounts.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex space-x-4 mb-4">
+              <Input
+                placeholder="Search accounts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+              <Select onValueChange={setFilterAccountType} value={filterAccountType}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Types</SelectItem>
+                  <SelectItem value="Asset">Asset</SelectItem>
+                  <SelectItem value="Liability">Liability</SelectItem>
+                  <SelectItem value="Equity">Equity</SelectItem>
+                  <SelectItem value="Revenue">Revenue</SelectItem>
+                  <SelectItem value="Expense">Expense</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select onValueChange={(value: 'All' | 'true' | 'false') => setFilterIsActive(value === 'All' ? 'All' : value === 'true')} value={String(filterIsActive)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Statuses</SelectItem>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>Add New Account</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Account</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleAddAccount} className="space-y-4">
                       <div>
-                        <Label htmlFor="parent_account">Parent Account</Label>
-                        <Select onValueChange={setNewParentAccountId} value={newParentAccountId}>
+                        <Label htmlFor="account_code">Account Code</Label>
+                        <Input
+                          id="account_code"
+                          value={newAccountCode}
+                          onChange={(e) => setNewAccountCode(e.target.value)}
+                          required
+                        />
+                        {addFormErrors.account_code && <p className="text-red-500 text-sm">{addFormErrors.account_code}</p>}
+                      </div>
+                      <div>
+                        <Label htmlFor="account_name">Account Name</Label>
+                        <Input
+                          id="account_name"
+                          value={newAccountName}
+                          onChange={(e) => setNewAccountName(e.target.value)}
+                          required
+                        />
+                        {addFormErrors.account_name && <p className="text-red-500 text-sm">{addFormErrors.account_name}</p>}
+                      </div>
+                      <div>
+                        <Label htmlFor="account_type">Account Type</Label>
+                        <Select onValueChange={setNewAccountType} value={newAccountType}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a parent account (optional)" />
+                            <SelectValue placeholder="Select an account type" />
                           </SelectTrigger>
                           <SelectContent>
-                            {parentAccounts.map(acc => (
-                              <SelectItem key={acc.id} value={acc.id}>
-                                {acc.account_name} ({acc.account_code})
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="Asset">Asset</SelectItem>
+                            <SelectItem value="Liability">Liability</SelectItem>
+                            <SelectItem value="Equity">Equity</SelectItem>
+                            <SelectItem value="Revenue">Revenue</SelectItem>
+                            <SelectItem value="Expense">Expense</SelectItem>
                           </SelectContent>
                         </Select>
+                        {addFormErrors.account_type && <p className="text-red-500 text-sm">{addFormErrors.account_type}</p>}
                       </div>
-                    )}
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Input
-                        id="description"
-                        value={newDescription}
-                        onChange={(e) => setNewDescription(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                       <input
-                        type="checkbox"
-                        id="is_active"
-                        checked={newIsActive}
-                        onChange={(e) => setNewIsActive(e.target.checked)}
-                        className="h-4 w-4"
-                      />
-                      <Label htmlFor="is_active">Is Active</Label>
-                    </div>
-                  <Button type="submit">Add Account</Button>
-                  {addFormErrors.form && <p className="text-red-500 text-sm">{addFormErrors.form}</p>}
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+                      {newAccountType && parentAccounts.length > 0 && (
+                        <div>
+                          <Label htmlFor="parent_account">Parent Account</Label>
+                          <Select onValueChange={setNewParentAccountId} value={newParentAccountId}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a parent account (optional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {parentAccounts.map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
+                                  {acc.account_name} ({acc.account_code})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div>
+                        <Label htmlFor="description">Description</Label>
+                        <Input
+                          id="description"
+                          value={newDescription}
+                          onChange={(e) => setNewDescription(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                         <input
+                          type="checkbox"
+                          id="is_active"
+                          checked={newIsActive}
+                          onChange={(e) => setNewIsActive(e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                        <Label htmlFor="is_active">Is Active</Label>
+                      </div>
+                    <Button type="submit">Add Account</Button>
+                    {addFormErrors.form && <p className="text-red-500 text-sm">{addFormErrors.form}</p>}
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
 
-          <AccountTreeTable accounts={filteredAccounts} onEditAccount={handleEditAccount} onDeleteAccount={handleDeleteAccount} />
-        </CardContent>
-      </Card>
+            <AccountTreeTable accounts={filteredAccounts} onEditAccount={handleEditAccount} onDeleteAccount={handleDeleteAccount} />
+          </CardContent>
+        </Card>
 
-      {/* Edit Account Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Account</DialogTitle>
-          </DialogHeader>
-          {editingAccount && (
-            <form onSubmit={handleUpdateAccount} className="space-y-4">
-              <div>
-                  <Label htmlFor="edit_account_code">Account Code</Label>
-                  <Input
-                    id="edit_account_code"
-                    value={editingAccount.account_code}
-                    disabled
-                  />
-                </div>
+        {/* Edit Account Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Account</DialogTitle>
+            </DialogHeader>
+            {editingAccount && (
+              <form onSubmit={handleUpdateAccount} className="space-y-4">
                 <div>
-                  <Label htmlFor="edit_account_name">Account Name</Label>
-                  <Input
-                    id="edit_account_name"
-                    value={editingAccount.account_name}
-                    onChange={(e) => setEditingAccount({ ...editingAccount, account_name: e.target.value })}
-                    required
-                  />
-                  {editFormErrors.account_name && <p className="text-red-500 text-sm">{editFormErrors.account_name}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="edit_account_type">Account Type</Label>
-                  <Input
-                    id="edit_account_type"
-                    value={editingAccount.account_type}
-                    disabled
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit_description">Description</Label>
-                  <Input
-                    id="edit_description"
-                    value={editingAccount.description || ''}
-                    onChange={(e) => setEditingAccount({ ...editingAccount, description: e.target.value })}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="edit_is_active"
-                    checked={editingAccount.is_active}
-                    onChange={(e) => setEditingAccount({ ...editingAccount, is_active: e.target.checked })}
-                    className="h-4 w-4"
-                  />
-                   <Label htmlFor="edit_is_active">Is Active</Label>
-                </div>
-              <Button type="submit">Save Changes</Button>
-              {editFormErrors.form && <p className="text-red-500 text-sm">{editFormErrors.form}</p>}
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+                    <Label htmlFor="edit_account_code">Account Code</Label>
+                    <Input
+                      id="edit_account_code"
+                      value={editingAccount.account_code}
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_account_name">Account Name</Label>
+                    <Input
+                      id="edit_account_name"
+                      value={editingAccount.account_name}
+                      onChange={(e) => setEditingAccount({ ...editingAccount, account_name: e.target.value })}
+                      required
+                    />
+                    {editFormErrors.account_name && <p className="text-red-500 text-sm">{editFormErrors.account_name}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_account_type">Account Type</Label>
+                    <Input
+                      id="edit_account_type"
+                      value={editingAccount.account_type}
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit_description">Description</Label>
+                    <Input
+                      id="edit_description"
+                      value={editingAccount.description || ''}
+                      onChange={(e) => setEditingAccount({ ...editingAccount, description: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="edit_is_active"
+                      checked={editingAccount.is_active}
+                      onChange={(e) => setEditingAccount({ ...editingAccount, is_active: e.target.checked })}
+                      className="h-4 w-4"
+                    />
+                     <Label htmlFor="edit_is_active">Is Active</Label>
+                  </div>
+                <Button type="submit">Save Changes</Button>
+                {editFormErrors.form && <p className="text-red-500 text-sm">{editFormErrors.form}</p>}
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AppLayout>
   );
 }

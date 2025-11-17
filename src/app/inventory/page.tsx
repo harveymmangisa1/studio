@@ -40,6 +40,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import AppLayout from '@/components/AppLayout';
 
 const Select = dynamic(() => import('@/components/ui/select').then(mod => mod.Select), { ssr: false });
 const SelectContent = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectContent), { ssr: false });
@@ -49,14 +50,14 @@ const SelectValue = dynamic(() => import('@/components/ui/select').then(mod => m
 import { toCsv } from '@/lib/utils';
 import { PageHeader } from '@/components/shared';
 const initialProducts: Product[] = [
-  { id: '1', name: 'Wireless Mouse', category: 'Electronics', sku: 'WM-001', cost: 15.00, price: 29.99, quantity: 150, minStock: 10 },
-  { id: '2', name: 'Mechanical Keyboard', category: 'Electronics', sku: 'MK-001', cost: 55.00, price: 99.99, quantity: 75, minStock: 5 },
-  { id: '3', name: 'Ergonomic Chair', category: 'Furniture', sku: 'EC-001', cost: 120.00, price: 249.99, quantity: 30, minStock: 5 },
-  { id: '4', name: 'Desk Lamp', category: 'Furniture', sku: 'DL-001', cost: 20.00, price: 45.00, quantity: 8, minStock: 15 },
-  { id: '5', name: 'Coffee Mug', category: 'Kitchenware', sku: 'CM-001', cost: 5.00, price: 12.99, quantity: 200, minStock: 25 },
-  { id: '6', name: 'Laptop Stand', category: 'Accessories', sku: 'LS-001', cost: 25.00, price: 59.99, quantity: 12, minStock: 10 },
-  { id: '7', name: 'USB-C Cable', category: 'Electronics', sku: 'UC-001', cost: 8.00, price: 19.99, quantity: 3, minStock: 20 },
-  { id: '8', name: 'Monitor Stand', category: 'Furniture', sku: 'MS-001', cost: 35.00, price: 79.99, quantity: 45, minStock: 8 },
+  { id: '1', name: 'Wireless Mouse', category: 'Electronics', sku: 'WM-001', cost: 15.00, price: 29.99, quantity: 150, minStock: 10, industry: 'retail' },
+  { id: '2', name: 'Mechanical Keyboard', category: 'Electronics', sku: 'MK-001', cost: 55.00, price: 99.99, quantity: 75, minStock: 5, industry: 'retail' },
+  { id: '3', name: 'Ergonomic Chair', category: 'Furniture', sku: 'EC-001', cost: 120.00, price: 249.99, quantity: 30, minStock: 5, industry: 'retail' },
+  { id: '4', name: 'Desk Lamp', category: 'Furniture', sku: 'DL-001', cost: 20.00, price: 45.00, quantity: 8, minStock: 15, industry: 'retail' },
+  { id: '5', name: 'Coffee Mug', category: 'Kitchenware', sku: 'CM-001', cost: 5.00, price: 12.99, quantity: 200, minStock: 25, industry: 'retail' },
+  { id: '6', name: 'Laptop Stand', category: 'Accessories', sku: 'LS-001', cost: 25.00, price: 59.99, quantity: 12, minStock: 10, industry: 'retail' },
+  { id: '7', name: 'USB-C Cable', category: 'Electronics', sku: 'UC-001', cost: 8.00, price: 19.99, quantity: 3, minStock: 20, industry: 'retail' },
+  { id: '8', name: 'Monitor Stand', category: 'Furniture', sku: 'MS-001', cost: 35.00, price: 79.99, quantity: 45, minStock: 8, industry: 'retail' },
 ];
 
 export default function InventoryPage() {
@@ -173,121 +174,123 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Inventory Management"
-        description="Track, manage, and analyze your product inventory."
-      >
-        <Button variant="outline" onClick={() => {
-          const columns = ['id', 'name', 'category', 'sku', 'cost', 'price', 'quantity', 'minStock'];
-          const csv = toCsv(filteredProducts, columns);
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.setAttribute('href', url);
-          link.setAttribute('download', 'products.csv');
-          link.style.visibility = 'hidden';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }}>
-          <Download className="mr-2 h-4 w-4" />
-          Export
-        </Button>
-        <Button data-tour-id="inventory-add" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
-      </PageHeader>
+    <AppLayout>
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          title="Inventory Management"
+          description="Track, manage, and analyze your product inventory."
+        >
+          <Button variant="outline" onClick={() => {
+            const columns = ['id', 'name', 'category', 'sku', 'cost', 'price', 'quantity', 'minStock'];
+            const csv = toCsv(filteredProducts, columns);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'products.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button data-tour-id="inventory-add" onClick={() => { setEditingProduct(null); setShowForm(true); }}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </PageHeader>
 
-      {/* Dialog for Product Form */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-grow overflow-y-auto pr-6 -mr-6">
-            <ProductForm product={editingProduct} onSuccess={handleFormSuccess} />
-          </div>
-        </DialogContent>
-      </Dialog>
+        {/* Dialog for Product Form */}
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto pr-6 -mr-6">
+              <ProductForm product={editingProduct} onSuccess={handleFormSuccess} />
+            </div>
+          </DialogContent>
+        </Dialog>
 
-      {/* Products Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Products</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Expiry Date</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-center">Stock</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.map(product => {
-                const stockInfo = getStockStatus(product.quantity, product.minStock);
-                return (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{product.sku}</TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell>
-                      {product.expiryDate 
-                        ? new Date(product.expiryDate).toLocaleDateString() 
-                        : <span className="text-muted-foreground/50">N/A</span>
-                      }
-                    </TableCell>
-                    <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-center">{product.quantity}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={stockInfo.variant as any}>{stockInfo.label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(product)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            <span>Edit</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDuplicate(product)}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            <span>Duplicate</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/inventory/${product.id}`}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              <span>View Details</span>
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product.id!)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+        {/* Products Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>All Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Expiry Date</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-center">Stock</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.map(product => {
+                  const stockInfo = getStockStatus(product.quantity, product.minStock);
+                  return (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{product.sku}</TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell>
+                        {product.industryFields?.expiryDate
+                          ? new Date(product.industryFields.expiryDate).toLocaleDateString() 
+                          : <span className="text-muted-foreground/50">N/A</span>
+                        }
+                      </TableCell>
+                      <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-center">{product.quantity}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={stockInfo.variant as any}>{stockInfo.label}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(product)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDuplicate(product)}>
+                              <Copy className="mr-2 h-4 w-4" />
+                              <span>Duplicate</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/inventory/${product.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>View Details</span>
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product.id!)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
   );
 }

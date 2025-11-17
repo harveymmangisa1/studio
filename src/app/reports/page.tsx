@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,6 +21,7 @@ import {
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/shared';
+import AppLayout from '@/components/AppLayout';
 
 interface ReportCard {
   title: string;
@@ -190,154 +192,156 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Reports & Analytics"
-        description="Comprehensive business insights and financial reports"
-      >
-        <Button variant="outline" data-tour-id="reports-entry">
-          <Download className="w-4 h-4 mr-2" />
-          Export All
-        </Button>
-        <Button>
-          <Calendar className="w-4 h-4 mr-2" />
-          Schedule Report
-        </Button>
-      </PageHeader>
+    <AppLayout>
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          title="Reports & Analytics"
+          description="Comprehensive business insights and financial reports"
+        >
+          <Button variant="outline" data-tour-id="reports-entry">
+            <Download className="w-4 h-4 mr-2" />
+            Export All
+          </Button>
+          <Button>
+            <Calendar className="w-4 h-4 mr-2" />
+            Schedule Report
+          </Button>
+        </PageHeader>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${reportStats.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <ArrowUpRight className="w-3 h-3" />
-              +12.5% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Sales</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{reportStats.totalSales}</div>
-            <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
-              <ArrowDownRight className="w-3 h-3" />
-              -2.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{reportStats.totalProducts}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <ArrowUpRight className="w-3 h-3" />
-              +5.7% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Customers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{reportStats.totalCustomers}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <ArrowUpRight className="w-3 h-3" />
-              +15.3% from last month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${reportStats.totalRevenue.toLocaleString()}</div>
+              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                <ArrowUpRight className="w-3 h-3" />
+                +12.5% from last month
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Sales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{reportStats.totalSales}</div>
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <ArrowDownRight className="w-3 h-3" />
+                -2.1% from last month
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{reportStats.totalProducts}</div>
+              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                <ArrowUpRight className="w-3 h-3" />
+                +5.7% from last month
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Customers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{reportStats.totalCustomers}</div>
+              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                <ArrowUpRight className="w-3 h-3" />
+                +15.3% from last month
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Report Categories */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {reportCards.map((report, index) => {
-          const Icon = report.icon;
-          const TrendIcon = getTrendIcon(report.stats?.trend || 'up');
-          
-          return (
-            <Link key={index} href={report.href}>
-              <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/20">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className={`p-3 rounded-xl ${report.bgColor}`}>
-                      <Icon className={`w-6 h-6 ${report.color}`} />
-                    </div>
-                    {report.stats && (
-                      <div className="text-right">
-                        <div className="text-sm font-medium">{report.stats.value}</div>
-                        <div className={`text-xs flex items-center gap-1 ${getTrendColor(report.stats.trend)}`}>
-                          <TrendIcon className="w-3 h-3" />
-                          {Math.abs(report.stats.change)}%
-                        </div>
+        {/* Report Categories */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {reportCards.map((report, index) => {
+            const Icon = report.icon;
+            const TrendIcon = getTrendIcon(report.stats?.trend || 'up');
+            
+            return (
+              <Link key={index} href={report.href}>
+                <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/20">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className={`p-3 rounded-xl ${report.bgColor}`}>
+                        <Icon className={`w-6 h-6 ${report.color}`} />
                       </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
-                    {report.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {report.description}
-                  </p>
-                  <div className="flex items-center text-sm text-primary group-hover:underline">
-                    View Report
-                    <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+                      {report.stats && (
+                        <div className="text-right">
+                          <div className="text-sm font-medium">{report.stats.value}</div>
+                          <div className={`text-xs flex items-center gap-1 ${getTrendColor(report.stats.trend)}`}>
+                            <TrendIcon className="w-3 h-3" />
+                            {Math.abs(report.stats.change)}%
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
+                      {report.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {report.description}
+                    </p>
+                    <div className="flex items-center text-sm text-primary group-hover:underline">
+                      View Report
+                      <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
 
-      {/* Recent Reports */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recently Generated Reports</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { name: 'Monthly P&L Report - December 2024', date: '2024-12-15', type: 'Profit & Loss', size: '2.3 MB' },
-              { name: 'Inventory Valuation Report', date: '2024-12-14', type: 'Inventory', size: '1.8 MB' },
-              { name: 'Customer Analytics - Q4 2024', date: '2024-12-13', type: 'Customer Analytics', size: '3.1 MB' },
-              { name: 'AR Aging Report', date: '2024-12-12', type: 'AR Aging', size: '1.2 MB' },
-            ].map((report, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <div className="font-medium">{report.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {report.type} • {report.date} • {report.size}
+        {/* Recent Reports */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recently Generated Reports</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { name: 'Monthly P&L Report - December 2024', date: '2024-12-15', type: 'Profit & Loss', size: '2.3 MB' },
+                { name: 'Inventory Valuation Report', date: '2024-12-14', type: 'Inventory', size: '1.8 MB' },
+                { name: 'Customer Analytics - Q4 2024', date: '2024-12-13', type: 'Customer Analytics', size: '3.1 MB' },
+                { name: 'AR Aging Report', date: '2024-12-12', type: 'AR Aging', size: '1.2 MB' },
+              ].map((report, index) => (
+                <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="font-medium">{report.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {report.type} • {report.date} • {report.size}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm">
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
-                    <Download className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <FileText className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
   );
 }

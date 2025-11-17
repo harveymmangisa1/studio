@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, ArrowRight, Check, AlertCircle, Save, CheckCircle } from 'lucide-react';
 import { FormField, SuccessCard } from '@/components/shared';
+import AppLayout from '@/components/AppLayout';
 
 const STORAGE_KEY = 'customerFormDraft';
 
@@ -187,308 +189,312 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
 
   if (showSuccess) {
     return (
-      <SuccessCard
-        title="Customer Created!"
-        description={`${formData.name} has been added to your customer database.`}
-        buttonText="View Customer"
-        onButtonClick={() => onSuccess && onSuccess(formData)}
-      />
+      <AppLayout>
+        <SuccessCard
+          title="Customer Created!"
+          description={`${formData.name} has been added to your customer database.`}
+          buttonText="View Customer"
+          onButtonClick={() => onSuccess && onSuccess(formData)}
+        />
+      </AppLayout>
     );
   }
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>
-          {currentStep === 1 && "Let's start with the basics"}
-          {currentStep === 2 && "Where is your customer located?"}
-          {currentStep === 3 && "Financial information"}
-          {currentStep === 4 && "Review and confirm"}
-        </CardTitle>
-        <p className="text-sm text-gray-500">
-          {currentStep === 1 && "We need some essential information about your customer"}
-          {currentStep === 2 && "This information helps with invoicing and shipping"}
-          {currentStep === 3 && "Set up payment terms and billing preferences"}
-          {currentStep === 4 && "Review your information before submitting"}
-        </p>
-      </CardHeader>
+    <AppLayout>
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>
+            {currentStep === 1 && "Let's start with the basics"}
+            {currentStep === 2 && "Where is your customer located?"}
+            {currentStep === 3 && "Financial information"}
+            {currentStep === 4 && "Review and confirm"}
+          </CardTitle>
+          <p className="text-sm text-gray-500">
+            {currentStep === 1 && "We need some essential information about your customer"}
+            {currentStep === 2 && "This information helps with invoicing and shipping"}
+            {currentStep === 3 && "Set up payment terms and billing preferences"}
+            {currentStep === 4 && "Review your information before submitting"}
+          </p>
+        </CardHeader>
 
-      <CardContent>
-        <ProgressBar currentStep={currentStep} completedSteps={completedSteps} />
+        <CardContent>
+          <ProgressBar currentStep={currentStep} completedSteps={completedSteps} />
 
-        {/* Step 1: Basic Information */}
-        {currentStep === 1 && (
-          <div className="space-y-4">
-            <FormField label="Customer Name" required error={errors.name} helpText="This will appear on invoices and reports">
-              <Input
-                placeholder="Acme Corporation"
-                value={formData.name}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
-                className={errors.name ? 'border-red-500' : formData.name.length >= 2 ? 'border-green-500' : ''}
-              />
-            </FormField>
-
-            <FormField label="Customer Type" required>
-              <RadioGroup value={formData.type} onValueChange={(value) => handleFieldChange('type', value)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="individual" id="individual" />
-                  <Label htmlFor="individual">Individual</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="business" id="business" />
-                  <Label htmlFor="business">Business/Company</Label>
-                </div>
-              </RadioGroup>
-            </FormField>
-
-            <FormField label="Email Address" required error={errors.email} helpText="Used for invoice delivery and communication">
-              <Input
-                type="email"
-                placeholder="contact@acme.com"
-                value={formData.email}
-                onChange={(e) => handleFieldChange('email', e.target.value)}
-                className={errors.email ? 'border-red-500' : validateEmail(formData.email) ? 'border-green-500' : ''}
-              />
-            </FormField>
-
-            <FormField label="Phone Number" helpText="Include country code for international customers">
-              <Input
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                value={formData.phone}
-                onChange={(e) => handleFieldChange('phone', e.target.value)}
-              />
-            </FormField>
-          </div>
-        )}
-
-        {/* Step 2: Address Information */}
-        {currentStep === 2 && (
-          <div className="space-y-4">
-            <FormField label="Street Address">
-              <Input
-                placeholder="123 Main Street"
-                value={formData.address}
-                onChange={(e) => handleFieldChange('address', e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Address Line 2" helpText="Apartment, suite, unit, building, floor, etc.">
-              <Input
-                placeholder="Suite 100, Floor 2"
-                value={formData.address2}
-                onChange={(e) => handleFieldChange('address2', e.target.value)}
-              />
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="City">
+          {/* Step 1: Basic Information */}
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              <FormField label="Customer Name" required error={errors.name} helpText="This will appear on invoices and reports">
                 <Input
-                  placeholder="New York"
-                  value={formData.city}
-                  onChange={(e) => handleFieldChange('city', e.target.value)}
+                  placeholder="Acme Corporation"
+                  value={formData.name}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  className={errors.name ? 'border-red-500' : formData.name.length >= 2 ? 'border-green-500' : ''}
                 />
               </FormField>
 
-              <FormField label="State/Province">
+              <FormField label="Customer Type" required>
+                <RadioGroup value={formData.type} onValueChange={(value) => handleFieldChange('type', value)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="individual" id="individual" />
+                    <Label htmlFor="individual">Individual</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="business" id="business" />
+                    <Label htmlFor="business">Business/Company</Label>
+                  </div>
+                </RadioGroup>
+              </FormField>
+
+              <FormField label="Email Address" required error={errors.email} helpText="Used for invoice delivery and communication">
                 <Input
-                  placeholder="NY"
-                  value={formData.state}
-                  onChange={(e) => handleFieldChange('state', e.target.value)}
+                  type="email"
+                  placeholder="contact@acme.com"
+                  value={formData.email}
+                  onChange={(e) => handleFieldChange('email', e.target.value)}
+                  className={errors.email ? 'border-red-500' : validateEmail(formData.email) ? 'border-green-500' : ''}
+                />
+              </FormField>
+
+              <FormField label="Phone Number" helpText="Include country code for international customers">
+                <Input
+                  type="tel"
+                  placeholder="+1 (555) 123-4567"
+                  value={formData.phone}
+                  onChange={(e) => handleFieldChange('phone', e.target.value)}
                 />
               </FormField>
             </div>
+          )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Postal/ZIP Code">
+          {/* Step 2: Address Information */}
+          {currentStep === 2 && (
+            <div className="space-y-4">
+              <FormField label="Street Address">
                 <Input
-                  placeholder="10001"
-                  value={formData.postalCode}
-                  onChange={(e) => handleFieldChange('postalCode', e.target.value)}
+                  placeholder="123 Main Street"
+                  value={formData.address}
+                  onChange={(e) => handleFieldChange('address', e.target.value)}
                 />
               </FormField>
 
-              <FormField label="Country">
-                <Select value={formData.country} onValueChange={(value) => handleFieldChange('country', value)}>
+              <FormField label="Address Line 2" helpText="Apartment, suite, unit, building, floor, etc.">
+                <Input
+                  placeholder="Suite 100, Floor 2"
+                  value={formData.address2}
+                  onChange={(e) => handleFieldChange('address2', e.target.value)}
+                />
+              </FormField>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="City">
+                  <Input
+                    placeholder="New York"
+                    value={formData.city}
+                    onChange={(e) => handleFieldChange('city', e.target.value)}
+                  />
+                </FormField>
+
+                <FormField label="State/Province">
+                  <Input
+                    placeholder="NY"
+                    value={formData.state}
+                    onChange={(e) => handleFieldChange('state', e.target.value)}
+                  />
+                </FormField>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Postal/ZIP Code">
+                  <Input
+                    placeholder="10001"
+                    value={formData.postalCode}
+                    onChange={(e) => handleFieldChange('postalCode', e.target.value)}
+                  />
+                </FormField>
+
+                <FormField label="Country">
+                  <Select value={formData.country} onValueChange={(value) => handleFieldChange('country', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="us">United States</SelectItem>
+                      <SelectItem value="uk">United Kingdom</SelectItem>
+                      <SelectItem value="ca">Canada</SelectItem>
+                      <SelectItem value="au">Australia</SelectItem>
+                      <SelectItem value="mw">Malawi</SelectItem>
+                      <SelectItem value="za">South Africa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Financial Details */}
+          {currentStep === 3 && (
+            <div className="space-y-4">
+              <FormField label="Tax ID / VAT Number" helpText="For tax reporting and invoice requirements">
+                <Input
+                  placeholder="US: 12-3456789, EU: GB123456789"
+                  value={formData.taxId}
+                  onChange={(e) => handleFieldChange('taxId', e.target.value)}
+                />
+              </FormField>
+
+              <FormField label="Payment Terms" helpText="Default payment deadline for invoices">
+                <Select value={formData.paymentTerms} onValueChange={(value) => handleFieldChange('paymentTerms', value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="us">United States</SelectItem>
-                    <SelectItem value="uk">United Kingdom</SelectItem>
-                    <SelectItem value="ca">Canada</SelectItem>
-                    <SelectItem value="au">Australia</SelectItem>
-                    <SelectItem value="mw">Malawi</SelectItem>
-                    <SelectItem value="za">South Africa</SelectItem>
+                    <SelectItem value="due_on_receipt">Due on Receipt</SelectItem>
+                    <SelectItem value="net_15">Net 15</SelectItem>
+                    <SelectItem value="net_30">Net 30</SelectItem>
+                    <SelectItem value="net_60">Net 60</SelectItem>
                   </SelectContent>
                 </Select>
               </FormField>
+
+              <FormField label="Credit Limit" error={errors.creditLimit} helpText="Maximum outstanding balance allowed">
+                <Input
+                  type="number"
+                  placeholder="5000.00"
+                  value={formData.creditLimit}
+                  onChange={(e) => handleFieldChange('creditLimit', e.target.value)}
+                />
+              </FormField>
+
+              <FormField label="Discount Rate (%)" error={errors.discountRate} helpText="Default discount applied to invoices">
+                <Input
+                  type="number"
+                  placeholder="5.00"
+                  min="0"
+                  max="100"
+                  value={formData.discountRate}
+                  onChange={(e) => handleFieldChange('discountRate', e.target.value)}
+                />
+              </FormField>
+
+              <FormField label="Preferred Payment Methods" helpText="Methods this customer typically uses">
+                <div className="space-y-2">
+                  {['Bank Transfer', 'Credit Card', 'Cash', 'Check', 'Mobile Money'].map((method) => (
+                    <div key={method} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={method}
+                        checked={formData.paymentMethods.includes(method)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleFieldChange('paymentMethods', [...formData.paymentMethods, method]);
+                          } else {
+                            handleFieldChange('paymentMethods', formData.paymentMethods.filter(m => m !== method));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={method}>{method}</Label>
+                    </div>
+                  ))}
+                </div>
+              </FormField>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Step 3: Financial Details */}
-        {currentStep === 3 && (
-          <div className="space-y-4">
-            <FormField label="Tax ID / VAT Number" helpText="For tax reporting and invoice requirements">
-              <Input
-                placeholder="US: 12-3456789, EU: GB123456789"
-                value={formData.taxId}
-                onChange={(e) => handleFieldChange('taxId', e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Payment Terms" helpText="Default payment deadline for invoices">
-              <Select value={formData.paymentTerms} onValueChange={(value) => handleFieldChange('paymentTerms', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="due_on_receipt">Due on Receipt</SelectItem>
-                  <SelectItem value="net_15">Net 15</SelectItem>
-                  <SelectItem value="net_30">Net 30</SelectItem>
-                  <SelectItem value="net_60">Net 60</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormField>
-
-            <FormField label="Credit Limit" error={errors.creditLimit} helpText="Maximum outstanding balance allowed">
-              <Input
-                type="number"
-                placeholder="5000.00"
-                value={formData.creditLimit}
-                onChange={(e) => handleFieldChange('creditLimit', e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Discount Rate (%)" error={errors.discountRate} helpText="Default discount applied to invoices">
-              <Input
-                type="number"
-                placeholder="5.00"
-                min="0"
-                max="100"
-                value={formData.discountRate}
-                onChange={(e) => handleFieldChange('discountRate', e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Preferred Payment Methods" helpText="Methods this customer typically uses">
-              <div className="space-y-2">
-                {['Bank Transfer', 'Credit Card', 'Cash', 'Check', 'Mobile Money'].map((method) => (
-                  <div key={method} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={method}
-                      checked={formData.paymentMethods.includes(method)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          handleFieldChange('paymentMethods', [...formData.paymentMethods, method]);
-                        } else {
-                          handleFieldChange('paymentMethods', formData.paymentMethods.filter(m => m !== method));
-                        }
-                      }}
-                    />
-                    <Label htmlFor={method}>{method}</Label>
-                  </div>
-                ))}
-              </div>
-            </FormField>
-          </div>
-        )}
-
-        {/* Step 4: Review */}
-        {currentStep === 4 && (
-          <div className="space-y-6">
-            <div className="border rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold">Basic Information</h3>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)}>Edit</Button>
-              </div>
-              <div className="space-y-1 text-sm">
-                <p><span className="text-gray-500">Name:</span> {formData.name}</p>
-                <p><span className="text-gray-500">Type:</span> {formData.type}</p>
-                <p><span className="text-gray-500">Email:</span> {formData.email}</p>
-                {formData.phone && <p><span className="text-gray-500">Phone:</span> {formData.phone}</p>}
-              </div>
-            </div>
-
-            {(formData.address || formData.city) && (
+          {/* Step 4: Review */}
+          {currentStep === 4 && (
+            <div className="space-y-6">
               <div className="border rounded-lg p-4">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">Address</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)}>Edit</Button>
-                </div>
-                <div className="text-sm">
-                  <p>{formData.address} {formData.address2}</p>
-                  <p>{formData.city}, {formData.state} {formData.postalCode}</p>
-                  <p>{formData.country}</p>
-                </div>
-              </div>
-            )}
-
-            {(formData.paymentTerms || formData.creditLimit) && (
-              <div className="border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">Financial Details</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(3)}>Edit</Button>
+                  <h3 className="font-semibold">Basic Information</h3>
+                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)}>Edit</Button>
                 </div>
                 <div className="space-y-1 text-sm">
-                  <p><span className="text-gray-500">Payment Terms:</span> {formData.paymentTerms}</p>
-                  {formData.creditLimit && <p><span className="text-gray-500">Credit Limit:</span> ${formData.creditLimit}</p>}
-                  {formData.discountRate && <p><span className="text-gray-500">Discount:</span> {formData.discountRate}%</p>}
+                  <p><span className="text-gray-500">Name:</span> {formData.name}</p>
+                  <p><span className="text-gray-500">Type:</span> {formData.type}</p>
+                  <p><span className="text-gray-500">Email:</span> {formData.email}</p>
+                  {formData.phone && <p><span className="text-gray-500">Phone:</span> {formData.phone}</p>}
                 </div>
               </div>
-            )}
 
-            <FormField label="Internal Notes" helpText="Private notes, not visible to customer">
-              <Textarea
-                placeholder="Add any internal notes about this customer..."
-                value={formData.notes}
-                onChange={(e) => handleFieldChange('notes', e.target.value)}
-                rows={3}
-                maxLength={500}
-              />
-              <p className="text-xs text-gray-500 text-right">{formData.notes.length}/500</p>
-            </FormField>
+              {(formData.address || formData.city) && (
+                <div className="border rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold">Address</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)}>Edit</Button>
+                  </div>
+                  <div className="text-sm">
+                    <p>{formData.address} {formData.address2}</p>
+                    <p>{formData.city}, {formData.state} {formData.postalCode}</p>
+                    <p>{formData.country}</p>
+                  </div>
+                </div>
+              )}
+
+              {(formData.paymentTerms || formData.creditLimit) && (
+                <div className="border rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold">Financial Details</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setCurrentStep(3)}>Edit</Button>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-gray-500">Payment Terms:</span> {formData.paymentTerms}</p>
+                    {formData.creditLimit && <p><span className="text-gray-500">Credit Limit:</span> ${formData.creditLimit}</p>}
+                    {formData.discountRate && <p><span className="text-gray-500">Discount:</span> {formData.discountRate}%</p>}
+                  </div>
+                </div>
+              )}
+
+              <FormField label="Internal Notes" helpText="Private notes, not visible to customer">
+                <Textarea
+                  placeholder="Add any internal notes about this customer..."
+                  value={formData.notes}
+                  onChange={(e) => handleFieldChange('notes', e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                />
+                <p className="text-xs text-gray-500 text-right">{formData.notes.length}/500</p>
+              </FormField>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-6 pt-6 border-t">
+            <div>
+              {currentStep > 1 && (
+                <Button variant="outline" onClick={handleBack}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              {currentStep > 1 && currentStep < 4 && (
+                <Button variant="ghost" onClick={handleSkip}>
+                  Skip
+                </Button>
+              )}
+              
+              <Button variant="outline" onClick={handleSaveDraft}>
+                <Save className="mr-2 h-4 w-4" />
+                Save Draft
+              </Button>
+
+              {currentStep < 4 ? (
+                <Button onClick={handleNext} disabled={currentStep === 1 && (!formData.name || !formData.email)}>
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button data-tour-id="customers-add" onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
+                  <Check className="mr-2 h-4 w-4" />
+                  Create Customer
+                </Button>
+              )}
+            </div>
           </div>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-6 pt-6 border-t">
-          <div>
-            {currentStep > 1 && (
-              <Button variant="outline" onClick={handleBack}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            {currentStep > 1 && currentStep < 4 && (
-              <Button variant="ghost" onClick={handleSkip}>
-                Skip
-              </Button>
-            )}
-            
-            <Button variant="outline" onClick={handleSaveDraft}>
-              <Save className="mr-2 h-4 w-4" />
-              Save Draft
-            </Button>
-
-            {currentStep < 4 ? (
-              <Button onClick={handleNext} disabled={currentStep === 1 && (!formData.name || !formData.email)}>
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button data-tour-id="customers-add" onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
-                <Check className="mr-2 h-4 w-4" />
-                Create Customer
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </AppLayout>
   );
 }

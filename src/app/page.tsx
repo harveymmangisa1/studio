@@ -29,6 +29,7 @@ import ExpensesChart from "@/components/dashboard/ExpensesChart";
 import { PageHeader } from '@/components/shared';
 import { useTenant } from '@/lib/tenant';
 import { useAuth } from '@/components/AuthProvider';
+import AppLayout from '@/components/AppLayout';
 
 interface Stats {
   totalProducts: number;
@@ -202,209 +203,211 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-8">
-      {isOpen && (
-        <Walkthrough
-          steps={steps}
-          isOpen={isOpen}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          onClose={close}
-        />
-      )}
-      <PageHeader
-        title={`${tenant?.name || 'Your'} Dashboard`}
-        description={`Welcome back, ${userProfile?.name || 'User'}! Here's a summary of your business.`}
-      >
-        <Tabs defaultValue="month" onValueChange={(value) => setTimeRange(value as any)}>
-          <TabsList>
-            <TabsTrigger value="today">Today</TabsTrigger>
-            <TabsTrigger value="week">Week</TabsTrigger>
-            <TabsTrigger value="month">Month</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <Button
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={refreshing}
+    <AppLayout>
+      <div className="flex flex-col gap-8">
+        {isOpen && (
+          <Walkthrough
+            steps={steps}
+            isOpen={isOpen}
+            currentStep={currentStep}
+            setCurrentStep={setCurrentStep}
+            onClose={close}
+          />
+        )}
+        <PageHeader
+          title={`${tenant?.name || 'Your'} Dashboard`}
+          description={`Welcome back, ${userProfile?.name || 'User'}! Here's a summary of your business.`}
         >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline ml-2">Refresh</span>
-        </Button>
-      </PageHeader>
+          <Tabs defaultValue="month" onValueChange={(value) => setTimeRange(value as any)}>
+            <TabsList>
+              <TabsTrigger value="today">Today</TabsTrigger>
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((card) => {
-          const Icon = card.icon;
-          const isPositive = card.change >= 0;
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline ml-2">Refresh</span>
+          </Button>
+        </PageHeader>
 
-          return (
-            <Card key={card.title} className="group hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                 <div className="flex items-start justify-between">
-                    <div className="p-3 rounded-xl bg-primary/10">
-                        <Icon className="w-6 h-6 text-primary" />
-                    </div>
-                     <div className="flex items-center gap-2">
-                        {card.change !== 0 && (
-                            <div
-                            className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full ${
-                                isPositive
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}
-                            >
-                            {isPositive ? (
-                                <ArrowUp className="w-3 h-3" />
-                            ) : (
-                                <ArrowDown className="w-3 h-3" />
-                            )}
-                            {Math.abs(card.change)}%
-                            </div>
-                        )}
-                        <Link href={card.title === 'Total Revenue' || card.title === 'Total Sales' ? '/sales' : card.title === 'Total Products' ? '/inventory' : '/customers'}>
-                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8">
-                              <Eye className="w-4 h-4 text-muted-foreground" />
-                          </Button>
-                        </Link>
-                    </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statCards.map((card) => {
+            const Icon = card.icon;
+            const isPositive = card.change >= 0;
+
+            return (
+              <Card key={card.title} className="group hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
+                   <div className="flex items-start justify-between">
+                      <div className="p-3 rounded-xl bg-primary/10">
+                          <Icon className="w-6 h-6 text-primary" />
+                      </div>
+                       <div className="flex items-center gap-2">
+                          {card.change !== 0 && (
+                              <div
+                              className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full ${
+                                  isPositive
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}
+                              >
+                              {isPositive ? (
+                                  <ArrowUp className="w-3 h-3" />
+                              ) : (
+                                  <ArrowDown className="w-3 h-3" />
+                              )}
+                              {Math.abs(card.change)}%
+                              </div>
+                          )}
+                          <Link href={card.title === 'Total Revenue' || card.title === 'Total Sales' ? '/sales' : card.title === 'Total Products' ? '/inventory' : '/customers'}>
+                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8">
+                                <Eye className="w-4 h-4 text-muted-foreground" />
+                            </Button>
+                          </Link>
+                      </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">{card.title}</h3>
+                  <p className="text-2xl font-bold mb-2">{card.value}</p>
+                  <p className="text-xs text-muted-foreground">
+                      {isPositive ? 'Increase' : 'Decrease'} from last {timeRange}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="xl:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Recent Activity</CardTitle>
+                  <Link href="/audit-log">
+                    <Button variant="link" className="text-sm">View All</Button>
+                  </Link>
                 </div>
               </CardHeader>
-              <CardContent>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">{card.title}</h3>
-                <p className="text-2xl font-bold mb-2">{card.value}</p>
-                <p className="text-xs text-muted-foreground">
-                    {isPositive ? 'Increase' : 'Decrease'} from last {timeRange}
-                </p>
+              <CardContent className="space-y-2">
+                {recentActivities.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center gap-4 p-3 hover:bg-muted/50 rounded-lg transition-colors group"
+                  >
+                    {getActivityIcon(activity)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{activity.description}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {activity.amount && (
+                        <p className="text-sm font-semibold text-green-600 whitespace-nowrap">
+                          +${activity.amount.toLocaleString()}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground whitespace-nowrap">{activity.timestamp}</p>
+                       <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8">
+                          <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
+             <Card>
+              <CardHeader>
+                  <CardTitle>Sales Trend</CardTitle>
+                  <CardDescription>Your sales performance over the last 6 months.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <SalesChart data={MOCK_SALES_DATA} />
+              </CardContent>
+              </Card>
+          </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="xl:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Recent Activity</CardTitle>
-                <Link href="/audit-log">
-                  <Button variant="link" className="text-sm">View All</Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {recentActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-center gap-4 p-3 hover:bg-muted/50 rounded-lg transition-colors group"
-                >
-                  {getActivityIcon(activity)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{activity.description}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {activity.amount && (
-                      <p className="text-sm font-semibold text-green-600 whitespace-nowrap">
-                        +${activity.amount.toLocaleString()}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground whitespace-nowrap">{activity.timestamp}</p>
-                     <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8">
-                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader>
-                <CardTitle>Sales Trend</CardTitle>
-                <CardDescription>Your sales performance over the last 6 months.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <SalesChart data={MOCK_SALES_DATA} />
-            </CardContent>
-            </Card>
-        </div>
+          {/* Right Column */}
+          <div className="space-y-6">
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                          <AlertCircle className="w-5 h-5 text-amber-500" />
+                          Alerts & Notifications
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      {stats.lowStockItems > 0 && (
+                          <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                          <TrendingDown className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                              <p className="text-sm font-medium text-amber-900">Low Stock Alert</p>
+                              <p className="text-xs text-amber-700 mt-1">{stats.lowStockItems} products are below their minimum stock level.</p>
+                              <Link href="/inventory">
+                                <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-amber-600">View Products →</Button>
+                              </Link>
+                          </div>
+                          </div>
+                      )}
+                      
+                      {stats.pendingOrders > 0 && (
+                          <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <ShoppingCart className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                              <p className="text-sm font-medium text-blue-900">Pending Orders</p>
+                              <p className="text-xs text-blue-700 mt-1">{stats.pendingOrders} sales orders await processing.</p>
+                               <Link href="/sales">
+                                 <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-blue-600">Process Orders →</Button>
+                               </Link>
+                          </div>
+                          </div>
+                      )}
+                      
+                      <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                          <TrendingUp className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                          <p className="text-sm font-medium text-emerald-900">Sales Performance</p>
+                          <p className="text-xs text-emerald-700 mt-1">Revenue increased by {stats.revenueChange}% this {timeRange}.</p>
+                          <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-emerald-600">View Report →</Button>
+                          </div>
+                      </div>
+                  </CardContent>
+              </Card>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-amber-500" />
-                        Alerts & Notifications
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {stats.lowStockItems > 0 && (
-                        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <TrendingDown className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                            <p className="text-sm font-medium text-amber-900">Low Stock Alert</p>
-                            <p className="text-xs text-amber-700 mt-1">{stats.lowStockItems} products are below their minimum stock level.</p>
-                            <Link href="/inventory">
-                              <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-amber-600">View Products →</Button>
-                            </Link>
-                        </div>
-                        </div>
-                    )}
-                    
-                    {stats.pendingOrders > 0 && (
-                        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <ShoppingCart className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                            <p className="text-sm font-medium text-blue-900">Pending Orders</p>
-                            <p className="text-xs text-blue-700 mt-1">{stats.pendingOrders} sales orders await processing.</p>
-                             <Link href="/sales">
-                               <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-blue-600">Process Orders →</Button>
-                             </Link>
-                        </div>
-                        </div>
-                    )}
-                    
-                    <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                        <TrendingUp className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                        <p className="text-sm font-medium text-emerald-900">Sales Performance</p>
-                        <p className="text-xs text-emerald-700 mt-1">Revenue increased by {stats.revenueChange}% this {timeRange}.</p>
-                        <Button variant="link" size="sm" className="h-auto p-0 mt-2 text-emerald-600">View Report →</Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-3">
-                     {[
-                        { label: 'New Sale', icon: ShoppingCart, color: 'bg-emerald-500', href: '/sales/new' },
-                        { label: 'Add Product', icon: Package, color: 'bg-blue-500', href: '/inventory' },
-                        { label: 'New Customer', icon: Users, color: 'bg-amber-500', href: '/customers' },
-                        { label: 'View Reports', icon: TrendingUp, color: 'bg-slate-500', href: '/reports/balance-sheet' },
-                    ].map((action, index) => (
-                        <Link key={index} href={action.href}>
-                          <Button variant="outline" className="flex-col h-24 gap-2 w-full">
-                               <div className={`${action.color} p-2 rounded-lg`}>
-                                  <action.icon className="w-5 h-5 text-white" />
-                              </div>
-                              <span className="text-sm font-medium text-muted-foreground">{action.label}</span>
-                          </Button>
-                        </Link>
-                    ))}
-                </CardContent>
-            </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-3">
+                       {[
+                          { label: 'New Sale', icon: ShoppingCart, color: 'bg-emerald-500', href: '/sales/new' },
+                          { label: 'Add Product', icon: Package, color: 'bg-blue-500', href: '/inventory' },
+                          { label: 'New Customer', icon: Users, color: 'bg-amber-500', href: '/customers' },
+                          { label: 'View Reports', icon: TrendingUp, color: 'bg-slate-500', href: '/reports/balance-sheet' },
+                      ].map((action, index) => (
+                          <Link key={index} href={action.href}>
+                            <Button variant="outline" className="flex-col h-24 gap-2 w-full">
+                                 <div className={`${action.color} p-2 rounded-lg`}>
+                                    <action.icon className="w-5 h-5 text-white" />
+                                </div>
+                                <span className="text-sm font-medium text-muted-foreground">{action.label}</span>
+                            </Button>
+                          </Link>
+                      ))}
+                  </CardContent>
+              </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

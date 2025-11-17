@@ -1,16 +1,17 @@
+
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { TenantProvider } from './TenantProvider';
-import { SidebarProvider } from './ui/sidebar';
-import { AppSidebar } from './app-sidebar';
+import { useRouter } from 'next/navigation';
 
 type AuthContextType = {
   session: Session | null;
   supabase: SupabaseClient;
   userProfile: { id: string; name: string | null; email: string; role?: string | null } | null;
+  loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{ id: string; name: string | null; email: string; role?: string | null } | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const getSession = async () => {
@@ -63,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadProfile();
   }, [session]);
 
-  const value = { session, supabase, userProfile };
+  const value = { session, supabase, userProfile, loading };
 
   if (loading) {
     return (
@@ -72,31 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  if (session) {
-    return (
-      <AuthContext.Provider value={value}>
-        <TenantProvider>
-          <SidebarProvider>
-            <div className="flex min-h-screen flex-col">
-              <div className="flex flex-1">
-                <AppSidebar />
-                <main className="flex-1 flex flex-col pl-16">
-                  <div className="flex-1 p-4 sm:p-6 lg:p-8">
-                    {children}
-                  </div>
-                </main>
-              </div>
-            </div>
-          </SidebarProvider>
-        </TenantProvider>
-      </AuthContext.Provider>
-    );
-  }
-
+  
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      <TenantProvider>
+        {children}
+      </TenantProvider>
     </AuthContext.Provider>
   );
 }

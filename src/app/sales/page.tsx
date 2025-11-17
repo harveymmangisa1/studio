@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -17,6 +18,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { postARInvoice, postCOGS, postARPayment } from '../../lib/ledger';
 import { PageHeader } from '@/components/shared';
+import AppLayout from '@/components/AppLayout';
 
 interface Invoice {
   id: string;
@@ -155,158 +157,160 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Sales & Quotations"
-        description="Manage your sales cycle from quotation to invoice."
-      >
-        <Link href="/sales/quotes/new">
-          <Button variant="outline">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Quote
-          </Button>
-        </Link>
-        <Link href="/sales/new">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Invoice
-          </Button>
-        </Link>
-      </PageHeader>
-      
-      <Tabs defaultValue="invoices">
-        <TabsList>
-          <TabsTrigger value="invoices">Invoices</TabsTrigger>
-          <TabsTrigger value="quotations">Quotations</TabsTrigger>
-        </TabsList>
-        <TabsContent value="invoices">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Invoices</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Posting</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.map(invoice => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                      <TableCell>{invoice.customer_name}</TableCell>
-                      <TableCell>{new Date(invoice.invoice_date).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        {getStatusBadge(invoice.payment_status)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={invoice['posting_status' as any] === 'Posted' ? 'default' : 'outline'}>
-                          {invoice['posting_status' as any] || 'Draft'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">${invoice.total_amount.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {invoice['posting_status' as any] !== 'Posted' && (
-                              <DropdownMenuItem onClick={() => handlePostInvoice(invoice)}>
-                                <span>Post Invoice</span>
-                              </DropdownMenuItem>
-                            )}
-                            {invoice.payment_status !== 'Paid' && (
-                              <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id, invoice.total_amount)}>
-                                <span>Receive Payment</span>
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem asChild>
-                               <Link href={`/sales/${invoice.id}`}>
-                                 <Eye className="mr-2 h-4 w-4" />
-                                 <span>View Details</span>
-                               </Link>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+    <AppLayout>
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          title="Sales & Quotations"
+          description="Manage your sales cycle from quotation to invoice."
+        >
+          <Link href="/sales/quotes/new">
+            <Button variant="outline">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Quote
+            </Button>
+          </Link>
+          <Link href="/sales/new">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Invoice
+            </Button>
+          </Link>
+        </PageHeader>
+        
+        <Tabs defaultValue="invoices">
+          <TabsList>
+            <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="quotations">Quotations</TabsTrigger>
+          </TabsList>
+          <TabsContent value="invoices">
+            <Card>
+              <CardHeader>
+                <CardTitle>All Invoices</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Posting</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="quotations">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Quotations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quote #</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Expiry Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {quotes.map(quote => (
-                    <TableRow key={quote.id}>
-                      <TableCell className="font-medium">{quote.quote_number}</TableCell>
-                      <TableCell>{quote.customer_name}</TableCell>
-                      <TableCell>{new Date(quote.quote_date).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(quote.expiry_date).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        {getStatusBadge(quote.status)}
-                      </TableCell>
-                      <TableCell className="text-right">${quote.total_amount.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                               <Link href={`/sales/quotes/${quote.id}`}>
-                                 <Eye className="mr-2 h-4 w-4" />
-                                 <span>View Details</span>
-                               </Link>
-                            </DropdownMenuItem>
-                            {quote.status !== 'Accepted' && (
-                              <DropdownMenuItem>
-                                <span>Convert to Invoice</span>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map(invoice => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
+                        <TableCell>{invoice.customer_name}</TableCell>
+                        <TableCell>{new Date(invoice.invoice_date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(invoice.payment_status)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={(invoice as any).posting_status === 'Posted' ? 'default' : 'outline'}>
+                            {(invoice as any).posting_status || 'Draft'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">${invoice.total_amount.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                           <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {(invoice as any).posting_status !== 'Posted' && (
+                                <DropdownMenuItem onClick={() => handlePostInvoice(invoice)}>
+                                  <span>Post Invoice</span>
+                                </DropdownMenuItem>
+                              )}
+                              {invoice.payment_status !== 'Paid' && (
+                                <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id, invoice.total_amount)}>
+                                  <span>Receive Payment</span>
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem asChild>
+                                 <Link href={`/sales/${invoice.id}`}>
+                                   <Eye className="mr-2 h-4 w-4" />
+                                   <span>View Details</span>
+                                 </Link>
                               </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="quotations">
+            <Card>
+              <CardHeader>
+                <CardTitle>All Quotations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Quote #</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Expiry Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+                  </TableHeader>
+                  <TableBody>
+                    {quotes.map(quote => (
+                      <TableRow key={quote.id}>
+                        <TableCell className="font-medium">{quote.quote_number}</TableCell>
+                        <TableCell>{quote.customer_name}</TableCell>
+                        <TableCell>{new Date(quote.quote_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(quote.expiry_date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(quote.status)}
+                        </TableCell>
+                        <TableCell className="text-right">${quote.total_amount.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                           <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                 <Link href={`/sales/quotes/${quote.id}`}>
+                                   <Eye className="mr-2 h-4 w-4" />
+                                   <span>View Details</span>
+                                 </Link>
+                              </DropdownMenuItem>
+                              {quote.status !== 'Accepted' && (
+                                <DropdownMenuItem>
+                                  <span>Convert to Invoice</span>
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppLayout>
   );
 }

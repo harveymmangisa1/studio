@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -40,6 +41,7 @@ import {
   LucideProps
 } from 'lucide-react';
 import { ForwardRefExoticComponent, RefAttributes } from 'react';
+import AppLayout from '@/components/AppLayout';
 
 const STORAGE_KEY = 'teamMemberFormDraft';
 
@@ -1259,41 +1261,43 @@ export function TeamManagementDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {!showForm ? (
-          <TeamMemberList 
-            members={members}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAdd={() => {
-              setEditingMember(null);
-              setShowForm(true);
-            }}
-          />
-        ) : (
-          <EnhancedTeamMemberForm
-            initialData={editingMember}
-            onSuccess={handleSaveMember}
-            onCancel={() => {
-              setShowForm(false);
-              setEditingMember(null);
-            }}
-          />
-        )}
+    <AppLayout>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {!showForm ? (
+            <TeamMemberList 
+              members={members}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onAdd={() => {
+                setEditingMember(null);
+                setShowForm(true);
+              }}
+            />
+          ) : (
+            <EnhancedTeamMemberForm
+              initialData={editingMember}
+              onSuccess={handleSaveMember}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingMember(null);
+              }}
+            />
+          )}
 
-        <ConfirmationDialog
-          isOpen={!!deleteConfirm}
-          onClose={() => setDeleteConfirm(null)}
-          onConfirm={confirmDelete}
-          title="Delete Team Member"
-          message={`Are you sure you want to remove ${deleteConfirm?.fullName} from your team? This action cannot be undone.`}
-          confirmText="Delete Member"
-          variant="destructive"
-          isLoading={isDeleting}
-        />
+          <ConfirmationDialog
+            isOpen={!!deleteConfirm}
+            onClose={() => setDeleteConfirm(null)}
+            onConfirm={confirmDelete}
+            title="Delete Team Member"
+            message={`Are you sure you want to remove ${deleteConfirm?.fullName} from your team? This action cannot be undone.`}
+            confirmText="Delete Member"
+            variant="destructive"
+            isLoading={isDeleting}
+          />
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
 

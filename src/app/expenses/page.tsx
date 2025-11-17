@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ExpenseForm, Expense } from '@/components/ExpenseForm';
 import ExpensesChart from '@/components/dashboard/ExpensesChart';
 import { PageHeader } from '@/components/shared';
+import AppLayout from '@/components/AppLayout';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -48,62 +50,64 @@ export default function ExpensesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Expenses"
-        description="Track and manage your business expenses."
-      >
-        <Button onClick={() => { setShowForm(true); }}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Expense
-        </Button>
-      </PageHeader>
+    <AppLayout>
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          title="Expenses"
+          description="Track and manage your business expenses."
+        >
+          <Button onClick={() => { setShowForm(true); }}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Expense
+          </Button>
+        </PageHeader>
 
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Expense</DialogTitle>
-          </DialogHeader>
-          <ExpenseForm onSuccess={handleFormSuccess} />
-        </DialogContent>
-      </Dialog>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Expense</DialogTitle>
+            </DialogHeader>
+            <ExpenseForm onSuccess={handleFormSuccess} />
+          </DialogContent>
+        </Dialog>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Expense Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExpensesChart />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Expense Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpensesChart />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {expenses.map(expense => (
-                <TableRow key={expense.id}>
-                  <TableCell>{new Date(expense.expense_date).toLocaleDateString()}</TableCell>
-                  <TableCell>{expense.category}</TableCell>
-                  <TableCell>{expense.description}</TableCell>
-                  <TableCell className="text-right">${expense.amount.toFixed(2)}</TableCell>
+        <Card>
+          <CardHeader>
+            <CardTitle>All Expenses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+              </TableHeader>
+              <TableBody>
+                {expenses.map(expense => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{new Date(expense.expense_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{expense.category}</TableCell>
+                    <TableCell>{expense.description}</TableCell>
+                    <TableCell className="text-right">${expense.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
   );
 }
