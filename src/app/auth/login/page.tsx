@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -69,7 +70,23 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Check your email for the confirmation link!');
+        // Now create a tenant for the new user
+        if (data.user) {
+          const { error: tenantError } = await supabase
+            .from('tenants')
+            .insert({
+              id: data.user.id, // Using user ID as tenant ID for simplicity
+              owner_id: data.user.id,
+              company_name: businessName,
+              // You might want to generate a subdomain here
+            });
+
+          if (tenantError) {
+            setError(`Account created, but failed to set up business: ${tenantError.message}`);
+          } else {
+            setMessage('Check your email for the confirmation link!');
+          }
+        }
       }
     } else { // login
       const { error } = await supabase.auth.signInWithPassword({

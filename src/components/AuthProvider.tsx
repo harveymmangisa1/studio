@@ -3,9 +3,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Session, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import LoginPage from '@/app/auth/login/page';
 import { TenantProvider } from './TenantProvider';
-import { SidebarProvider, SidebarInset } from './ui/sidebar';
+import { SidebarProvider } from './ui/sidebar';
 import { AppSidebar } from './app-sidebar';
 
 type AuthContextType = {
@@ -64,6 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadProfile();
   }, [session]);
 
+  const value = { session, supabase, userProfile };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -72,29 +73,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!session) {
-    return <LoginPage />;
-  }
-
-  return (
-    <AuthContext.Provider value={{ session, supabase, userProfile }}>
-      <TenantProvider>
-        <SidebarProvider>
-          <div className="flex min-h-screen flex-col">
-            <header className="lg:hidden flex items-center justify-between h-16 px-4 border-b shrink-0">
-               {/* Mobile header content can go here if needed, managed by AppSidebar now */}
-            </header>
-            <div className="flex flex-1">
-              <AppSidebar />
-              <main className="flex-1 flex flex-col">
+  if (session) {
+    return (
+      <AuthContext.Provider value={value}>
+        <TenantProvider>
+          <SidebarProvider>
+            <div className="flex min-h-screen flex-col">
+              <div className="flex flex-1">
+                <AppSidebar />
+                <main className="flex-1 flex flex-col pl-16">
                   <div className="flex-1 p-4 sm:p-6 lg:p-8">
                     {children}
                   </div>
-              </main>
+                </main>
+              </div>
             </div>
-          </div>
-        </SidebarProvider>
-      </TenantProvider>
+          </SidebarProvider>
+        </TenantProvider>
+      </AuthContext.Provider>
+    );
+  }
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
     </AuthContext.Provider>
   );
 }

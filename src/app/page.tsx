@@ -28,6 +28,7 @@ import SalesChart from "@/components/dashboard/SalesChart";
 import ExpensesChart from "@/components/dashboard/ExpensesChart";
 import { PageHeader } from '@/components/shared';
 import { useTenant } from '@/lib/tenant';
+import { useAuth } from '@/components/AuthProvider';
 
 interface Stats {
   totalProducts: number;
@@ -61,7 +62,7 @@ const MOCK_SALES_DATA = [
 
 export default function DashboardPage() {
   const { tenant } = useTenant();
-  const [userName, setUserName] = useState("User"); 
+  const { userProfile } = useAuth();
   const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
     lowStockItems: 0,
@@ -79,14 +80,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
-    const getUser = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if(user) {
-            // In a real app, you'd fetch the user's profile name from your 'users' table
-            setUserName(user.email?.split('@')[0] || "User");
-        }
-    }
-    getUser();
   }, [timeRange]);
 
   const fetchDashboardData = async () => {
@@ -189,8 +182,15 @@ export default function DashboardPage() {
       customer: 'bg-amber-100 text-amber-600',
     };
     
-    const { isOpen, currentStep, setCurrentStep, close } = useWalkthrough();
-    const router = useRouter();
+    return (
+      <div className={`p-3 rounded-lg ${iconColors[activity.type]}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+    );
+  };
+  
+  const { isOpen, currentStep, setCurrentStep, close } = useWalkthrough();
+  const router = useRouter();
 
   const steps: WalkthroughStep[] = [
     { id: 'welcome', target: '[data-tour-id="sidebar-brand"]', title: 'Welcome to paeasybooks', content: 'You\'re logged in. Let\'s get your company ready.' },
@@ -202,9 +202,8 @@ export default function DashboardPage() {
   ];
 
   return (
-      <div className={`p-3 rounded-lg ${iconColors[activity.type]}`}>
-        <Icon className="w-5 h-5" />
-        {isOpen && (
+    <div className="flex flex-col gap-8">
+      {isOpen && (
         <Walkthrough
           steps={steps}
           isOpen={isOpen}
@@ -213,16 +212,9 @@ export default function DashboardPage() {
           onClose={close}
         />
       )}
-    </div>
-    );
-  };
-
-
-  return (
-    <div className="flex flex-col gap-8">
       <PageHeader
         title={`${tenant?.name || 'Your'} Dashboard`}
-        description={`Welcome back, ${userName}! Here's a summary of your business.`}
+        description={`Welcome back, ${userProfile?.name || 'User'}! Here's a summary of your business.`}
       >
         <Tabs defaultValue="month" onValueChange={(value) => setTimeRange(value as any)}>
           <TabsList>
