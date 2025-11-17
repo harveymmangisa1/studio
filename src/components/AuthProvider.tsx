@@ -42,9 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load user profile from users table once session is available
   useEffect(() => {
     const loadProfile = async () => {
+      if (!session?.user) return;
       try {
         const authUser = session.user;
-        if (!authUser) return;
         const { data, error } = await supabase
           .from('users')
           .select('id, name, email, role')
@@ -57,7 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserProfile({ id: authUser.id, name: authUser.user_metadata?.name || null, email: authUser.email || '', role: null });
         }
       } catch (e) {
-        setUserProfile({ id: session.user.id, name: session.user.user_metadata?.name || null, email: session.user.email || '', role: null });
+        if(session?.user) {
+          setUserProfile({ id: session.user.id, name: session.user.user_metadata?.name || null, email: session.user.email || '', role: null });
+        }
       }
     };
     loadProfile();
@@ -77,12 +79,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{ session, supabase, userProfile }}>
       <TenantProvider>
         <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <div className="p-4 sm:p-6 lg:p-8">
-              {children}
-            </div>
-          </SidebarInset>
+          <div className="flex">
+            <AppSidebar />
+            <main className="flex-1">
+              <SidebarInset>
+                <div className="p-4 sm:p-6 lg:p-8">
+                  {children}
+                </div>
+              </SidebarInset>
+            </main>
+          </div>
         </SidebarProvider>
       </TenantProvider>
     </AuthContext.Provider>
