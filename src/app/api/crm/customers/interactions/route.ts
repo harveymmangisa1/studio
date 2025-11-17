@@ -1,4 +1,3 @@
-"use strict";
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 
