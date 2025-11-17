@@ -166,3 +166,28 @@ export async function reverseJournalBatch(batchId: UUID, date: string, reason = 
     entries: reversed,
   });
 }
+
+// New: Record a sale by creating standard ledger entries (AR, Revenue, COGS, Inventory)
+export async function recordSale(invoiceId: string, customerId: string, amount: number, cogs: number) {
+  const revenueAccount = await getAccountIdByName('Sales Revenue');
+  const arAccount = await getAccountIdByName('Accounts Receivable');
+  const cogsAccount = await getAccountIdByName('Cost of Goods Sold');
+  const inventoryAccount = await getAccountIdByName('Inventory');
+
+  const date = new Date().toISOString().slice(0, 10);
+
+  const entries: JournalEntry[] = [
+    { account_id: arAccount, debit: amount, credit: 0, memo: `Invoice ${invoiceId} - AR` },
+    { account_id: revenueAccount, debit: 0, credit: amount, memo: `Invoice ${invoiceId} - Revenue` },
+    { account_id: cogsAccount, debit: cogs, credit: 0, memo: `Invoice ${invoiceId} - COGS` },
+    { account_id: inventoryAccount, debit: 0, credit: cogs, memo: `COGS for Invoice ${invoiceId}` }
+  ];
+
+  return createJournalBatch({
+    date,
+    description: `Sale ${invoiceId} - Customer ${customerId}`,
+    source_type: 'SALE',
+    source_id: invoiceId,
+    entries,
+  });
+}

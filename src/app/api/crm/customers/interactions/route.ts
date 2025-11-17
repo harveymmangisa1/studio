@@ -1,27 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
-
-function generateUuid(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    // @ts-ignore
-    return crypto.randomUUID();
-  }
-  return 'crm_interaction_' + Math.random().toString(36).slice(2, 8) + '_' + Date.now().toString(36);
-}
-
-function extractTenantFromRequest(req: Request): string {
-  const h = req.headers.get('X-Tenant-Id') || req.headers.get('x-tenant-id');
-  if (h) return h;
-  const cookieHeader = req.headers.get('cookie') || '';
-  const m = cookieHeader.match(/tenant_id=([^;]+)/);
-  if (m) return m[1];
-  return 'default-tenant';
-}
+import { generateUuid, extractTenantFromRequest } from '@/lib/crm/utils';
 
 export async function GET(req: Request) {
   const tenantId = extractTenantFromRequest(req);
   const supabase = getSupabase(tenantId);
-  const { data, error } = await supabase.from('customer_interactions').select('*');
+  const { searchParams } = new URL(req.url);
+  const customerId = searchParams.get('customerId');
+
+  let query = supabase.from('customer_interactions').select('*');
+  if (customerId) {
+    query = query.eq('customer_id', customerId);
+  }
+
+  const { data, error } = await query;
+
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }
@@ -53,7 +46,7 @@ export async function POST(req: Request) {
     created_by: created_by ?? null,
     created_at: now,
   } as any;
-  const { data, error } = await supabase.from('customer_interactions').insert([payload]).single();
+  const { data, error } = await supabase.from('customer_interactions').insert([payload]).select().single();
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }

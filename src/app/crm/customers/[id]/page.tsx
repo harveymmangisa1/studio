@@ -21,7 +21,7 @@ type Event = {
 
 export default function CRMCustomerPage({ params }: { params: { id: string } }) {
   const { tenant } = useTenant();
-  const tenantId = (tenant?.id) ?? 'default-tenant';
+  const tenantId = tenant?.id ?? 'default-tenant';
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -31,6 +31,8 @@ export default function CRMCustomerPage({ params }: { params: { id: string } }) 
   // Load customer data
   useEffect(() => {
     let mounted = true;
+    if (!tenantId) return;
+
     (async () => {
       try {
         const res = await fetch(`/api/crm/customers/${params.id}`, {
@@ -43,6 +45,8 @@ export default function CRMCustomerPage({ params }: { params: { id: string } }) 
         }
       } catch (e: any) {
         if (mounted) setError(e?.message ?? 'Error loading customer');
+      } finally {
+        if (mounted) setLoading(false);
       }
     })();
     return () => {
@@ -53,12 +57,12 @@ export default function CRMCustomerPage({ params }: { params: { id: string } }) 
   // Load interactions for the customer
   useEffect(() => {
     let mounted = true;
+    if (!customer?.id || !tenantId) {
+      return;
+    }
     (async () => {
       try {
-        if (!customer?.id) {
-          return;
-        }
-        const res = await fetch('/api/crm/customers/interactions', {
+        const res = await fetch(`/api/crm/customers/interactions?customerId=${customer.id}`, {
           headers: { 'X-Tenant-Id': tenantId },
         });
         const data = await res.json();
@@ -82,7 +86,7 @@ export default function CRMCustomerPage({ params }: { params: { id: string } }) 
   }, [customer?.id, tenantId]);
 
   function addInteraction(payload: any) {
-    if (!customer?.id) return;
+    if (!customer?.id || !tenantId) return;
     const newEvent: Event = {
       id: 'ev-' + (events.length + 1),
       date: payload.date ?? new Date().toISOString().split('T')[0],
@@ -123,7 +127,7 @@ export default function CRMCustomerPage({ params }: { params: { id: string } }) 
   }
 
   if (loading) {
-    // show a simple loading while customer is loading
+    return <div>Loading...</div>
   }
 
   return (
