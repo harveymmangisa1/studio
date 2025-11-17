@@ -19,7 +19,9 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';\nimport { getMergedIndustryDefaults, setIndustryDefaultsOverride } from '@/config/industryDefaults';\n
+import { zodResolver } from '@hookform/resolvers/zod';
+import { getMergedIndustryDefaults, setIndustryDefaultsOverride } from '@/config/industryDefaults';
+
 const STORAGE_KEY = 'productFormDraft';
 
 // Industry-specific configurations
@@ -219,7 +221,7 @@ type IndustryFieldConfig = {
 const createProductSchema = (industry: string) => {
   const industryConfig = INDUSTRY_CONFIGS[industry as IndustryType];
   
-  const baseSchema = z.object({
+  let baseSchema = z.object({
     id: z.string().optional(),
     name: z.string().min(1, 'Product name is required').min(2, 'Product name must be at least 2 characters'),
     category: z.string().min(1, 'Category is required'),
