@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { getMergedIndustryDefaults, setIndustryDefaultsOverride } from '@/config/industryDefaults';
+import { getMergedIndustryDefaults } from '@/config/industryDefaults';
 
 const STORAGE_KEY = 'productFormDraft';
 
@@ -221,7 +221,7 @@ type IndustryFieldConfig = {
 const createProductSchema = (industry: string) => {
   const industryConfig = INDUSTRY_CONFIGS[industry as IndustryType];
   
-  let baseSchema = z.object({
+  let schemaObject = {
     id: z.string().optional(),
     name: z.string().min(1, 'Product name is required').min(2, 'Product name must be at least 2 characters'),
     category: z.string().min(1, 'Category is required'),
@@ -232,9 +232,11 @@ const createProductSchema = (industry: string) => {
     minStock: z.coerce.number().int().min(0, 'Min. stock must be non-negative').max(10000, 'Min stock seems too high').optional(),
     industry: z.string().min(1, 'Industry is required'),
     industryFields: z.record(z.any()).optional(),
-  });
-  
-  let finalSchema = baseSchema.superRefine((data, ctx) => {
+  };
+
+  const baseSchema = z.object(schemaObject);
+
+  const finalSchema = baseSchema.superRefine((data, ctx) => {
     // Price vs Cost validation
     if (data.price < data.cost) {
       ctx.addIssue({
@@ -371,6 +373,8 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
 
   const industryConfig = INDUSTRY_CONFIGS[selectedIndustry];
   const IndustryIcon = industryConfig?.icon || Package;
+
+  const computeDefaultsForIndustry = (industry: IndustryType) => getMergedIndustryDefaults(industry);
 
   // Initialize industry fields with defaults
   const initializeIndustryFields = (industry: IndustryType) => {
