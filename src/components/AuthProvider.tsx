@@ -6,8 +6,7 @@ import { supabase } from '@/lib/supabase';
 import LoginPage from '@/app/auth/login/page';
 import { TenantProvider } from './TenantProvider';
 import { SidebarProvider, SidebarInset } from './ui/sidebar';
-import { AppSidebar } from './AppSidebar';
-import { usePathname } from 'next/navigation';
+import { AppSidebar } from './app-sidebar';
 
 type AuthContextType = {
   session: Session | null;
@@ -21,7 +20,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{ id: string; name: string | null; email: string; role?: string | null } | null>(null);
-  const pathname = usePathname();
 
   useEffect(() => {
     const getSession = async () => {
@@ -39,10 +37,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load user profile from users table once session is available
   useEffect(() => {
     const loadProfile = async () => {
-      if (!session?.user) return;
+      if (!session?.user) {
+        setUserProfile(null);
+        return;
+      };
       try {
         const authUser = session.user;
         const { data, error } = await supabase
@@ -53,12 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!error && data) {
           setUserProfile({ id: data.id, name: data.name, email: data.email, role: data.role });
         } else {
-          // fallback to auth values
-          setUserProfile({ id: authUser.id, name: authUser.user_metadata?.name || null, email: authUser.email || '', role: null });
+          setUserProfile({ id: authUser.id, name: authUser.user_metadata?.full_name || authUser.email, email: authUser.email || '', role: null });
         }
       } catch (e) {
         if(session?.user) {
-          setUserProfile({ id: session.user.id, name: session.user.user_metadata?.name || null, email: session.user.email || '', role: null });
+          setUserProfile({ id: session.user.id, name: session.user.user_metadata?.full_name || session.user.email, email: session.user.email || '', role: null });
         }
       }
     };
@@ -66,28 +65,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   if (loading) {
-    return <div>Loading...</div>; // Or a proper loading spinner
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    );
   }
 
-  // If there's no session and the user is not on a public page, show login.
   if (!session) {
-      return <LoginPage />;
+    return <LoginPage />;
   }
 
-  // If there is a session, show the main app layout.
   return (
     <AuthContext.Provider value={{ session, supabase, userProfile }}>
       <TenantProvider>
         <SidebarProvider>
-          <div className="flex">
-            <AppSidebar />
-            <main className="flex-1">
-              <SidebarInset>
-                <div className="p-4 sm:p-6 lg:p-8">
-                  {children}
-                </div>
-              </SidebarInset>
-            </main>
+          <div className="flex min-h-screen flex-col">
+            <header className="lg:hidden flex items-center justify-between h-16 px-4 border-b shrink-0">
+               {/* Mobile header content can go here if needed, managed by AppSidebar now */}
+            </header>
+            <div className="flex flex-1">
+              <AppSidebar />
+              <main className="flex-1 flex flex-col">
+                  <div className="flex-1 p-4 sm:p-6 lg:p-8">
+                    {children}
+                  </div>
+              </main>
+            </div>
           </div>
         </SidebarProvider>
       </TenantProvider>

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,67 +23,68 @@ type AuthMode = 'login' | 'signup';
 
 export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>('login');
-  const [email, setEmail] = useState(mode === 'login' ? 'demo@paeasybooks.com' : '');
-  const [password, setPassword] = useState(mode === 'login' ? 'demo-password' : '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [signupStep, setSignupStep] = useState(1);
+  const router = useRouter();
 
   useEffect(() => {
-    if (mode === 'login') {
-      setEmail('demo@paeasybooks.com');
-      setPassword('demo-password');
-    } else {
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setFullName('');
-      setBusinessName('');
-    }
     setError(null);
+    setMessage(null);
     setSignupStep(1);
   }, [mode]);
 
-  const validateForm = () => {
-    if (mode === 'signup') {
-      if (!fullName.trim()) {
-        setError('Full name is required');
-        return false;
-      }
-      if (!businessName.trim()) {
-        setError('Business name is required');
-        return false;
-      }
-      if (password.length < 8) {
-        setError('Password must be at least 8 characters');
-        return false;
-      }
-      if (password !== confirmPassword) {
-        setError('Passwords do not match');
-        return false;
-      }
-    }
-    return true;
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-
     setLoading(true);
     setError(null);
+    setMessage(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      console.log('Auth submitted:', { mode, email, password });
-    }, 2000);
+    if (mode === 'signup') {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        setLoading(false);
+        return;
+      }
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            business_name: businessName,
+          }
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Check your email for the confirmation link!');
+      }
+    } else { // login
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        router.push('/');
+        router.refresh(); // Force a refresh to re-run middleware and AuthProvider logic
+      }
+    }
+    setLoading(false);
   };
 
   const nextSignupStep = () => {
@@ -101,14 +104,12 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <Card className="border border-slate-200 shadow-sm">
           <CardHeader className="space-y-6 pb-8">
-            {/* Logo */}
             <div className="flex justify-center">
               <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center">
                 <Package className="w-6 h-6 text-white" />
               </div>
             </div>
             
-            {/* Title */}
             <div className="text-center space-y-2">
               <CardTitle className="text-2xl font-semibold text-slate-900">
                 {mode === 'login' ? 'Sign in' : 'Create account'}
@@ -120,7 +121,6 @@ export default function AuthPage() {
               </p>
             </div>
 
-            {/* Mode Toggle */}
             <div className="flex border border-slate-200 rounded-lg p-1">
               <button
                 onClick={() => setMode('login')}
@@ -147,7 +147,6 @@ export default function AuthPage() {
 
           <CardContent className="space-y-6">
             <form onSubmit={handleAuth} className="space-y-5">
-              {/* Signup Step 1: Personal & Business Info */}
               {mode === 'signup' && signupStep === 1 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -194,7 +193,6 @@ export default function AuthPage() {
                 </div>
               )}
 
-              {/* Email & Password Fields */}
               {(mode === 'login' || (mode === 'signup' && signupStep === 2)) && (
                 <>
                   <div className="space-y-2">
@@ -257,7 +255,6 @@ export default function AuthPage() {
                     )}
                   </div>
 
-                  {/* Confirm Password */}
                   {mode === 'signup' && (
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-900">
@@ -286,15 +283,20 @@ export default function AuthPage() {
                     </div>
                   )}
 
-                  {/* Error Message */}
                   {error && (
                     <div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-red-600">{error}</span>
                     </div>
                   )}
+                  
+                  {message && (
+                    <div className="flex items-start space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-green-600">{message}</span>
+                    </div>
+                  )}
 
-                  {/* Navigation for Signup Step 2 */}
                   {mode === 'signup' && signupStep === 2 && (
                     <div className="flex gap-3">
                       <Button
@@ -323,7 +325,6 @@ export default function AuthPage() {
                     </div>
                   )}
 
-                  {/* Submit Button for Login */}
                   {mode === 'login' && (
                     <Button
                       type="submit"
@@ -344,16 +345,6 @@ export default function AuthPage() {
               )}
             </form>
 
-            {/* Demo Notice for Login */}
-            {mode === 'login' && (
-              <div className="pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-500 text-center">
-                  Demo credentials are pre-filled for testing
-                </p>
-              </div>
-            )}
-
-            {/* Footer Link */}
             <div className="text-center">
               <p className="text-sm text-slate-600">
                 {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
@@ -368,7 +359,6 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        {/* Footer Text */}
         <p className="text-xs text-slate-500 text-center mt-6">
           By continuing, you agree to our Terms of Service and Privacy Policy. This is a product of Octet Systems
         </p>

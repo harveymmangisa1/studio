@@ -1,6 +1,22 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
-import { generateUuid, extractTenantFromRequest } from '@/lib/crm/utils';
+
+function generateUuid(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in (crypto as any)) {
+    // @ts-ignore
+    return (crypto as any).randomUUID();
+  }
+  return 'crm_' + Math.random().toString(36).slice(2, 8) + '_' + Date.now().toString(36);
+}
+
+function extractTenantFromRequest(req: Request): string {
+  const h = req.headers.get('X-Tenant-Id') || req.headers.get('x-tenant-id');
+  if (h) return h;
+  const cookieHeader = req.headers.get('cookie') || '';
+  const m = cookieHeader.match(/tenant_id=([^;]+)/);
+  if (m) return m[1];
+  return 'default-tenant';
+}
 
 export async function GET(req: Request) {
   const tenantId = extractTenantFromRequest(req);
