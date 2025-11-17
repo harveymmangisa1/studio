@@ -20,7 +20,12 @@ function extractTenantFromRequest(req: Request): string {
 
 export async function GET(req: Request) {
   const tenantId = extractTenantFromRequest(req);
-  const supabase = getSupabase(tenantId);
+  let supabase: any;
+  try {
+    supabase = getSupabase(tenantId);
+  } catch (err: any) {
+    return new NextResponse(JSON.stringify({ error: err?.message ?? 'Supabase not configured' }), { status: 500 });
+  }
   const { data, error } = await supabase.from('customer_contacts').select('*');
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
@@ -30,7 +35,12 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const tenantId = extractTenantFromRequest(req);
-  const supabase = getSupabase(tenantId);
+  let supabase: any;
+  try {
+    supabase = getSupabase(tenantId);
+  } catch (err: any) {
+    return new NextResponse(JSON.stringify({ error: err?.message ?? 'Supabase not configured' }), { status: 500 });
+  }
   let body: any;
   try {
     body = await req.json();
