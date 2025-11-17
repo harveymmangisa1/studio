@@ -43,6 +43,34 @@ export default function AuthPage() {
     setSignupStep(1);
   }, [mode]);
 
+  const mapAuthError = (raw: string) => {
+    const lower = raw.toLowerCase();
+    if (lower.includes('already') || lower.includes('exists') || lower.includes('duplicate')) {
+      return 'An account with this email already exists. Try signing in or reset your password.';
+    }
+    if (lower.includes('password') && lower.includes('required')) {
+      return 'Password is required.';
+    }
+    return raw;
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email to reset your password');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage('Password reset email sent. Please check your inbox.');
+    }
+    setLoading(false);
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -68,7 +96,7 @@ export default function AuthPage() {
       });
 
       if (error) {
-        setError(error.message);
+        setError(mapAuthError(error.message));
       } else {
         // Now create a tenant for the new user
         if (data.user) {
@@ -239,6 +267,7 @@ export default function AuthPage() {
                       {mode === 'login' && (
                         <button
                           type="button"
+                          onClick={handleForgotPassword}
                           className="text-xs text-slate-600 hover:text-slate-900"
                         >
                           Forgot?
@@ -294,7 +323,7 @@ export default function AuthPage() {
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                         >
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showConfirmPassword ? <EyeOff className="w-4 h-6" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
