@@ -1,6 +1,5 @@
 
 'use client';
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -53,7 +52,7 @@ export default function AuthPage() {
     }
     return raw;
   };
-
+  
   const handleForgotPassword = async () => {
     if (!email) {
       setError('Please enter your email to reset your password');
@@ -104,15 +103,19 @@ export default function AuthPage() {
             .from('tenants')
             .insert({
               id: data.user.id, // Using user ID as tenant ID for simplicity
-              owner_id: data.user.id,
               company_name: businessName,
-              // You might want to generate a subdomain here
             });
 
           if (tenantError) {
             setError(`Account created, but failed to set up business: ${tenantError.message}`);
           } else {
-            setMessage('Check your email for the confirmation link!');
+            // Link owner in tenant_users
+            const { error: ownerLinkError } = await supabase.from('tenant_users').insert({ tenant_id: data.user.id, user_id: data.user.id, role: 'owner', is_active: true });
+            if (ownerLinkError) {
+              setError(`Tenant created, but failed to assign owner: ${ownerLinkError.message}`);
+            } else {
+              setMessage('Account created. Your business is set up. Check your email for the confirmation link.');
+            }
           }
         }
       }
@@ -412,3 +415,5 @@ export default function AuthPage() {
     </div>
   );
 }
+
+    
