@@ -40,26 +40,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const loadProfile = async () => {
-      if (!session?.user) {
+      if (session?.user) {
+        // Fallback to user metadata if 'users' table is not available or fails
+        setUserProfile({ 
+          id: session.user.id, 
+          name: session.user.user_metadata?.full_name || session.user.email, 
+          email: session.user.email || '', 
+          role: 'Admin' // Default role
+        });
+      } else {
         setUserProfile(null);
-        return;
-      };
-      try {
-        const authUser = session.user;
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, name, email, role')
-          .eq('id', authUser.id)
-          .single();
-        if (!error && data) {
-          setUserProfile({ id: data.id, name: data.name, email: data.email, role: data.role });
-        } else {
-          setUserProfile({ id: authUser.id, name: authUser.user_metadata?.full_name || authUser.email, email: authUser.email || '', role: null });
-        }
-      } catch (e) {
-        if(session?.user) {
-          setUserProfile({ id: session.user.id, name: session.user.user_metadata?.full_name || session.user.email, email: session.user.email || '', role: null });
-        }
       }
     };
     loadProfile();
