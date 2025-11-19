@@ -3,11 +3,14 @@
 
 import { Tenant, TenantContext } from '@/lib/tenant';
 import { setSupabaseTenant, supabase } from '@/lib/supabase';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { useAuth } from './AuthProvider';
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
+  const { session, loading: authLoading } = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [theme, setTheme] = useState('light');
+  const [tenantLoading, setTenantLoading] = useState(true);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme') || 'light';
@@ -31,6 +34,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [tenant]);
 
   const getTenantData = async () => {
+    if (!session) {
+        setTenantLoading(false);
+        return;
+    };
     try {
       const response = await fetch('/api/tenant');
       if (!response.ok) {
@@ -55,6 +62,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error("Error in getTenantData:", error);
+    } finally {
+        setTenantLoading(false);
     }
   };
 
@@ -71,8 +80,14 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [tenant]);
 
   useEffect(() => {
-    getTenantData();
-  }, []);
+    // Only fetch tenant data when the auth state is confirmed and a session exists
+    if (!authLoading && session) {
+      getTenantData();
+    } else if (!authLoading && !session) {
+      // If there's no session, we don't need to load tenant data
+      setTenantLoading(false);
+    }
+  }, [authLoading, session]);
 
   const updateTenantSettings = async (newSettings: any) => {
     if (!tenant) return;
@@ -112,6 +127,14 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       console.error('Error updating settings:', tenantError, settingsError);
     }
   };
+
+  if (tenantLoading || authLoading) {
+    return (
+        <div className="min-h-screen flex items-center justify-center">
+            <div>Loading application...</div>
+        </div>
+    );
+  }
 
   return (
     <TenantContext.Provider value={{ tenant, setTenant, updateTenantSettings, theme, setTheme }}>
