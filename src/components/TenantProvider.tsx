@@ -35,20 +35,21 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   const getTenantData = async () => {
     if (!session) {
-        setTenantLoading(false);
-        return;
-    };
+      setTenantLoading(false);
+      return;
+    }
     try {
-      const response = await fetch('/api/tenant');
-      if (!response.ok) {
-        throw new Error('Failed to fetch tenant data');
-      }
-      const tenantInfo = await response.json();
-      
+      const tenantId = session?.user?.user_metadata?.tenant_id ?? 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c';
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('*, tenant_settings(*)')
+        .eq('id', tenantId)
+        .single();
+      if (error) throw error;
+      const tenantInfo: any = data;
       if (tenantInfo) {
         const { tenant_settings, company_name, ...restOfTenant } = tenantInfo;
         const settings = Array.isArray(tenant_settings) ? tenant_settings[0] : tenant_settings;
-        
         const fullTenant = {
           ...restOfTenant,
           name: company_name,
@@ -59,19 +60,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           settings: settings?.settings || {},
         };
         setTenant(fullTenant as Tenant);
+      } else {
+        setTenant({ id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c', name: 'Default Tenant' } as Tenant);
       }
-      } catch (error) {
-        console.error('Error in getTenantData:', error);
-        // Fallback to default tenant when API route fails (e.g., due to auth)
-        const defaultTenant: any = {
-          id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c',
-          name: 'Default Tenant'
-        };
-        // @ts-ignore
-        setTenant(defaultTenant);
-      } finally {
-        setTenantLoading(false);
-      }
+    } catch (error: any) {
+      console.error('Error in getTenantData:', error);
+      // Fallback default on error
+      setTenant({ id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c', name: 'Default Tenant' } as Tenant);
+    } finally {
+      setTenantLoading(false);
+    }
   };
 
   useEffect(() => {
