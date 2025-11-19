@@ -38,32 +38,14 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       setTenantLoading(false);
       return;
     }
-
     try {
-      const tenantId = session?.user?.user_metadata?.tenant_id ?? 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c';
-
-      // 1. Use maybeSingle() instead of single()
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('*, tenant_settings(*)')
-        .eq('id', tenantId)
-        .maybeSingle(); 
-
-      if (error) {
-          console.warn("Supabase API Error:", error.message);
-          throw error;
+      const response = await fetch('/api/tenant');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch tenant data');
       }
-
-      // 2. Handle case where RLS hides the data (data is null but no error thrown)
-      if (!data) {
-          console.warn(`No tenant found for ID: ${tenantId}. Check RLS policies.`);
-          // Force the fallback
-          throw new Error("Tenant not found or access denied");
-      }
-
-      const tenantInfo: any = data;
-
-      // ... rest of your logic mapping data ...
+      const tenantInfo = await response.json();
+      
       if (tenantInfo) {
           const { tenant_settings, company_name, ...restOfTenant } = tenantInfo;
           const settings = Array.isArray(tenant_settings) ? tenant_settings[0] : tenant_settings;
@@ -78,6 +60,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
             settings: settings?.settings || {},
           };
           setTenant(fullTenant as Tenant);
+      } else {
+        throw new Error("Tenant data is empty");
       }
     } catch (error: any) {
       console.error('Error in getTenantData:', error);
