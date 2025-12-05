@@ -35,11 +35,7 @@ CREATE TABLE employees (
     certificates_urls TEXT[],
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
-    FOREIGN KEY (tenant_id, department_id) REFERENCES departments (tenant_id, id),
-    FOREIGN KEY (tenant_id, manager_id) REFERENCES employees (tenant_id, id)
 );
-
-ALTER TABLE departments ADD FOREIGN KEY (tenant_id, manager_id) REFERENCES employees (tenant_id, id);
 
 -- Create the attendance table
 CREATE TABLE attendance (

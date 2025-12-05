@@ -97,27 +97,7 @@ export default function AuthPage() {
       if (error) {
         setError(mapAuthError(error.message));
       } else {
-        // Now create a tenant for the new user
-        if (data.user) {
-          const { error: tenantError } = await supabase
-            .from('tenants')
-            .insert({
-              id: data.user.id, // Using user ID as tenant ID for simplicity
-              company_name: businessName,
-            });
-
-          if (tenantError) {
-            setError(`Account created, but failed to set up business: ${tenantError.message}`);
-          } else {
-            // Link owner in tenant_users
-            const { error: ownerLinkError } = await supabase.from('tenant_users').insert({ tenant_id: data.user.id, user_id: data.user.id, role: 'owner', is_active: true });
-            if (ownerLinkError) {
-              setError(`Tenant created, but failed to assign owner: ${ownerLinkError.message}`);
-            } else {
-              setMessage('Account created. Your business is set up. Check your email for the confirmation link.');
-            }
-          }
-        }
+        setMessage('Account created. Check your email for the confirmation link.');
       }
     } else { // login
       const { error } = await supabase.auth.signInWithPassword({
@@ -415,5 +395,4 @@ export default function AuthPage() {
     </div>
   );
 }
-
     

@@ -45,7 +45,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       // 1. Use maybeSingle() instead of single()
       const { data, error } = await supabase
         .from('tenants')
-        .select('*, tenant_settings(*)')
+        .select('*, tenant_settings!tenant_id(*)')
         .eq('id', tenantId)
         .maybeSingle(); 
   
