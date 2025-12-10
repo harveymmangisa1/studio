@@ -29,7 +29,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (tenant) {
-      setSupabaseTenant(tenant.id);
+      // setSupabaseTenant(tenant.id); // This is no longer needed
     }
   }, [tenant]);
 
@@ -42,13 +42,13 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     const userId = session.user.id;
 
     try {
-      // Resolve current tenant for logged-in user from tenant_users table
-      const { data, error } = await supabase
+      // Use a single, nested query to fetch all required data at once.
+      const { data: tenantLink, error: tenantLinkError } = await supabase
         .from('tenant_users')
         .select(`
           tenant_id,
           role,
-          tenants (
+          tenants!fk_tenant(
             *,
             tenant_settings(*)
           )
@@ -57,53 +57,47 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         .eq('is_active', true)
         .maybeSingle();
 
-      if (error) {
-        throw error;
+      if (tenantLinkError) {
+        console.warn("Supabase API Error:", tenantLinkError.message);
+        throw tenantLinkError;
       }
 
-      if (!data) {
-          console.warn(`No tenant found for user ID: ${userId}. Check tenant_users table and RLS policies.`);
-          // Force the fallback
-          throw new Error("Tenant not found or access denied for this user.");
+      // Handle case where RLS hides the data (data is null but no error thrown)
+      if (!tenantLink || !tenantLink.tenants) {
+        console.warn(`No tenant found for user ID: ${userId}. Check RLS policies.`);
+        throw new Error("Tenant not found or access denied for this user.");
       }
 
-      const tenantInfo: any = data.tenants;
+      const tenantInfo: any = tenantLink.tenants;
+      
+      const { tenant_settings, company_name, ...restOfTenant } = tenantInfo;
+      const settings = Array.isArray(tenant_settings) ? tenant_settings[0] : tenant_settings;
+      
+      const fullTenant: Tenant = {
+        ...restOfTenant,
+        name: company_name,
+        address: settings?.business_address,
+        email: settings?.business_email,
+        phone: settings?.business_phone,
+        logo_url: settings?.logo_url,
+        settings: settings?.settings || {},
+      };
+      setTenant(fullTenant);
 
-      if (tenantInfo) {
-          const { tenant_settings, company_name, ...restOfTenant } = tenantInfo;
-          const settings = Array.isArray(tenant_settings) ? tenant_settings[0] : tenant_settings;
-          
-          const fullTenant = {
-            ...restOfTenant,
-            name: company_name,
-            address: settings?.business_address,
-            email: settings?.business_email,
-            phone: settings?.business_phone,
-            logo_url: settings?.logo_url,
-            settings: settings?.settings || {},
-          };
-          setTenant(fullTenant as Tenant);
-          setSupabaseTenant(fullTenant.id);
-
-          try {
-            document.cookie = `tenant_id=${fullTenant.id}; path=/; SameSite=Lax`;
-          } catch (cookieError) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.warn('Unable to persist tenant cookie:', cookieError);
-            }
-          }
-      } else {
-        throw new Error('Tenant data is null, though tenant_user link exists.');
+      try {
+        document.cookie = `tenant_id=${fullTenant.id}; path=/; SameSite=Lax`;
+      } catch (cookieError) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('Unable to persist tenant cookie:', cookieError);
+        }
       }
     } catch (error: any) {
       console.error('Error in getTenantData:', error);
-      // Keep your fallback logic here, it is good
       setTenant({ id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c', name: 'Default Tenant' } as Tenant);
     } finally {
       setTenantLoading(false);
     }
   };
-
 
   useEffect(() => {
     if (tenant?.settings) {
@@ -118,11 +112,9 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [tenant]);
 
   useEffect(() => {
-    // Only fetch tenant data when the auth state is confirmed and a session exists
     if (!authLoading && session) {
       getTenantData();
     } else if (!authLoading && !session) {
-      // If there's no session, we don't need to load tenant data
       setTenantLoading(false);
     }
   }, [authLoading, session]);
@@ -142,13 +134,11 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       ...restOfSettings 
     } = newSettings;
 
-    // 1. Update tenants table
     const { error: tenantError } = await supabase
       .from('tenants')
       .update({ company_name: companyName, industry })
       .eq('id', tenant.id);
 
-    // 2. Update tenant_settings table
     const { error: settingsError } = await supabase
       .from('tenant_settings')
       .update({
@@ -160,7 +150,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       .eq('tenant_id', tenant.id);
 
     if (!tenantError && !settingsError) {
-      await getTenantData(); // Refresh data
+      await getTenantData();
     } else {
       console.error('Error updating settings:', tenantError, settingsError);
     }
