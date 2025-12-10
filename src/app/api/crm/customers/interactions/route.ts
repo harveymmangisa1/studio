@@ -9,17 +9,20 @@ function generateUuid(): string {
   return 'crm_' + Math.random().toString(36).slice(2, 8) + '_' + Date.now().toString(36);
 }
 
-function extractTenantFromRequest(req: Request): string {
+function extractTenantFromRequest(req: Request): string | null {
   const h = req.headers.get('X-Tenant-Id') || req.headers.get('x-tenant-id');
   if (h) return h;
   const cookieHeader = req.headers.get('cookie') || '';
   const m = cookieHeader.match(/tenant_id=([^;]+)/);
   if (m) return m[1];
-  return 'default-tenant';
+  return null;
 }
 
 export async function GET(req: Request) {
   const tenantId = extractTenantFromRequest(req);
+  if (!tenantId) {
+    return new NextResponse(JSON.stringify({ error: 'Tenant context missing' }), { status: 401 });
+  }
   const supabase = getSupabase(tenantId);
   const { searchParams } = new URL(req.url);
   const customerId = searchParams.get('customerId');
@@ -39,6 +42,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const tenantId = extractTenantFromRequest(req);
+  if (!tenantId) {
+    return new NextResponse(JSON.stringify({ error: 'Tenant context missing' }), { status: 401 });
+  }
   const supabase = getSupabase(tenantId);
   let body: any;
   try {

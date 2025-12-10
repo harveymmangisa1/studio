@@ -21,7 +21,7 @@ type Event = {
 
 export default function CRMCustomerPage({ params }: { params: { id: string } }) {
   const { tenant } = useTenant();
-  const tenantId = tenant?.id ?? 'default-tenant';
+  const tenantId = tenant?.id;
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [events, setEvents] = useState<Event[]>([]);

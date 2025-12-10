@@ -1,2 +1,2 @@
-CREATE POLICY "Allow authenticated users to create tenants" ON tenants
-FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow postgres to create tenants" ON tenants
+FOR INSERT TO postgres WITH CHECK (true);

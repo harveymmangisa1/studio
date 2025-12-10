@@ -40,18 +40,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const loadProfile = async () => {
-      if (session?.user) {
-        // Fallback to user metadata if 'users' table is not available or fails
-        setUserProfile({ 
-          id: session.user.id, 
-          name: session.user.user_metadata?.full_name || session.user.email, 
-          email: session.user.email || '', 
-          role: 'Admin' // Default role
-        });
-      } else {
+      if (!session?.user) {
         setUserProfile(null);
+        return;
+      }
+
+      const userId = session.user.id;
+
+      try {
+        const { data, error } = await supabase
+          .from('tenant_users')
+          .select('role, tenants!inner(company_name), tenant_id')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (error) {
+          console.warn('Unable to load tenant user profile:', error.message);
+        }
+
+        setUserProfile({
+          id: userId,
+          name: session.user.user_metadata?.full_name || session.user.email,
+          email: session.user.email || '',
+          role: data?.role || session.user.user_metadata?.role || 'Admin'
+        });
+      } catch (profileError) {
+        console.error('Error loading profile information:', profileError);
+        setUserProfile({
+          id: userId,
+          name: session.user.user_metadata?.full_name || session.user.email,
+          email: session.user.email || '',
+          role: session.user.user_metadata?.role || 'Admin'
+        });
       }
     };
+
     loadProfile();
   }, [session]);
 

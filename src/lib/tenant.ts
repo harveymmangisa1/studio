@@ -8,6 +8,7 @@ export interface Tenant {
   phone?: string;
   logo_url?: string;
   primary_color?: string;
+  settings?: Record<string, any>;
 }
 
 export const TenantContext = createContext<{

@@ -22,7 +22,7 @@ type Customer = {
 
 export default function CRMCustomerList() {
   const { tenant } = useTenant();
-  const tenantId = (tenant?.id) ?? 'default-tenant';
+  const tenantId = tenant?.id;
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -32,6 +32,9 @@ export default function CRMCustomerList() {
   const [confirmTarget, setConfirmTarget] = useState<Customer | null>(null);
 
   useEffect(() => {
+    if (!tenantId) return;
+    setLoading(true);
+
     fetch('/api/crm/customers', {
       headers: { 'X-Tenant-Id': tenantId },
     })
@@ -46,6 +49,12 @@ export default function CRMCustomerList() {
   async function createCustomer(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!tenantId) {
+      setError('Tenant context unavailable. Please refresh and try again.');
+      return;
+    }
+
     if (!name.trim()) {
       setError('Name is required');
       return;
@@ -76,6 +85,12 @@ export default function CRMCustomerList() {
   async function performDelete(id: string) {
     const target = customers.find((c) => c.id === id);
     const displayName = target?.name ?? id;
+
+    if (!tenantId) {
+      setError('Tenant context unavailable. Please refresh and try again.');
+      return false;
+    }
+
     try {
       const res = await fetch(`/api/crm/customers/${id}`, {
         method: 'DELETE',
@@ -119,7 +134,11 @@ export default function CRMCustomerList() {
         <button className="bg-blue-600 text-white px-4 py-2 rounded" type="submit">Add Customer</button>
       </form>
       {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
-      {loading ? (
+      {!tenantId ? (
+        <div className="rounded border border-amber-200 bg-amber-50 p-4 text-amber-800">
+          Missing tenant context. Please ensure you are signed in and have access to a workspace.
+        </div>
+      ) : loading ? (
         <div>Loading...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
