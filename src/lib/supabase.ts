@@ -14,19 +14,17 @@ export const getSupabase = (tenantId?: string) => {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
   }
 
-  if (tenantId) {
-    // Fire and forget tenant switch for subsequent requests
-    // @ts-ignore
-    supabaseInstance.rpc('set_current_tenant', { tenant_id_input: tenantId });
-  }
-
+  // The tenantId is no longer set via RPC.
+  // It should be used in each query explicitly, e.g., .eq('tenant_id', tenantId)
+  
   return supabaseInstance;
 };
 
 export const setSupabaseTenant = (tenantId: string) => {
+  // This function is now a no-op as we are not setting the tenant context via RPC.
+  // It's kept for now to avoid breaking imports, but can be removed in a future refactor.
   if (supabaseInstance) {
-    // @ts-ignore
-    supabaseInstance.rpc('set_current_tenant', { tenant_id_input: tenantId });
+    // console.log(`Tenant context would have been set to: ${tenantId}`);
   }
 };
 
