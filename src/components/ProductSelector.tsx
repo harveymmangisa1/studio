@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTenant } from '@/lib/tenant';
 
 interface Product {
   id: string;
@@ -16,13 +17,15 @@ interface ProductSelectorProps {
 }
 
 export function ProductSelector({ control, index }: ProductSelectorProps) {
+  const { tenant } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!tenant) return;
     const fetchProducts = async () => {
       try {
-        const { data, error } = await supabase.from('products').select('id, name, selling_price');
+        const { data, error } = await supabase.from('products').select('id, name, selling_price').eq('tenant_id', tenant.id);
         if (error) throw error;
         setProducts(data || []);
       } catch (error) {
@@ -32,7 +35,7 @@ export function ProductSelector({ control, index }: ProductSelectorProps) {
       }
     };
     fetchProducts();
-  }, []);
+  }, [tenant]);
 
   const handleProductChange = (productId: string) => {
     const product = products.find(p => p.id === productId);

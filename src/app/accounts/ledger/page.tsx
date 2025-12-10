@@ -17,6 +17,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { useTenant } from '@/lib/tenant';
 
 interface LedgerEntry {
   id: string;
@@ -32,11 +33,13 @@ interface LedgerEntry {
 }
 
 export default function GeneralLedgerPage() {
+  const { tenant } = useTenant();
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!tenant) return;
     const fetchLedgerEntries = async () => {
       try {
         const { data, error } = await supabase
@@ -52,6 +55,7 @@ export default function GeneralLedgerPage() {
             reference_type,
             reference_id
           `)
+          .eq('tenant_id', tenant.id)
           .order('transaction_date', { ascending: true }); // Order by ascending for running balance
 
         if (error) {
@@ -74,7 +78,7 @@ export default function GeneralLedgerPage() {
     };
 
     fetchLedgerEntries();
-  }, []);
+  }, [tenant]);
 
   if (loading) {
     return <div>Loading...</div>;

@@ -30,6 +30,7 @@ import {
 import AccountTreeTable from '@/components/AccountTreeTable';
 import { MoreHorizontal } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
+import { useTenant } from '@/lib/tenant';
 
 interface Account {
   id: string;
@@ -43,6 +44,7 @@ interface Account {
 }
 
 export default function ChartOfAccountsPage() {
+  const { tenant } = useTenant();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,24 +69,27 @@ export default function ChartOfAccountsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const { data, error } = await supabase.from('accounts').select('*, parent_account_id');
-        if (error) {
-          throw error;
-        }
-        // Initialize balance for all accounts, assuming it comes from DB or needs calculation
-        const accountsWithBalance = (data || []).map(acc => ({...acc, balance: acc.balance || 0}));
-        setAccounts(accountsWithBalance);
-      } catch (error: any) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (tenant) {
+      fetchAccounts();
+    }
+  }, [tenant]);
 
-    fetchAccounts();
-  }, []);
+  const fetchAccounts = async () => {
+    if (!tenant) return;
+    try {
+      const { data, error } = await supabase.from('accounts').select('*, parent_account_id').eq('tenant_id', tenant.id);
+      if (error) {
+        throw error;
+      }
+      // Initialize balance for all accounts, assuming it comes from DB or needs calculation
+      const accountsWithBalance = (data || []).map(acc => ({...acc, balance: acc.balance || 0}));
+      setAccounts(accountsWithBalance);
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const validateAccount = (account: Partial<Account>, isNew: boolean = true) => {
     const errors: Record<string, string> = {};
@@ -123,9 +128,11 @@ export default function ChartOfAccountsPage() {
 
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!tenant) return;
     setAddFormErrors({});
 
     const newAccountData = {
+      tenant_id: tenant.id,
       account_code: newAccountCode,
       account_name: newAccountName,
       account_type: newAccountType,
@@ -177,7 +184,7 @@ export default function ChartOfAccountsPage() {
 
   const handleUpdateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingAccount) return;
+    if (!editingAccount || !tenant) return;
 
     setEditFormErrors({});
 
@@ -202,6 +209,7 @@ export default function ChartOfAccountsPage() {
           is_active: editingAccount.is_active,
         })
         .eq('id', editingAccount.id)
+        .eq('tenant_id', tenant.id)
         .select()
         .single();
 
@@ -220,13 +228,15 @@ export default function ChartOfAccountsPage() {
   };
 
   const handleDeleteAccount = async (id: string) => {
+    if (!tenant) return;
     if (!confirm('Are you sure you want to delete this account? This action cannot be undone.')) return;
 
     try {
       const { error } = await supabase
         .from('accounts')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('tenant_id', tenant.id);
 
       if (error) {
         throw error;

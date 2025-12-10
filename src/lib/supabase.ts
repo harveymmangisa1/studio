@@ -13,9 +13,9 @@ export const getSupabase = (tenantId?: string) => {
     }
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
   }
-
-  // The tenantId is no longer set via RPC.
-  // It should be used in each query explicitly, e.g., .eq('tenant_id', tenantId)
+  
+  // The tenantId is now used in each query explicitly, e.g., .eq('tenant_id', tenantId)
+  // We no longer set a session variable in the database.
   
   return supabaseInstance;
 };
@@ -23,9 +23,6 @@ export const getSupabase = (tenantId?: string) => {
 export const setSupabaseTenant = (tenantId: string) => {
   // This function is now a no-op as we are not setting the tenant context via RPC.
   // It's kept for now to avoid breaking imports, but can be removed in a future refactor.
-  if (supabaseInstance) {
-    // console.log(`Tenant context would have been set to: ${tenantId}`);
-  }
 };
 
 export const supabase: any = new Proxy({}, {

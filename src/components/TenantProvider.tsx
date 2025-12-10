@@ -27,12 +27,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
 
-  useEffect(() => {
-    if (tenant) {
-      // setSupabaseTenant(tenant.id); // This is no longer needed
-    }
-  }, [tenant]);
-
   const getTenantData = async () => {
     if (!session) {
       setTenantLoading(false);
@@ -84,13 +78,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       };
       setTenant(fullTenant);
 
-      try {
-        document.cookie = `tenant_id=${fullTenant.id}; path=/; SameSite=Lax`;
-      } catch (cookieError) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('Unable to persist tenant cookie:', cookieError);
-        }
-      }
     } catch (error: any) {
       console.error('Error in getTenantData:', error);
       setTenant({ id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c', name: 'Default Tenant' } as Tenant);

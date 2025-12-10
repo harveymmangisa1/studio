@@ -41,6 +41,7 @@ import { supabase } from '@/lib/supabase';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import AppLayout from '@/components/AppLayout';
+import { useTenant } from '@/lib/tenant';
 
 const Select = dynamic(() => import('@/components/ui/select').then(mod => mod.Select), { ssr: false });
 const SelectContent = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectContent), { ssr: false });
@@ -49,19 +50,10 @@ const SelectTrigger = dynamic(() => import('@/components/ui/select').then(mod =>
 const SelectValue = dynamic(() => import('@/components/ui/select').then(mod => mod.SelectValue), { ssr: false });
 import { toCsv } from '@/lib/utils';
 import { PageHeader } from '@/components/shared';
-const initialProducts: Product[] = [
-  { id: '1', name: 'Wireless Mouse', category: 'Electronics', sku: 'WM-001', cost: 15.00, price: 29.99, quantity: 150, minStock: 10, industry: 'retail' },
-  { id: '2', name: 'Mechanical Keyboard', category: 'Electronics', sku: 'MK-001', cost: 55.00, price: 99.99, quantity: 75, minStock: 5, industry: 'retail' },
-  { id: '3', name: 'Ergonomic Chair', category: 'Furniture', sku: 'EC-001', cost: 120.00, price: 249.99, quantity: 30, minStock: 5, industry: 'retail' },
-  { id: '4', name: 'Desk Lamp', category: 'Furniture', sku: 'DL-001', cost: 20.00, price: 45.00, quantity: 8, minStock: 15, industry: 'retail' },
-  { id: '5', name: 'Coffee Mug', category: 'Kitchenware', sku: 'CM-001', cost: 5.00, price: 12.99, quantity: 200, minStock: 25, industry: 'retail' },
-  { id: '6', name: 'Laptop Stand', category: 'Accessories', sku: 'LS-001', cost: 25.00, price: 59.99, quantity: 12, minStock: 10, industry: 'retail' },
-  { id: '7', name: 'USB-C Cable', category: 'Electronics', sku: 'UC-001', cost: 8.00, price: 19.99, quantity: 3, minStock: 20, industry: 'retail' },
-  { id: '8', name: 'Monitor Stand', category: 'Furniture', sku: 'MS-001', cost: 35.00, price: 79.99, quantity: 45, minStock: 8, industry: 'retail' },
-];
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const { tenant } = useTenant();
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -71,9 +63,10 @@ export default function InventoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProducts = async () => {
+    if (!tenant) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('products').select('*');
+      const { data, error } = await supabase.from('products').select('*').eq('tenant_id', tenant.id);
       if (error) throw error;
       setProducts(data || []);
     } catch (error: any) {
@@ -84,8 +77,10 @@ export default function InventoryPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (tenant) {
+      fetchProducts();
+    }
+  }, [tenant]);
 
   const handleFormSuccess = (product: Product) => {
     if (editingProduct) {
@@ -95,6 +90,7 @@ export default function InventoryPage() {
     }
     setShowForm(false);
     setEditingProduct(null);
+    fetchProducts(); // Refresh list from DB
   };
 
   const handleEdit = (product: Product) => {
@@ -105,7 +101,7 @@ export default function InventoryPage() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        const { error } = await supabase.from('products').delete().eq('id', id);
+        const { error } = await supabase.from('products').delete().eq('id', id).eq('tenant_id', tenant!.id);
         if (error) throw error;
         fetchProducts(); // Re-fetch products to update the list
       } catch (error: any) {
@@ -160,8 +156,7 @@ export default function InventoryPage() {
 
   const refreshData = async () => {
     setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await fetchProducts();
     setLoading(false);
   };
 

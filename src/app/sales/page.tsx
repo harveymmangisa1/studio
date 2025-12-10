@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { postARInvoice, postCOGS, postARPayment } from '../../lib/ledger';
 import { PageHeader } from '@/components/shared';
 import AppLayout from '@/components/AppLayout';
+import { useTenant } from '@/lib/tenant';
 
 interface Invoice {
   id: string;
@@ -40,15 +41,17 @@ interface Quote {
 }
 
 export default function SalesPage() {
+  const { tenant } = useTenant();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSalesData = async () => {
+    if (!tenant) return;
     try {
       setLoading(true);
-      const { data: invoiceData, error: invoiceError } = await supabase.from('sales_invoices').select('*');
+      const { data: invoiceData, error: invoiceError } = await supabase.from('sales_invoices').select('*').eq('tenant_id', tenant.id);
       if (invoiceError) throw invoiceError;
       setInvoices(invoiceData || []);
       
@@ -67,32 +70,21 @@ export default function SalesPage() {
   };
 
   useEffect(() => {
-    fetchSalesData();
-  }, []);
+    if (tenant) {
+      fetchSalesData();
+    }
+  }, [tenant]);
 
   const handleMarkAsPaid = async (invoiceId: string, totalAmount: number) => {
+    if (!tenant) return;
     try {
       const { error } = await supabase
         .from('sales_invoices')
         .update({ payment_status: 'Paid', payment_date: new Date().toISOString() })
-        .eq('id', invoiceId);
+        .eq('id', invoiceId)
+        .eq('tenant_id', tenant.id);
 
       if (error) throw error;
-
-      // Create ledger entries for payment
-      const { data: accounts, error: accountsError } = await supabase
-        .from('accounts')
-        .select('id, account_name')
-        .in('account_name', ['Accounts Receivable', 'Cash']);
-
-      if (accountsError) throw accountsError;
-
-      const accountsReceivableAccountId = accounts.find(a => a.account_name === 'Accounts Receivable')?.id;
-      const cashAccountId = accounts.find(a => a.account_name === 'Cash')?.id;
-
-      if (!accountsReceivableAccountId || !cashAccountId) {
-        throw new Error('Could not find required accounts for transaction.');
-      }
 
       await postARPayment({ date: new Date().toISOString().slice(0,10), receiptId: `PMT-${invoiceId}`, amount: totalAmount, cashAccountName: 'Cash' });
 
@@ -103,12 +95,14 @@ export default function SalesPage() {
   };
   
   const handlePostInvoice = async (invoice: Invoice) => {
+    if (!tenant) return;
     try {
       // Fetch line items for COGS calculation
       const { data: inv, error } = await supabase
         .from('sales_invoices')
         .select('id, invoice_number, invoice_date, total_amount, tax_amount, sales_invoice_line_items(quantity, unit_cost)')
         .eq('id', invoice.id)
+        .eq('tenant_id', tenant.id)
         .single();
       if (error) throw error;
 

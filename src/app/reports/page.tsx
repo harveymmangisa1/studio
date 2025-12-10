@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/shared';
 import AppLayout from '@/components/AppLayout';
+import { useTenant } from '@/lib/tenant';
 
 interface ReportCard {
   title: string;
@@ -38,6 +39,7 @@ interface ReportCard {
 }
 
 export default function ReportsPage() {
+  const { tenant } = useTenant();
   const [reportStats, setReportStats] = useState({
     totalRevenue: 0,
     totalSales: 0,
@@ -46,10 +48,13 @@ export default function ReportsPage() {
   });
 
   useEffect(() => {
-    fetchReportStats();
-  }, []);
+    if (tenant) {
+      fetchReportStats();
+    }
+  }, [tenant]);
 
   const fetchReportStats = async () => {
+    if (!tenant) return;
     try {
       const [
         { data: revenueData },
@@ -57,10 +62,10 @@ export default function ReportsPage() {
         { count: productsCount },
         { count: customersCount },
       ] = await Promise.all([
-        supabase.from('sales_invoices').select('total_amount').eq('payment_status', 'Paid'),
-        supabase.from('sales_invoices').select('*', { count: 'exact' }),
-        supabase.from('products').select('*', { count: 'exact' }),
-        supabase.from('customers').select('*', { count: 'exact' }),
+        supabase.from('sales_invoices').select('total_amount').eq('payment_status', 'Paid').eq('tenant_id', tenant.id),
+        supabase.from('sales_invoices').select('*', { count: 'exact' }).eq('tenant_id', tenant.id),
+        supabase.from('products').select('*', { count: 'exact' }).eq('tenant_id', tenant.id),
+        supabase.from('customers').select('*', { count: 'exact' }).eq('tenant_id', tenant.id),
       ]);
 
       const totalRevenue = revenueData?.reduce((sum, invoice) => sum + invoice.total_amount, 0) || 0;

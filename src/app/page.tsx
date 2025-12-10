@@ -80,10 +80,13 @@ export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('month');
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [timeRange]);
+    if (tenant) {
+      fetchDashboardData();
+    }
+  }, [timeRange, tenant]);
 
   const fetchDashboardData = async () => {
+    if (!tenant) return;
     try {
       setLoading(true);
 
@@ -98,15 +101,15 @@ export default function DashboardPage() {
         { data: recentStock, error: recentStockError },
         { data: recentCustomers, error: recentCustomersError },
       ] = await Promise.all([
-        supabase.from('sales_invoices').select('total_amount').eq('payment_status', 'Paid'),
-        supabase.from('sales_invoices').select('*' , { count: 'exact' }),
-        supabase.from('products').select('*' , { count: 'exact' }),
-        supabase.from('customers').select('*' , { count: 'exact' }),
-        supabase.from('products').select('id').lte('stock_quantity', 10), // Assuming reorder_point is 10
-        supabase.from('sales_invoices').select('*' , { count: 'exact' }).eq('payment_status', 'Unpaid'),
-        supabase.from('sales_invoices').select('id, created_at, total_amount, invoice_number').order('created_at', { ascending: false }).limit(5),
-        supabase.from('stock_movements').select('id, created_at, movement_type, quantity, products(name)').order('created_at', { ascending: false }).limit(5),
-        supabase.from('customers').select('id, created_at, name').order('created_at', { ascending: false }).limit(5),
+        supabase.from('sales_invoices').select('total_amount').eq('payment_status', 'Paid').eq('tenant_id', tenant.id),
+        supabase.from('sales_invoices').select('*' , { count: 'exact' }).eq('tenant_id', tenant.id),
+        supabase.from('products').select('*' , { count: 'exact' }).eq('tenant_id', tenant.id),
+        supabase.from('customers').select('*' , { count: 'exact' }).eq('tenant_id', tenant.id),
+        supabase.from('products').select('id').lte('stock_quantity', 10).eq('tenant_id', tenant.id), // Assuming reorder_point is 10
+        supabase.from('sales_invoices').select('*' , { count: 'exact' }).eq('payment_status', 'Unpaid').eq('tenant_id', tenant.id),
+        supabase.from('sales_invoices').select('id, created_at, total_amount, invoice_number').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('stock_movements').select('id, created_at, movement_type, quantity, products(name)').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('customers').select('id, created_at, name').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(5),
       ]);
 
       if (revenueError || salesError || productsError || customersError || lowStockError || pendingOrdersError || recentSalesError || recentStockError || recentCustomersError) {

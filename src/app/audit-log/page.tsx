@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useTenant } from '@/lib/tenant';
 
 interface AuditLogEntry {
   id: string;
@@ -17,16 +18,19 @@ interface AuditLogEntry {
 }
 
 export default function AuditLogPage() {
+  const { tenant } = useTenant();
   const [logEntries, setLogEntries] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!tenant) return;
     const fetchAuditLog = async () => {
       try {
         const { data, error } = await supabase
           .from('audit_log')
           .select('*')
+          .eq('tenant_id', tenant.id)
           .order('timestamp', { ascending: false });
 
         if (error) throw error;
@@ -39,7 +43,7 @@ export default function AuditLogPage() {
     };
 
     fetchAuditLog();
-  }, []);
+  }, [tenant]);
 
   if (loading) {
     return <div>Loading...</div>;

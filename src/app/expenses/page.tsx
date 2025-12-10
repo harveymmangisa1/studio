@@ -12,21 +12,26 @@ import { ExpenseForm, Expense } from '@/components/ExpenseForm';
 import ExpensesChart from '@/components/dashboard/ExpensesChart';
 import { PageHeader } from '@/components/shared';
 import AppLayout from '@/components/AppLayout';
+import { useTenant } from '@/lib/tenant';
 
 export default function ExpensesPage() {
+  const { tenant } = useTenant();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    fetchExpenses();
-  }, []);
+    if (tenant) {
+      fetchExpenses();
+    }
+  }, [tenant]);
 
   const fetchExpenses = async () => {
+    if (!tenant) return;
     try {
       setLoading(true);
-      const { data, error } = await supabase.from('expenses').select('*');
+      const { data, error } = await supabase.from('expenses').select('*').eq('tenant_id', tenant.id);
       if (error) throw error;
       setExpenses(data || []);
     } catch (error: any) {
