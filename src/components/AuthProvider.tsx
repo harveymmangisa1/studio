@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data, error } = await supabase
           .from('tenant_users')
-          .select('role, tenants!inner(company_name), tenant_id')
+          .select('role, tenants!fk_tenant(company_name), tenant_id')
           .eq('user_id', userId)
           .eq('is_active', true)
           .maybeSingle();
