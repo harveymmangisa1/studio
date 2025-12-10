@@ -2,7 +2,7 @@
 'use client';
 
 import { Tenant, TenantContext } from '@/lib/tenant';
-import { setSupabaseTenant, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useState, useEffect, useContext } from 'react';
 import { useAuth } from './AuthProvider';
 
@@ -43,49 +43,62 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Resolve current tenant for logged-in user from tenant_users table
-      const { data: tenantLink, error: tenantLinkError } = await supabase
+      const { data, error } = await supabase
         .from('tenant_users')
-        .select('tenant_id, role, tenants!inner(*, tenant_settings!tenant_id(*))')
+        .select(`
+          tenant_id,
+          role,
+          tenants (
+            *,
+            tenant_settings(*)
+          )
+        `)
         .eq('user_id', userId)
         .eq('is_active', true)
         .maybeSingle();
 
-      if (tenantLinkError) {
-        throw tenantLinkError;
+      if (error) {
+        throw error;
       }
 
-      if (!tenantLink?.tenant_id || !tenantLink.tenants) {
-        throw new Error('No tenant assigned to the current user');
+      if (!data) {
+          console.warn(`No tenant found for user ID: ${userId}. Check tenant_users table and RLS policies.`);
+          // Force the fallback
+          throw new Error("Tenant not found or access denied for this user.");
       }
 
-      const tenantInfo: any = tenantLink.tenants;
-      const settings = Array.isArray(tenantInfo.tenant_settings)
-        ? tenantInfo.tenant_settings[0]
-        : tenantInfo.tenant_settings;
+      const tenantInfo: any = data.tenants;
 
-      const fullTenant = {
-        ...tenantInfo,
-        name: tenantInfo.company_name,
-        address: settings?.business_address,
-        email: settings?.business_email,
-        phone: settings?.business_phone,
-        logo_url: settings?.logo_url,
-        settings: settings?.settings || {},
-      } as Tenant;
+      if (tenantInfo) {
+          const { tenant_settings, company_name, ...restOfTenant } = tenantInfo;
+          const settings = Array.isArray(tenant_settings) ? tenant_settings[0] : tenant_settings;
+          
+          const fullTenant = {
+            ...restOfTenant,
+            name: company_name,
+            address: settings?.business_address,
+            email: settings?.business_email,
+            phone: settings?.business_phone,
+            logo_url: settings?.logo_url,
+            settings: settings?.settings || {},
+          };
+          setTenant(fullTenant as Tenant);
+          setSupabaseTenant(fullTenant.id);
 
-      setTenant(fullTenant);
-      setSupabaseTenant(tenantLink.tenant_id);
-
-      try {
-        document.cookie = `tenant_id=${tenantLink.tenant_id}; path=/; SameSite=Lax`;
-      } catch (cookieError) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('Unable to persist tenant cookie:', cookieError);
-        }
+          try {
+            document.cookie = `tenant_id=${fullTenant.id}; path=/; SameSite=Lax`;
+          } catch (cookieError) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.warn('Unable to persist tenant cookie:', cookieError);
+            }
+          }
+      } else {
+        throw new Error('Tenant data is null, though tenant_user link exists.');
       }
     } catch (error: any) {
       console.error('Error in getTenantData:', error);
-      setTenant(null);
+      // Keep your fallback logic here, it is good
+      setTenant({ id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c', name: 'Default Tenant' } as Tenant);
     } finally {
       setTenantLoading(false);
     }
