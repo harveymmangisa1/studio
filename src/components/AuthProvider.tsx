@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data, error } = await supabase
           .from('tenant_users')
-          .select('role, tenants!fk_tenant(company_name), tenant_id')
+          .select('role, tenants!tenant_users_tenant_id_fkey(company_name), tenant_id')
           .eq('user_id', userId)
           .eq('is_active', true)
           .maybeSingle();
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: session.user.email || '',
           role: data?.role || session.user.user_metadata?.role || 'Admin'
         });
-      } catch (profileError) {
+      } catch (profileError: any) {
         console.error('Error loading profile information:', profileError);
         setUserProfile({
           id: userId,
