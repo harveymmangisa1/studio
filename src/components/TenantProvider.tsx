@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Tenant, TenantContext } from '@/lib/tenant';
@@ -78,7 +77,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       };
 
       setTenant(fullTenant);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error in getTenantData:', err);
       // fallback default tenant
       setTenant({ id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c', name: 'Default Tenant', settings: {} } as Tenant);
