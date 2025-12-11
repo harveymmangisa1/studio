@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Tenant, TenantContext } from '@/lib/tenant';
@@ -63,7 +64,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No tenant found for this user or access denied.');
       }
 
-      const t = tenantUser.tenants;
+      const t = tenantLink.tenants;
       const settings = Array.isArray(t.tenant_settings) ? t.tenant_settings[0] : t.tenant_settings;
 
       const fullTenant: Tenant = {
