@@ -42,9 +42,9 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         .select(`
           tenant_id,
           role,
-          tenants!fk_tenant(
+          tenants!tenant_users_tenant_id_fkey (
             *,
-            tenant_settings(*)
+            tenant_settings (*)
           )
         `)
         .eq('user_id', userId)
