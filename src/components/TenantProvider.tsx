@@ -7,7 +7,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useAuth } from './AuthProvider';
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
-  const { session, loading: authLoading } = useAuth();
+  const authContext = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [theme, setTheme] = useState('light');
   const [tenantLoading, setTenantLoading] = useState(true);
@@ -27,16 +27,13 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
 
-  const getTenantData = async () => {
-    if (!session) {
+  const getTenantData = async (userId: string) => {
+    if (!userId) {
       setTenantLoading(false);
       return;
     }
 
-    const userId = session.user.id;
-
     try {
-      // Use a single, nested query to fetch all required data at once.
       const { data: tenantLink, error: tenantLinkError } = await supabase
         .from('tenant_users')
         .select(`
@@ -56,7 +53,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         throw tenantLinkError;
       }
 
-      // Handle case where RLS hides the data (data is null but no error thrown)
       if (!tenantLink || !tenantLink.tenants) {
         console.warn(`No tenant found for user ID: ${userId}. Check RLS policies.`);
         throw new Error("Tenant not found or access denied for this user.");
@@ -80,7 +76,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
     } catch (error: any) {
       console.error('Error in getTenantData:', error);
-      setTenant({ id: 'a8d6f397-8e3a-4b8d-9b3d-2e6b7d3b3e5c', name: 'Default Tenant' } as Tenant);
+      setTenant(null); // Set to null on error
     } finally {
       setTenantLoading(false);
     }
@@ -99,12 +95,14 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [tenant]);
 
   useEffect(() => {
+    if (!authContext) return;
+    const { session, loading: authLoading } = authContext;
     if (!authLoading && session) {
-      getTenantData();
+      getTenantData(session.user.id);
     } else if (!authLoading && !session) {
       setTenantLoading(false);
     }
-  }, [authLoading, session]);
+  }, [authContext]);
 
   const updateTenantSettings = async (newSettings: any) => {
     if (!tenant) return;
@@ -132,18 +130,21 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         business_email: email,
         business_phone: phone,
         business_address: `${address}, ${city}, ${country}`,
+        tax_id: taxId,
         settings: restOfSettings
       })
       .eq('tenant_id', tenant.id);
 
     if (!tenantError && !settingsError) {
-      await getTenantData();
+      if(authContext?.session?.user.id) {
+        await getTenantData(authContext.session.user.id);
+      }
     } else {
       console.error('Error updating settings:', tenantError, settingsError);
     }
   };
 
-  if (tenantLoading || authLoading) {
+  if (!authContext || authContext.loading || tenantLoading) {
     return (
         <div className="min-h-screen flex items-center justify-center">
             <div>Loading application...</div>
