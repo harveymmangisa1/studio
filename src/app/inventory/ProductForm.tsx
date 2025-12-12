@@ -208,6 +208,11 @@ const INDUSTRY_CONFIGS = {
 } as const;
 
 type IndustryType = keyof typeof INDUSTRY_CONFIGS;
+
+const isValidIndustry = (value: any): value is IndustryType => {
+  return typeof value === 'string' && Object.keys(INDUSTRY_CONFIGS).includes(value);
+};
+
 type IndustryFieldConfig = {
   label: string;
   type: 'text' | 'number' | 'boolean' | 'date' | 'select';
@@ -367,7 +372,9 @@ const StockStatus = ({ quantity, minStock }: StockStatusProps) => {
 
 export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
   const [activeTab, setActiveTab] = useState('basic');
-  const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>(product?.industry as IndustryType || 'retail');
+  const [selectedIndustry, setSelectedIndustry] = useState<IndustryType>(() => 
+    isValidIndustry(product?.industry) ? product!.industry : 'retail'
+  );
   const [showSuccess, setShowSuccess] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -415,17 +422,20 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
   // Update form validation when industry changes
   useEffect(() => {
     if (industry !== selectedIndustry) {
-      setSelectedIndustry(industry);
-      const newConfig = INDUSTRY_CONFIGS[industry];
-      
-      // Reset industry-specific fields
-      const defaultIndustryFields = initializeIndustryFields(industry);
+      if (isValidIndustry(industry)) {
+        setSelectedIndustry(industry);
+        const newConfig = INDUSTRY_CONFIGS[industry];
+        
+        // Reset industry-specific fields
+        const defaultIndustryFields = initializeIndustryFields(industry);
 
-      form.setValue('industryFields', defaultIndustryFields);
-      form.setValue('category', newConfig?.defaultCategory || '');
-      
-      // Update form validation schema
-      form.setValue('industry', industry);
+        form.setValue('industryFields', defaultIndustryFields);
+        form.setValue('category', newConfig?.defaultCategory || '');
+      } else {
+        // an invalid industry value was introduced in the form, probably from a draft.
+        // reset it to the current selectedIndustry which is guaranteed to be valid.
+        form.setValue('industry', selectedIndustry);
+      }
     }
   }, [industry, form, selectedIndustry]);
 

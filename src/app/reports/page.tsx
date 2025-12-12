@@ -13,16 +13,18 @@ import {
   Calendar,
   Download,
   FileText,
-  PieChart,
   Activity,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  PieChart,
+  LucideProps
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
+import { useTenant } from '@/lib/tenant';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/shared';
 import AppLayout from '@/components/AppLayout';
-import { useTenant } from '@/lib/tenant';
 
 interface ReportCard {
   title: string;
@@ -68,7 +70,7 @@ export default function ReportsPage() {
         supabase.from('customers').select('*', { count: 'exact' }).eq('tenant_id', tenant.id),
       ]);
 
-      const totalRevenue = revenueData?.reduce((sum, invoice) => sum + invoice.total_amount, 0) || 0;
+      const totalRevenue = revenueData?.reduce((sum: number, invoice: any) => sum + (invoice as any).total_amount, 0) || 0;
 
       setReportStats({
         totalRevenue,
@@ -90,7 +92,7 @@ export default function ReportsPage() {
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       stats: {
-        value: `$${reportStats.totalRevenue.toLocaleString()}`,
+        value: formatCurrency(reportStats.totalRevenue, tenant?.settings?.currency),
         change: 12.5,
         trend: 'up'
       }
@@ -155,7 +157,7 @@ export default function ReportsPage() {
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       stats: {
-        value: '$12,450',
+        value: formatCurrency(12450, tenant?.settings?.currency),
         change: -8.9,
         trend: 'down'
       }
@@ -168,7 +170,7 @@ export default function ReportsPage() {
       color: 'text-teal-600',
       bgColor: 'bg-teal-50',
       stats: {
-        value: '$8,750',
+        value: formatCurrency(8750, tenant?.settings?.currency),
         change: 22.1,
         trend: 'up'
       }
@@ -220,7 +222,7 @@ export default function ReportsPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${reportStats.totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{formatCurrency(reportStats.totalRevenue, tenant?.settings?.currency)}</div>
               <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                 <ArrowUpRight className="w-3 h-3" />
                 +12.5% from last month

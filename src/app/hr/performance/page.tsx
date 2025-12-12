@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useTenant } from '@/lib/tenant';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PerformanceTable } from '@/components/hr/PerformanceTable';
+import AppLayout from '@/components/AppLayout';
 
 const PerformancePage = () => {
   const { tenant } = useTenant();
@@ -33,12 +34,14 @@ const PerformancePage = () => {
   }, [tenant]);
 
   return (
-    <div>
-      <PageHeader title="Performance" description="Manage employee performance reviews." />
-      <div className="mt-8">
-        <PerformanceTable reviews={reviews} />
+    <AppLayout>
+      <div>
+        <PageHeader title="Performance" description="Manage employee performance reviews." />
+        <div className="mt-8">
+          <PerformanceTable reviews={reviews} />
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

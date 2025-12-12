@@ -20,6 +20,7 @@ import { postARInvoice, postCOGS, postARPayment } from '../../lib/ledger';
 import { PageHeader } from '@/components/shared';
 import AppLayout from '@/components/AppLayout';
 import { useTenant } from '@/lib/tenant';
+import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 
 interface Invoice {
   id: string;
@@ -182,65 +183,128 @@ export default function SalesPage() {
                 <CardTitle>All Invoices</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Posting</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoices.map(invoice => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                        <TableCell>{invoice.customer_name}</TableCell>
-                        <TableCell>{new Date(invoice.invoice_date).toLocaleDateString()}</TableCell>
-                        <TableCell>
+                {/* Mobile Cards View */}
+                <div className="md:hidden space-y-4">
+                  {invoices.map(invoice => (
+                    <div key={invoice.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium">{invoice.invoice_number}</h3>
+                          <p className="text-sm text-muted-foreground">{invoice.customer_name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatCurrency(invoice.total_amount, tenant?.settings?.currency)}</p>
                           {getStatusBadge(invoice.payment_status)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={(invoice as any).posting_status === 'Posted' ? 'default' : 'outline'}>
-                            {(invoice as any).posting_status || 'Draft'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">${invoice.total_amount.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {(invoice as any).posting_status !== 'Posted' && (
-                                <DropdownMenuItem onClick={() => handlePostInvoice(invoice)}>
-                                  <span>Post Invoice</span>
-                                </DropdownMenuItem>
-                              )}
-                              {invoice.payment_status !== 'Paid' && (
-                                <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id, invoice.total_amount)}>
-                                  <span>Receive Payment</span>
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem asChild>
-                                 <Link href={`/sales/${invoice.id}`}>
-                                   <Eye className="mr-2 h-4 w-4" />
-                                   <span>View Details</span>
-                                 </Link>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Date:</span>
+                          <p>{new Date(invoice.invoice_date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Posting:</span>
+                          <p>
+                            <Badge variant={(invoice as any).posting_status === 'Posted' ? 'default' : 'outline'}>
+                              {(invoice as any).posting_status || 'Draft'}
+                            </Badge>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {(invoice as any).posting_status !== 'Posted' && (
+                              <DropdownMenuItem onClick={() => handlePostInvoice(invoice)}>
+                                <span>Post Invoice</span>
                               </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                            )}
+                            {invoice.payment_status !== 'Paid' && (
+                              <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id, invoice.total_amount)}>
+                                <span>Receive Payment</span>
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem asChild>
+                               <Link href={`/sales/${invoice.id}`}>
+                                 <Eye className="mr-2 h-4 w-4" />
+                                 <span>View Details</span>
+                               </Link>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Invoice #</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Posting</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead><span className="sr-only">Actions</span></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {invoices.map(invoice => (
+                        <TableRow key={invoice.id}>
+                          <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
+                          <TableCell>{invoice.customer_name}</TableCell>
+                          <TableCell>{new Date(invoice.invoice_date).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            {getStatusBadge(invoice.payment_status)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={(invoice as any).posting_status === 'Posted' ? 'default' : 'outline'}>
+                              {(invoice as any).posting_status || 'Draft'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">{formatCurrency(invoice.total_amount, tenant?.settings?.currency)}</TableCell>
+                          <TableCell className="text-right">
+                             <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {(invoice as any).posting_status !== 'Posted' && (
+                                  <DropdownMenuItem onClick={() => handlePostInvoice(invoice)}>
+                                    <span>Post Invoice</span>
+                                  </DropdownMenuItem>
+                                )}
+                                {invoice.payment_status !== 'Paid' && (
+                                  <DropdownMenuItem onClick={() => handleMarkAsPaid(invoice.id, invoice.total_amount)}>
+                                    <span>Receive {getCurrencySymbol(tenant?.settings?.currency)}Payment</span>
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem asChild>
+                                   <Link href={`/sales/${invoice.id}`}>
+                                     <Eye className="mr-2 h-4 w-4" />
+                                     <span>View Details</span>
+                                   </Link>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -250,56 +314,110 @@ export default function SalesPage() {
                 <CardTitle>All Quotations</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Quote #</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Expiry Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quotes.map(quote => (
-                      <TableRow key={quote.id}>
-                        <TableCell className="font-medium">{quote.quote_number}</TableCell>
-                        <TableCell>{quote.customer_name}</TableCell>
-                        <TableCell>{new Date(quote.quote_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(quote.expiry_date).toLocaleDateString()}</TableCell>
-                        <TableCell>
+                {/* Mobile Cards View */}
+                <div className="md:hidden space-y-4">
+                  {quotes.map(quote => (
+                    <div key={quote.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-medium">{quote.quote_number}</h3>
+                          <p className="text-sm text-muted-foreground">{quote.customer_name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">{formatCurrency(quote.total_amount, tenant?.settings?.currency)}</p>
                           {getStatusBadge(quote.status)}
-                        </TableCell>
-                        <TableCell className="text-right">${quote.total_amount.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                 <Link href={`/sales/quotes/${quote.id}`}>
-                                   <Eye className="mr-2 h-4 w-4" />
-                                   <span>View Details</span>
-                                 </Link>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Date:</span>
+                          <p>{new Date(quote.quote_date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Expiry:</span>
+                          <p>{new Date(quote.expiry_date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                               <Link href={`/sales/quotes/${quote.id}`}>
+                                 <Eye className="mr-2 h-4 w-4" />
+                                 <span>View Details</span>
+                               </Link>
+                            </DropdownMenuItem>
+                            {quote.status !== 'Accepted' && (
+                              <DropdownMenuItem>
+                                <span>Convert to Invoice</span>
                               </DropdownMenuItem>
-                              {quote.status !== 'Accepted' && (
-                                <DropdownMenuItem>
-                                  <span>Convert to Invoice</span>
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Quote #</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Expiry Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead><span className="sr-only">Actions</span></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {quotes.map(quote => (
+                        <TableRow key={quote.id}>
+                          <TableCell className="font-medium">{quote.quote_number}</TableCell>
+                          <TableCell>{quote.customer_name}</TableCell>
+                          <TableCell>{new Date(quote.quote_date).toLocaleDateString()}</TableCell>
+                          <TableCell>{new Date(quote.expiry_date).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            {getStatusBadge(quote.status)}
+                          </TableCell>
+                          <TableCell className="text-right">{formatCurrency(quote.total_amount, tenant?.settings?.currency)}</TableCell>
+                          <TableCell className="text-right">
+                             <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                   <Link href={`/sales/quotes/${quote.id}`}>
+                                     <Eye className="mr-2 h-4 w-4" />
+                                     <span>View Details</span>
+                                   </Link>
+                                </DropdownMenuItem>
+                                {quote.status !== 'Accepted' && (
+                                  <DropdownMenuItem>
+                                    <span>Convert to Invoice</span>
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Download, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import AppLayout from '@/components/AppLayout';
 
 interface PayslipRow {
   id: string;
@@ -69,8 +70,9 @@ export default function PayslipsPage() {
   }, [search, payslips]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader title="Payslip History" description="Review employees' payslips by period and status." />
+    <AppLayout>
+      <div className="flex flex-col gap-8">
+        <PageHeader title="Payslip History" description="Review employees' payslips by period and status." />
 
       <Card>
         <CardHeader className="pb-2">
@@ -174,6 +176,7 @@ export default function PayslipsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

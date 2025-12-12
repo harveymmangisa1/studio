@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { EmployeeForm } from '@/components/hr/EmployeeForm';
 import { EmployeeCard } from '@/components/hr/EmployeeCard';
 
+import AppLayout from '@/components/AppLayout';
+
 const EmployeesPage = () => {
   const { tenant } = useTenant();
   const [employees, setEmployees] = useState([]);
@@ -61,27 +63,29 @@ const EmployeesPage = () => {
   };
 
   return (
-    <div>
-      <PageHeader title="Employees" description="Manage your company's employees.">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Add Employee</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Employee</DialogTitle>
-            </DialogHeader>
-            <EmployeeForm onSubmit={handleFormSubmit} />
-          </DialogContent>
-        </Dialog>
-      </PageHeader>
+    <AppLayout>
+      <div>
+        <PageHeader title="Employees" description="Manage your team and employee information.">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>Add Employee</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Employee</DialogTitle>
+              </DialogHeader>
+              <EmployeeForm onSubmit={handleFormSubmit} />
+            </DialogContent>
+          </Dialog>
+        </PageHeader>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {employees.map((employee) => (
-          <EmployeeCard key={employee.id} employee={employee} />
-        ))}
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {employees.map((employee) => (
+            <EmployeeCard key={employee.id} employee={employee} />
+          ))}
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

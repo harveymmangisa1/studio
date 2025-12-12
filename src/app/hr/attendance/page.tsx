@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useTenant } from '@/lib/tenant';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { AttendanceTable } from '@/components/hr/AttendanceTable';
+import AppLayout from '@/components/AppLayout';
 
 const AttendancePage = () => {
   const { tenant } = useTenant();
@@ -33,12 +34,14 @@ const AttendancePage = () => {
   }, [tenant]);
 
   return (
-    <div>
-      <PageHeader title="Attendance" description="Track employee attendance and leave." />
-      <div className="mt-8">
-        <AttendanceTable attendance={attendance} />
+    <AppLayout>
+      <div>
+        <PageHeader title="Attendance" description="Track employee attendance and leave." />
+        <div className="mt-8">
+          <AttendanceTable attendance={attendance} />
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

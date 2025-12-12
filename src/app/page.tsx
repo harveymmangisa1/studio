@@ -30,6 +30,7 @@ import { PageHeader } from '@/components/shared';
 import { useTenant } from '@/lib/tenant';
 import { useAuth } from '@/components/AuthProvider';
 import AppLayout from '@/components/AppLayout';
+import { formatCurrency } from '@/lib/currency';
 
 interface Stats {
   totalProducts: number;
@@ -63,7 +64,7 @@ const MOCK_SALES_DATA = [
 
 export default function DashboardPage() {
   const { tenant } = useTenant();
-  const { userProfile } = useAuth();
+  const { userProfile } = useAuth() || {};
   const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
     lowStockItems: 0,
@@ -113,17 +114,15 @@ export default function DashboardPage() {
       ]);
 
       if (revenueError || salesError || productsError || customersError || lowStockError || pendingOrdersError || recentSalesError || recentStockError || recentCustomersError) {
-        console.error({
-          revenueError, salesError, productsError, customersError, lowStockError, pendingOrdersError, recentSalesError, recentStockError, recentCustomersError
-        });
+        // Errors will be caught by the outer try/catch block
       }
 
-      const totalRevenue = revenueData?.reduce((sum, invoice) => sum + invoice.total_amount, 0) || 0;
+      const totalRevenue = revenueData?.reduce((sum: number, invoice: any) => sum + invoice.total_amount, 0) || 0;
 
       const formattedActivities: Activity[] = [
-        ...(recentSales || []).map(sale => ({ id: sale.id, type: 'sale' as const, title: 'New Sale', description: `Invoice #${sale.invoice_number}`, amount: sale.total_amount, timestamp: new Date(sale.created_at).toLocaleDateString(), icon: ShoppingCart })),
-        ...(recentStock || []).map(stock => ({ id: stock.id, type: 'stock' as const, title: `Stock ${stock.movement_type}`, description: `${stock.quantity} of ${stock.products.name}`, timestamp: new Date(stock.created_at).toLocaleDateString(), icon: Package })),
-        ...(recentCustomers || []).map(customer => ({ id: customer.id, type: 'customer' as const, title: 'New Customer', description: customer.name, timestamp: new Date(customer.created_at).toLocaleDateString(), icon: Users })),
+        ...(recentSales || []).map((sale: any) => ({ id: sale.id, type: 'sale' as const, title: 'New Sale', description: `Invoice #${sale.invoice_number}`, amount: sale.total_amount, timestamp: new Date(sale.created_at).toLocaleDateString(), icon: ShoppingCart })),
+        ...(recentStock || []).map((stock: any) => ({ id: stock.id, type: 'stock' as const, title: `Stock ${stock.movement_type}`, description: `${stock.quantity} of ${stock.products.name}`, timestamp: new Date(stock.created_at).toLocaleDateString(), icon: Package })),
+        ...(recentCustomers || []).map((customer: any) => ({ id: customer.id, type: 'customer' as const, title: 'New Customer', description: customer.name, timestamp: new Date(customer.created_at).toLocaleDateString(), icon: Users })),
       ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       setStats({
@@ -154,7 +153,7 @@ export default function DashboardPage() {
   const statCards = [
     {
       title: 'Total Revenue',
-      value: `$${stats.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: formatCurrency(stats.totalRevenue, tenant?.settings?.currency),
       change: stats.revenueChange,
       icon: DollarSign,
     },
@@ -240,7 +239,7 @@ export default function DashboardPage() {
         </PageHeader>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {statCards.map((card) => {
             const Icon = card.icon;
             const isPositive = card.change >= 0;
@@ -255,7 +254,7 @@ export default function DashboardPage() {
                        <div className="flex items-center gap-2">
                           {card.change !== 0 && (
                               <div
-                              className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full ${
+                              className={`hidden sm:flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full ${
                                   isPositive
                                   ? 'bg-green-100 text-green-700'
                                   : 'bg-red-100 text-red-700'
@@ -279,10 +278,22 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">{card.title}</h3>
-                  <p className="text-2xl font-bold mb-2">{card.value}</p>
-                  <p className="text-xs text-muted-foreground">
-                      {isPositive ? 'Increase' : 'Decrease'} from last {timeRange}
-                  </p>
+                  <p className="text-xl sm:text-2xl font-bold mb-2">{card.value}</p>
+                  <div className="flex items-center gap-2">
+                    {card.change !== 0 && (
+                      <div className="sm:hidden flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">
+                        {isPositive ? (
+                          <ArrowUp className="w-3 h-3" />
+                        ) : (
+                          <ArrowDown className="w-3 h-3" />
+                        )}
+                        {Math.abs(card.change)}%
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                        {isPositive ? 'Increase' : 'Decrease'} from last {timeRange}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             );

@@ -209,82 +209,157 @@ export default function InventoryPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Products Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Expiry Date</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-center">Stock</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map(product => {
-                  const stockInfo = getStockStatus(product.quantity, product.minStock);
-                  return (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{product.sku}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>
-                        {product.industryFields?.expiryDate
-                          ? new Date(product.industryFields.expiryDate).toLocaleDateString() 
-                          : <span className="text-muted-foreground/50">N/A</span>
-                        }
-                      </TableCell>
-                      <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
-                      <TableCell className="text-center">{product.quantity}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={stockInfo.variant as any}>{stockInfo.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(product)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicate(product)}>
-                              <Copy className="mr-2 h-4 w-4" />
-                              <span>Duplicate</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/inventory/${product.id}`}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                <span>View Details</span>
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product.id!)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+         {/* Products Table */}
+         <Card>
+           <CardHeader>
+             <CardTitle>All Products</CardTitle>
+           </CardHeader>
+           <CardContent>
+             {/* Mobile Cards View */}
+             <div className="md:hidden space-y-4">
+               {filteredProducts.map(product => {
+                 const stockInfo = getStockStatus(product.quantity, product.minStock);
+                 return (
+                   <div key={product.id} className="border rounded-lg p-4 space-y-3">
+                     <div className="flex justify-between items-start">
+                       <div>
+                         <h3 className="font-medium">{product.name}</h3>
+                         <p className="text-sm text-muted-foreground">{product.sku}</p>
+                       </div>
+                       <Badge variant={stockInfo.variant as any}>{stockInfo.label}</Badge>
+                     </div>
+                     <div className="grid grid-cols-2 gap-2 text-sm">
+                       <div>
+                         <span className="text-muted-foreground">Category:</span>
+                         <p>{product.category}</p>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground">Price:</span>
+                         <p>${product.price.toFixed(2)}</p>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground">Stock:</span>
+                         <p>{product.quantity}</p>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground">Expiry:</span>
+                         <p>
+                           {product.industryFields?.expiryDate
+                             ? new Date(product.industryFields.expiryDate).toLocaleDateString() 
+                             : 'N/A'
+                           }
+                         </p>
+                       </div>
+                     </div>
+                     <div className="flex justify-end">
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <Button variant="ghost" className="h-8 w-8 p-0">
+                             <span className="sr-only">Open menu</span>
+                             <MoreHorizontal className="h-4 w-4" />
+                           </Button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem onClick={() => handleEdit(product)}>
+                             <Edit className="mr-2 h-4 w-4" />
+                             <span>Edit</span>
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => handleDuplicate(product)}>
+                             <Copy className="mr-2 h-4 w-4" />
+                             <span>Duplicate</span>
+                           </DropdownMenuItem>
+                           <DropdownMenuItem asChild>
+                             <Link href={`/inventory/${product.id}`}>
+                               <Eye className="mr-2 h-4 w-4" />
+                               <span>View Details</span>
+                             </Link>
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product.id!)}>
+                             <Trash2 className="mr-2 h-4 w-4" />
+                             <span>Delete</span>
+                           </DropdownMenuItem>
+                         </DropdownMenuContent>
+                       </DropdownMenu>
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
+
+             {/* Desktop Table View */}
+             <div className="hidden md:block">
+               <Table>
+                 <TableHeader>
+                   <TableRow>
+                     <TableHead>Product</TableHead>
+                     <TableHead>SKU</TableHead>
+                     <TableHead>Category</TableHead>
+                     <TableHead>Expiry Date</TableHead>
+                     <TableHead className="text-right">Price</TableHead>
+                     <TableHead className="text-center">Stock</TableHead>
+                     <TableHead className="text-center">Status</TableHead>
+                     <TableHead className="text-right">Actions</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {filteredProducts.map(product => {
+                     const stockInfo = getStockStatus(product.quantity, product.minStock);
+                     return (
+                       <TableRow key={product.id}>
+                         <TableCell className="font-medium">{product.name}</TableCell>
+                         <TableCell className="text-muted-foreground">{product.sku}</TableCell>
+                         <TableCell>{product.category}</TableCell>
+                         <TableCell>
+                           {product.industryFields?.expiryDate
+                             ? new Date(product.industryFields.expiryDate).toLocaleDateString() 
+                             : <span className="text-muted-foreground/50">N/A</span>
+                           }
+                         </TableCell>
+                         <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                         <TableCell className="text-center">{product.quantity}</TableCell>
+                         <TableCell className="text-center">
+                           <Badge variant={stockInfo.variant as any}>{stockInfo.label}</Badge>
+                         </TableCell>
+                         <TableCell className="text-right">
+                           <DropdownMenu>
+                             <DropdownMenuTrigger asChild>
+                               <Button variant="ghost" className="h-8 w-8 p-0">
+                                 <span className="sr-only">Open menu</span>
+                                 <MoreHorizontal className="h-4 w-4" />
+                               </Button>
+                             </DropdownMenuTrigger>
+                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem onClick={() => handleEdit(product)}>
+                                 <Edit className="mr-2 h-4 w-4" />
+                                 <span>Edit</span>
+                               </DropdownMenuItem>
+                               <DropdownMenuItem onClick={() => handleDuplicate(product)}>
+                                 <Copy className="mr-2 h-4 w-4" />
+                                 <span>Duplicate</span>
+                               </DropdownMenuItem>
+                               <DropdownMenuItem asChild>
+                                 <Link href={`/inventory/${product.id}`}>
+                                   <Eye className="mr-2 h-4 w-4" />
+                                   <span>View Details</span>
+                                 </Link>
+                               </DropdownMenuItem>
+                               <DropdownMenuSeparator />
+                               <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(product.id!)}>
+                                 <Trash2 className="mr-2 h-4 w-4" />
+                                 <span>Delete</span>
+                               </DropdownMenuItem>
+                             </DropdownMenuContent>
+                           </DropdownMenu>
+                         </TableCell>
+                       </TableRow>
+                     );
+                   })}
+                 </TableBody>
+               </Table>
+             </div>
+           </CardContent>
+         </Card>
       </div>
     </AppLayout>
   );

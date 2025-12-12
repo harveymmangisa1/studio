@@ -4,6 +4,7 @@ import { DepartmentList } from '@/components/hr/DepartmentList';
 import { DepartmentForm } from '@/components/hr/DepartmentForm';
 import { Department } from '@/lib/hr/types';
 import { supabase } from '@/lib/supabase';
+import AppLayout from '@/components/AppLayout';
 
 export default function DepartmentsPage() {
   const [view, setView] = useState<'list' | 'form'>('list');
@@ -44,20 +45,22 @@ export default function DepartmentsPage() {
   };
 
   return (
-    <div className="p-6">
-      {view === 'list' ? (
-        <DepartmentList
-          onAddDepartment={handleAddDepartment}
-          onEditDepartment={handleEditDepartment}
-          onDeleteDepartment={handleDeleteDepartment}
-        />
-      ) : (
-        <DepartmentForm
-          department={editingDepartment}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
-      )}
-    </div>
+    <AppLayout>
+      <div className="p-6">
+        {view === 'list' ? (
+          <DepartmentList
+            onAddDepartment={handleAddDepartment}
+            onEditDepartment={handleEditDepartment}
+            onDeleteDepartment={handleDeleteDepartment}
+          />
+        ) : (
+          <DepartmentForm
+            department={editingDepartment}
+            onSuccess={handleSuccess}
+            onCancel={handleCancel}
+          />
+        )}
+      </div>
+    </AppLayout>
   );
 }

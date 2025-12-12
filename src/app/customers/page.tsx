@@ -16,7 +16,7 @@ import AppLayout from '@/components/AppLayout';
 
 const STORAGE_KEY = 'customerFormDraft';
 
-const ProgressBar = ({ currentStep, completedSteps }) => {
+const ProgressBar = ({ currentStep, completedSteps }: { currentStep: number; completedSteps: number[] }) => {
   const steps = [
     { number: 1, label: 'Basic' },
     { number: 2, label: 'Address' },
@@ -68,13 +68,17 @@ const ProgressBar = ({ currentStep, completedSteps }) => {
 };
 
 
-export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialData }) {
+function ProgressiveCustomerForm({ onSuccess, onCancel, initialData }: { 
+  onSuccess?: (data: any) => void; 
+  onCancel?: () => void; 
+  initialData?: any; 
+}) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [completedSteps, setCompletedSteps] = useState([]);
-  const [errors, setErrors] = useState({});
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [errors, setErrors] = useState<any>({});
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     name: '',
     type: 'individual',
     email: '',
@@ -117,30 +121,30 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
     }
   }, [formData, currentStep, completedSteps, showSuccess]);
 
-  const validateEmail = (email) => {
+  const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const validateStep = (step) => {
+  const validateStep = (step: number) => {
     const newErrors = {};
 
     if (step === 1) {
       if (!formData.name || formData.name.length < 2) {
-        newErrors.name = 'Name must be at least 2 characters';
+        (newErrors as any).name = 'Name must be at least 2 characters';
       }
       if (!formData.email) {
-        newErrors.email = 'Email is required';
+        (newErrors as any).email = 'Email is required';
       } else if (!validateEmail(formData.email)) {
-        newErrors.email = 'Please enter a valid email address';
+        (newErrors as any).email = 'Please enter a valid email address';
       }
     }
 
     if (step === 3) {
       if (formData.creditLimit && isNaN(formData.creditLimit)) {
-        newErrors.creditLimit = 'Credit limit must be a number';
+        (newErrors as any).creditLimit = 'Credit limit must be a number';
       }
       if (formData.discountRate && (isNaN(formData.discountRate) || formData.discountRate < 0 || formData.discountRate > 100)) {
-        newErrors.discountRate = 'Discount must be between 0 and 100';
+        (newErrors as any).discountRate = 'Discount must be between 0 and 100';
       }
     }
 
@@ -166,7 +170,7 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
     setCurrentStep(currentStep + 1);
   };
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
     if (errors[field]) {
       setErrors({ ...errors, [field]: undefined });
@@ -379,7 +383,7 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
 
               <FormField label="Preferred Payment Methods" helpText="Methods this customer typically uses">
                 <div className="space-y-2">
-                  {['Bank Transfer', 'Credit Card', 'Cash', 'Check', 'Mobile Money'].map((method) => (
+                  {['Bank Transfer', 'Credit Card', 'Cash', 'Check', 'Mobile Money'].map((method: string) => (
                     <div key={method} className="flex items-center space-x-2">
                       <Checkbox
                         id={method}
@@ -388,7 +392,7 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
                           if (checked) {
                             handleFieldChange('paymentMethods', [...formData.paymentMethods, method]);
                           } else {
-                            handleFieldChange('paymentMethods', formData.paymentMethods.filter(m => m !== method));
+                            handleFieldChange('paymentMethods', formData.paymentMethods.filter((m: any) => m !== method));
                           }
                         }}
                       />
@@ -409,9 +413,9 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
                   <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)}>Edit</Button>
                 </div>
                 <div className="space-y-1 text-sm">
-                  <p><span className="text-gray-500">Name:</span> {formData.name}</p>
-                  <p><span className="text-gray-500">Type:</span> {formData.type}</p>
-                  <p><span className="text-gray-500">Email:</span> {formData.email}</p>
+                  <p><span className="text-gray-500">Name:</span> {(formData as any).name}</p>
+                  <p><span className="text-gray-500">Type:</span> {(formData as any).type}</p>
+                  <p><span className="text-gray-500">Email:</span> {(formData as any).email}</p>
                   {formData.phone && <p><span className="text-gray-500">Phone:</span> {formData.phone}</p>}
                 </div>
               </div>
@@ -423,9 +427,9 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
                     <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)}>Edit</Button>
                   </div>
                   <div className="text-sm">
-                    <p>{formData.address} {formData.address2}</p>
-                    <p>{formData.city}, {formData.state} {formData.postalCode}</p>
-                    <p>{formData.country}</p>
+                    <p>{(formData as any).address} {(formData as any).address2}</p>
+                    <p>{(formData as any).city}, {(formData as any).state} {(formData as any).postalCode}</p>
+                    <p>{(formData as any).country}</p>
                   </div>
                 </div>
               )}
@@ -437,9 +441,9 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
                     <Button variant="ghost" size="sm" onClick={() => setCurrentStep(3)}>Edit</Button>
                   </div>
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-gray-500">Payment Terms:</span> {formData.paymentTerms}</p>
-                    {formData.creditLimit && <p><span className="text-gray-500">Credit Limit:</span> ${formData.creditLimit}</p>}
-                    {formData.discountRate && <p><span className="text-gray-500">Discount:</span> {formData.discountRate}%</p>}
+                     <p><span className="text-gray-500">Payment Terms:</span> {(formData as any).paymentTerms}</p>
+                    {(formData as any).creditLimit && <p><span className="text-gray-500">Credit Limit:</span> ${(formData as any).creditLimit}</p>}
+                    {(formData as any).discountRate && <p><span className="text-gray-500">Discount:</span> {(formData as any).discountRate}%</p>}
                   </div>
                 </div>
               )}
@@ -495,6 +499,61 @@ export default function ProgressiveCustomerForm({ onSuccess, onCancel, initialDa
           </div>
         </CardContent>
       </Card>
+    </AppLayout>
+  );
+}
+
+// Main page component
+export default function CustomersPage() {
+  const [showForm, setShowForm] = useState(false);
+  const [currentCustomer, setCurrentCustomer] = useState(null);
+
+  const handleFormSuccess = (customerData: any) => {
+    console.log('Customer created:', customerData);
+    setShowForm(false);
+    setCurrentCustomer(null);
+  };
+
+  const handleFormCancel = () => {
+    setShowForm(false);
+    setCurrentCustomer(null);
+  };
+
+  return (
+    <AppLayout>
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Customers</h1>
+            <p className="text-muted-foreground">Manage your customer database</p>
+          </div>
+          <Button onClick={() => setShowForm(true)}>
+            Add New Customer
+          </Button>
+        </div>
+
+        {showForm ? (
+          <ProgressiveCustomerForm
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+            initialData={currentCustomer}
+          />
+        ) : (
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium mb-2">No customers yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Get started by adding your first customer
+                </p>
+                <Button onClick={() => setShowForm(true)}>
+                  Add Your First Customer
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </AppLayout>
   );
 }

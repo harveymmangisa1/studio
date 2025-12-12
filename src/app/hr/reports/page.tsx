@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { DashboardStats } from '@/components/hr/DashboardStats';
 import { KPIChart } from '@/components/hr/KPIChart';
 import { Users, Briefcase, DollarSign, TrendingUp } from 'lucide-react';
+import AppLayout from '@/components/AppLayout';
 
 const stats = [
   {
@@ -44,15 +45,17 @@ const headcountData = [
 
 const ReportsPage = () => {
   return (
-    <div>
-      <PageHeader title="Reports" description="Analytics and insights for your HR department." />
-      <div className="mt-8 space-y-8">
-        <DashboardStats stats={stats} />
-        <div className="grid gap-8 md:grid-cols-2">
-          <KPIChart data={headcountData} title="Headcount Growth" dataKey="count" xAxisKey="month" />
+    <AppLayout>
+      <div>
+        <PageHeader title="Reports" description="Analytics and insights for your HR department." />
+        <div className="mt-8 space-y-8">
+          <DashboardStats stats={stats} />
+          <div className="grid gap-8 md:grid-cols-2">
+            <KPIChart data={headcountData} title="Headcount Growth" dataKey="count" xAxisKey="month" />
+          </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

@@ -26,7 +26,7 @@ export default function SalesChart({ data }: SalesChartProps) {
           axisLine={false}
           tickFormatter={(value) => value.slice(0, 3)}
         />
-        <YAxis tickFormatter={(value) => `$${value / 1000}k`} />
+        <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`} />
         <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
         <Bar dataKey="sales" fill="var(--color-sales)" radius={8} />
       </BarChart>

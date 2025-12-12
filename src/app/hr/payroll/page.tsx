@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useTenant } from '@/lib/tenant';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PayrollTable } from '@/components/hr/PayrollTable';
+import AppLayout from '@/components/AppLayout';
 
 const PayrollPage = () => {
   const { tenant } = useTenant();
@@ -33,12 +34,14 @@ const PayrollPage = () => {
   }, [tenant]);
 
   return (
-    <div>
-      <PageHeader title="Payroll" description="Process payroll and manage employee salaries." />
-      <div className="mt-8">
-        <PayrollTable payrolls={payrolls} />
+    <AppLayout>
+      <div>
+        <PageHeader title="Payroll" description="Process payroll and manage employee salaries." />
+        <div className="mt-8">
+          <PayrollTable payrolls={payrolls} />
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
