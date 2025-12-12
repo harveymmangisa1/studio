@@ -2,7 +2,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export const EmployeeCard = ({ employee }) => {
+import { Employee } from '@/lib/hr/types';
+
+export const EmployeeCard = ({ employee }: { employee: Employee }) => {
   return (
     <Card>
       <CardHeader>

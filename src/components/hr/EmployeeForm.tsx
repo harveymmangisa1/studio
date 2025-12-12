@@ -32,7 +32,9 @@ const departments = [
   { id: '4', name: 'Human Resources' },
 ];
 
-export const EmployeeForm = ({ employee, onSubmit }) => {
+import { Employee } from '@/lib/hr/types';
+
+export const EmployeeForm = ({ employee, onSubmit }: { employee?: Employee; onSubmit: (data: any) => void }) => {
   const form = useForm({
     resolver: zodResolver(employeeSchema),
     defaultValues: employee || {},

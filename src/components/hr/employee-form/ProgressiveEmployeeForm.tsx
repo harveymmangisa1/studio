@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft, ArrowRight, Check, AlertCircle, Save, CheckCircle, 
-  User, Briefcase, DollarSign, FileText, Upload, X, Eye,
+  User, Briefcase, DollarSign, FileText, Upload, X, Eye, Edit,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'employeeFormDraft';
@@ -396,10 +396,14 @@ export const ProgressiveEmployeeForm = ({ onSuccess, onCancel, initialData }: Pr
     setErrors({});
   };
 
-  const handleFieldChange = (field: keyof EmployeeFormData, value: any) => {
+const handleFieldChange = (field: keyof EmployeeFormData, value: any) => {
     setFormData({ ...formData, [field]: value });
     if (errors[field]) {
-      setErrors({ ...errors, [field]: undefined });
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
@@ -724,6 +728,7 @@ export const ProgressiveEmployeeForm = ({ onSuccess, onCancel, initialData }: Pr
                       <SelectItem value="EUR">EUR - Euro</SelectItem>
                       <SelectItem value="GBP">GBP - British Pound</SelectItem>
                       <SelectItem value="JPY">JPY - Japanese Yen</SelectItem>
+                      <SelectItem value="MWK">MWK - Malawian Kwacha</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormField>

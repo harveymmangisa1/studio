@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { EmployeeDashboard } from '@/components/hr/EmployeeDashboard';
 import { ProgressiveEmployeeForm, EmployeeFormData } from '@/components/hr/employee-form/ProgressiveEmployeeForm';
 import { Employee } from '@/lib/hr/types';
+import { BreadcrumbNavigation } from '@/components/shared/BreadcrumbNavigation';
+import { Pagination } from '@/components/shared/Pagination';
 import AppLayout from '@/components/AppLayout';
 
 const UPLOAD_KEY = 'employee-documents';
@@ -135,7 +137,7 @@ export default function HRPage() {
         employee_number: formData.employeeNumber,
         reporting_manager: formData.reportingManager,
         work_location: formData.workLocation,
-        base_salary: formData.baseSalary,
+        base_salary: formData.baseSalary ? parseFloat(formData.baseSalary) : null,
         currency: formData.currency,
         payment_frequency: formData.paymentFrequency,
         payment_method: formData.paymentMethod,
@@ -185,8 +187,9 @@ export default function HRPage() {
           setEmployees([...employees, data]);
         }
       }
-    } catch (e) {
+} catch (e) {
       console.error('Failed to save employee', e);
+      console.error('Error details:', JSON.stringify(e, null, 2));
     } finally {
       setCurrentView('dashboard');
       setEditingEmployee(null);
@@ -213,45 +216,45 @@ export default function HRPage() {
             <ProgressiveEmployeeForm
               onSuccess={handleFormSuccess}
               onCancel={handleFormCancel}
-              initialData={editingEmployee ? {
-                // Convert Employee to EmployeeFormData
-                firstName: editingEmployee.firstName,
-                lastName: editingEmployee.lastName,
-                email: editingEmployee.email,
-                phone: editingEmployee.phone,
-                dateOfBirth: editingEmployee.dateOfBirth,
-                gender: editingEmployee.gender,
-                nationalId: editingEmployee.nationalId,
-                maritalStatus: editingEmployee.maritalStatus,
-                address: editingEmployee.address,
-                city: editingEmployee.city,
-                state: editingEmployee.state,
-                postalCode: editingEmployee.postalCode,
-                country: editingEmployee.country,
-                emergencyContactName: editingEmployee.emergencyContactName,
-                emergencyContactPhone: editingEmployee.emergencyContactPhone,
-                emergencyContactRelationship: editingEmployee.emergencyContactRelationship,
-                employeeNumber: editingEmployee.employeeNumber,
-                jobTitle: editingEmployee.jobTitle,
-                department: editingEmployee.department,
-                employmentType: editingEmployee.employmentType,
-                startDate: editingEmployee.startDate,
-                reportingManager: editingEmployee.reportingManager,
-                workLocation: editingEmployee.workLocation,
-                baseSalary: editingEmployee.baseSalary,
-                currency: editingEmployee.currency,
-                paymentFrequency: editingEmployee.paymentFrequency,
-                paymentMethod: editingEmployee.paymentMethod,
-                bankName: editingEmployee.bankName,
-                accountNumber: editingEmployee.accountNumber,
-                routingNumber: editingEmployee.routingNumber,
-                taxId: editingEmployee.taxId,
-                notes: editingEmployee.notes,
-                contractFile: null,
-                idDocumentFile: null,
-                resumeFile: null,
-                certificatesFiles: [],
-              } : null}
+initialData={editingEmployee ? {
+                 // Convert Employee to EmployeeFormData
+                 firstName: editingEmployee.firstName,
+                 lastName: editingEmployee.lastName,
+                 email: editingEmployee.email,
+                 phone: editingEmployee.phone,
+                 dateOfBirth: editingEmployee.dateOfBirth || '',
+                 gender: editingEmployee.gender || '',
+                 nationalId: editingEmployee.nationalId || '',
+                 maritalStatus: editingEmployee.maritalStatus || '',
+                 address: editingEmployee.address || '',
+                 city: editingEmployee.city || '',
+                 state: editingEmployee.state || '',
+                 postalCode: editingEmployee.postalCode || '',
+                 country: editingEmployee.country || '',
+                 emergencyContactName: editingEmployee.emergencyContactName || '',
+                 emergencyContactPhone: editingEmployee.emergencyContactPhone || '',
+                 emergencyContactRelationship: editingEmployee.emergencyContactRelationship || '',
+                 employeeNumber: editingEmployee.employeeNumber || '',
+                 jobTitle: editingEmployee.jobTitle,
+                 department: editingEmployee.department,
+                 employmentType: editingEmployee.employmentType,
+                 startDate: editingEmployee.startDate,
+                 reportingManager: editingEmployee.reportingManager || '',
+                 workLocation: editingEmployee.workLocation || '',
+                 baseSalary: editingEmployee.baseSalary?.toString() || '',
+                 currency: editingEmployee.currency || 'USD',
+                 paymentFrequency: editingEmployee.paymentFrequency || 'monthly',
+                 paymentMethod: editingEmployee.paymentMethod || 'bank_transfer',
+                 bankName: editingEmployee.bankName || '',
+                 accountNumber: editingEmployee.accountNumber || '',
+                 routingNumber: editingEmployee.routingNumber || '',
+                 taxId: editingEmployee.taxId || '',
+                 notes: editingEmployee.notes || '',
+                 contractFile: null,
+                 idDocumentFile: null,
+                 resumeFile: null,
+                 certificatesFiles: [],
+               } : null}
             />
           )}
         </div>

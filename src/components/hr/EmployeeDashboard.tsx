@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Users, Plus, Search, Filter, Edit, Trash2, Briefcase, Check, AlertCircle
 } from 'lucide-react';
-import { Employee } from '@/app/hr/page';
+import { Employee } from '@/lib/hr/types';
 
 interface EmployeeDashboardProps {
   employees: Employee[];
@@ -53,7 +53,7 @@ export const EmployeeDashboard = ({
       inactive: { label: 'Inactive', class: 'bg-red-100 text-red-800' },
       pending: { label: 'Pending', class: 'bg-amber-100 text-amber-800' }
     };
-    const { label, class: className } = config[status];
+    const { label, class: className } = config[status as keyof typeof config];
     return <Badge className={className}>{label}</Badge>;
   };
 

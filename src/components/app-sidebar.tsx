@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -16,14 +17,10 @@ import {
   Warehouse,
   BarChart3,
   Shield,
-  ChevronRight,
   LogOut,
   Building,
   Briefcase,
-  Menu,
-  X,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useWalkthrough } from '@/hooks/use-walkthrough';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -36,85 +33,64 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupLabel,
-  useSidebar,
-  SidebarTrigger,
-  SidebarInset,
 } from '@/components/ui/sidebar';
-import { Separator } from './ui/separator';
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from './ui/breadcrumb';
 
 const menuGroups = [
-  {
-    title: 'Core',
-    items: [
-      { href: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Accountant', 'Viewer'] },
-    ],
-  },
-  {
-    title: 'Operations',
-    items: [
-      { href: '/inventory', label: 'Inventory', icon: Package, roles: ['Admin', 'Manager', 'Store Clerk'] },
-      { href: '/sales', label: 'Sales', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Cashier'] },
-      { href: '/purchases', label: 'Purchases', icon: ShoppingBag, roles: ['Admin', 'Manager'] },
-    ],
-  },
-  {
-    title: 'Financial',
-    items: [
-      { href: '/expenses', label: 'Expenses', icon: DollarSign, roles: ['Admin', 'Manager', 'Accountant'] },
-      { href: '/accounts', label: 'Accounting', icon: FileText, roles: ['Admin', 'Accountant'] },
-      { href: '/reports', label: 'Reports', icon: BarChart3, roles: ['Admin', 'Manager', 'Accountant', 'Viewer'] },
-    ],
-  },
-  {
-    title: 'Relationships',
-    items: [
-      { href: '/customers', label: 'Customers', icon: Users, roles: ['Admin', 'Manager', 'Cashier'] },
-      { href: '/suppliers', label: 'Suppliers', icon: Warehouse, roles: ['Admin', 'Manager'] },
-    ],
-  },
-  {
-    title: 'Human Resources',
-    items: [
-      { href: '/hr', label: 'HR Dashboard', icon: Briefcase, roles: ['Admin', 'Manager'] },
-    ],
-  },
-  {
-    title: 'Administration',
-    items: [
-      { href: '/users', label: 'Team', icon: Shield, roles: ['Admin'] },
-      { href: '/settings', label: 'Settings', icon: Settings, roles: ['Admin'] },
-    ],
-  },
-];
+    {
+      title: 'Core',
+      items: [
+        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Accountant', 'Viewer'] },
+      ]
+    },
+    {
+      title: 'Operations',
+      items: [
+        { href: '/inventory', label: 'Inventory', icon: Package, roles: ['Admin', 'Manager', 'Store Clerk'] },
+        { href: '/sales', label: 'Sales', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Cashier'] },
+        { href: '/purchases', label: 'Purchases', icon: ShoppingBag, roles: ['Admin', 'Manager'] },
+      ]
+    },
+    {
+      title: 'Financial',
+      items: [
+        { href: '/expenses', label: 'Expenses', icon: DollarSign, roles: ['Admin', 'Manager', 'Accountant'] },
+        { href: '/accounts', label: 'Accounting', icon: FileText, roles: ['Admin', 'Accountant'] },
+        { href: '/reports', label: 'Reports', icon: BarChart3, roles: ['Admin', 'Manager', 'Accountant', 'Viewer'] },
+      ]
+    },
+    {
+      title: 'Relationships',
+      items: [
+        { href: '/customers', label: 'Customers', icon: Users, roles: ['Admin', 'Manager', 'Cashier'] },
+        { href: '/suppliers', label: 'Suppliers', icon: Warehouse, roles: ['Admin', 'Manager'] },
+      ]
+    },
+    {
+      title: 'Human Resources',
+      items: [
+        { href: '/hr', label: 'HR Dashboard', icon: Briefcase, roles: ['Admin', 'Manager'] },
+      ]
+    },
+    {
+      title: 'Administration',
+      items: [
+        { href: '/users', label: 'Team', icon: Shield, roles: ['Admin'] },
+        { href: '/settings', label: 'Settings', icon: Settings, roles: ['Admin'] },
+      ]
+    },
+  ];
 
-function HelpSection({ compact = false }: { compact?: boolean }) {
+function HelpSection() {
   const { reset } = useWalkthrough();
   return (
-    <div className={cn('bg-gray-50 rounded-lg', compact ? 'p-1' : 'p-2')}>
-      <button
-        onClick={reset}
-        className={cn(
-          'w-full text-left text-xs font-medium text-gray-700 hover:text-gray-900',
-          compact ? 'px-1 py-1' : 'px-2 py-1.5'
-        )}
-      >
-        Show Walkthrough
-      </button>
-    </div>
+    <SidebarMenuButton onClick={reset}>
+      Show Walkthrough
+    </SidebarMenuButton>
   );
 }
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { isMobile, state, open, setOpen } = useSidebar();
   const auth = useAuth();
 
   if (!auth) {
@@ -139,8 +115,8 @@ export function AppSidebar() {
     }))
     .filter((group) => group.items.length > 0);
 
-  const sidebarContent = (
-    <>
+  return (
+    <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2" data-tour-id="sidebar-brand">
           <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
@@ -193,16 +169,8 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <HelpSection compact={state === 'collapsed'} />
+        <HelpSection />
       </SidebarFooter>
-    </>
-  );
-
-  return (
-    <>
-      <Sidebar collapsible={isMobile ? 'offcanvas' : 'icon'} side="left">
-        {sidebarContent}
-      </Sidebar>
-    </>
+    </Sidebar>
   );
 }
