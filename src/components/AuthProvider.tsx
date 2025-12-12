@@ -25,11 +25,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       setSession(session);
-      setLoading(false);
       // Manually trigger a router refresh on auth change to re-run middleware
-      if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'USER_UPDATED') {
-          router.refresh();
-      }
+      if (_event === 'SIGNED_IN') {
+        router.push('/dashboard');
+    } 
     });
     
     // Initial check

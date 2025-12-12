@@ -109,8 +109,7 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        // Refresh the page to ensure middleware picks up the session
-        router.refresh();
+        router.push('/dashboard');
       }
     }
     setLoading(false);
