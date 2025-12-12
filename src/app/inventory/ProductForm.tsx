@@ -974,7 +974,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 <CardContent className="pt-6 space-y-3">
                   <div className="flex justify-between items-start">
                     <div className="space-y-2 flex-1">
-                      <p><span className="text-gray-500 font-medium">Industry:</span> {industryConfig.name}</p>
+                      <p><span className="text-gray-500 font-medium">Industry:</span> {industryConfig?.name}</p>
                       <p><span className="text-gray-500 font-medium">Name:</span> {form.watch('name')}</p>
                       <p><span className="text-gray-500 font-medium">Category:</span> {form.watch('category')}</p>
                       <p><span className="text-gray-500 font-medium">SKU:</span> {form.watch('sku')}</p>
@@ -1026,7 +1026,7 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 </CardContent>
               </Card>
 
-              {industryConfig.fields && Object.keys(industryFields).length > 0 && (
+              {industryConfig?.fields && Object.keys(industryFields).length > 0 && (
                 <Card className="border-gray-200">
                   <CardHeader className="border-b border-gray-200">
                     <CardTitle className="text-lg">{industryConfig.name} Settings</CardTitle>
