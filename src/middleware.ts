@@ -9,15 +9,15 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const publicUrls = ['/auth/login'];
+  const isAuthRoute = req.nextUrl.pathname.startsWith('/auth');
 
-  // if user is not signed in and the current path is not public, redirect the user to /auth/login
-  if (!session && !publicUrls.includes(req.nextUrl.pathname)) {
+  // If user is not signed in and trying to access a protected route, redirect to login
+  if (!session && !isAuthRoute) {
     return NextResponse.redirect(new URL('/auth/login', req.url));
   }
 
-  // if user is signed in and the current path is /auth/login, redirect the user to /
-  if (session && req.nextUrl.pathname === '/auth/login') {
+  // If user is signed in and trying to access an auth route (like login), redirect to dashboard
+  if (session && isAuthRoute) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 
@@ -25,6 +25,14 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Matcher ignoring `/_next/` and `/api/`
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
