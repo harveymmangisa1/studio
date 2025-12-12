@@ -925,29 +925,31 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 </div>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
-                {industryConfig.fields && 
+                {industryConfig?.fields && 
                   Object.entries(industryConfig.fields).map(([key, fieldConfig]) => 
                     renderIndustryField(key, fieldConfig as IndustryFieldConfig)
                   )
                 }
 
                 {/* Required Fields Info */}
-                <div className="border-t pt-6">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Required Information</h3>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-900 mb-2">
-                      The following fields are required for {industryConfig.name.toLowerCase()} products:
-                    </p>
-                    <ul className="space-y-1">
-                      {industryConfig.requiredFields.map((field, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-blue-900">
-                          <Check className="w-4 h-4 text-blue-600" />
-                          {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
-                        </li>
-                      ))}
-                    </ul>
+                {industryConfig?.requiredFields && (
+                  <div className="border-t pt-6">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Required Information</h3>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-900 mb-2">
+                        The following fields are required for {industryConfig.name.toLowerCase()} products:
+                      </p>
+                      <ul className="space-y-1">
+                        {industryConfig.requiredFields.map((field, idx) => (
+                          <li key={idx} className="flex items-center gap-2 text-sm text-blue-900">
+                            <Check className="w-4 h-4 text-blue-600" />
+                            {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

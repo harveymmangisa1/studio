@@ -187,9 +187,9 @@ export function AppSidebar() {
                 <span className="truncate font-semibold">{userName}</span>
                 <span className="truncate text-xs">{userRole}</span>
               </div>
-              <button onClick={handleLogout}>
+              <span onClick={handleLogout} className="cursor-pointer">
                 <LogOut className="w-4 h-4 ml-auto" />
-              </button>
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
