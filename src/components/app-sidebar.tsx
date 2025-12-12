@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -114,7 +115,13 @@ function HelpSection({ compact = false }: { compact?: boolean }) {
 export function AppSidebar() {
   const pathname = usePathname();
   const { isMobile, state, open, setOpen } = useSidebar();
-  const { userProfile, supabase } = useAuth();
+  const auth = useAuth();
+
+  if (!auth) {
+    return null; // Or a loading skeleton
+  }
+
+  const { userProfile, supabase } = auth;
   const userName = userProfile?.name || userProfile?.email || 'Admin';
   const userRole = userProfile?.role || 'Admin';
 
