@@ -109,8 +109,9 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push('/');
-        router.refresh(); // This ensures the middleware re-validates the session
+        // The AuthProvider will detect the session change and handle the UI update.
+        // We just need to make sure the router is in a consistent state.
+        router.refresh();
       }
     }
     setLoading(false);
