@@ -108,8 +108,7 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push('/');
-        router.refresh(); // Force a refresh to re-run middleware and AuthProvider logic
+        window.location.href = '/';
       }
     }
     setLoading(false);
