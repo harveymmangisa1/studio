@@ -18,6 +18,7 @@ import {
   ArrowRight,
   ArrowLeft
 } from 'lucide-react';
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 type AuthMode = 'login' | 'signup';
 
@@ -108,7 +109,8 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else {
-        window.location.href = '/';
+        router.push('/');
+        router.refresh(); // This ensures the middleware re-validates the session
       }
     }
     setLoading(false);
@@ -394,4 +396,6 @@ export default function AuthPage() {
     </div>
   );
 }
+    
+
     
