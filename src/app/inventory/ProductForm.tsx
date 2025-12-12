@@ -994,8 +994,8 @@ export function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) 
                 <CardContent className="pt-6 space-y-3">
                   <div className="flex justify-between items-start">
                     <div className="space-y-2 flex-1">
-                      <p><span className="text-gray-500 font-medium">Cost Price:</span> ${(form.watch('cost') || 0).toFixed(2)}</p>
-                      <p><span className="text-gray-500 font-medium">Selling Price:</span> ${(form.watch('price') || 0).toFixed(2)}</p>
+                      <p><span className="text-gray-500 font-medium">Cost Price:</span> ${Number(form.watch('cost') || 0).toFixed(2)}</p>
+                      <p><span className="text-gray-500 font-medium">Selling Price:</span> ${Number(form.watch('price') || 0).toFixed(2)}</p>
                       <p><span className="text-gray-500 font-medium">Profit Margin:</span> 
                         {cost > 0 ? (((price - cost) / cost) * 100).toFixed(1) : '0'}%
                       </p>
