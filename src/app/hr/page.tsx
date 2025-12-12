@@ -31,6 +31,9 @@ export default function HRPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const load = async () => {
@@ -201,60 +204,89 @@ export default function HRPage() {
     setEditingEmployee(null);
   };
 
+const breadcrumbItems = [
+    { label: 'HR Dashboard', href: '/hr', active: currentView === 'dashboard' },
+    { label: 'Add Employee', href: '/hr', active: currentView === 'form' }
+  ];
+
+  const paginatedEmployees = employees.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto">
+          <BreadcrumbNavigation items={breadcrumbItems} className="mb-6" />
+          
           {currentView === 'dashboard' ? (
-            <EmployeeDashboard
-              employees={employees}
-              onAddEmployee={handleAddEmployee}
-              onEditEmployee={handleEditEmployee}
-              onDeleteEmployee={handleDeleteEmployee}
-            />
+            <>
+              <EmployeeDashboard
+                employees={paginatedEmployees}
+                onAddEmployee={handleAddEmployee}
+                onEditEmployee={handleEditEmployee}
+                onDeleteEmployee={handleDeleteEmployee}
+              />
+              
+              {employees.length > itemsPerPage && (
+                <div className="mt-6 flex justify-center">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(employees.length / itemsPerPage)}
+                    onPageChange={handlePageChange}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <ProgressiveEmployeeForm
               onSuccess={handleFormSuccess}
               onCancel={handleFormCancel}
-initialData={editingEmployee ? {
-                 // Convert Employee to EmployeeFormData
-                 firstName: editingEmployee.firstName,
-                 lastName: editingEmployee.lastName,
-                 email: editingEmployee.email,
-                 phone: editingEmployee.phone,
-                 dateOfBirth: editingEmployee.dateOfBirth || '',
-                 gender: editingEmployee.gender || '',
-                 nationalId: editingEmployee.nationalId || '',
-                 maritalStatus: editingEmployee.maritalStatus || '',
-                 address: editingEmployee.address || '',
-                 city: editingEmployee.city || '',
-                 state: editingEmployee.state || '',
-                 postalCode: editingEmployee.postalCode || '',
-                 country: editingEmployee.country || '',
-                 emergencyContactName: editingEmployee.emergencyContactName || '',
-                 emergencyContactPhone: editingEmployee.emergencyContactPhone || '',
-                 emergencyContactRelationship: editingEmployee.emergencyContactRelationship || '',
-                 employeeNumber: editingEmployee.employeeNumber || '',
-                 jobTitle: editingEmployee.jobTitle,
-                 department: editingEmployee.department,
-                 employmentType: editingEmployee.employmentType,
-                 startDate: editingEmployee.startDate,
-                 reportingManager: editingEmployee.reportingManager || '',
-                 workLocation: editingEmployee.workLocation || '',
-                 baseSalary: editingEmployee.baseSalary?.toString() || '',
-                 currency: editingEmployee.currency || 'USD',
-                 paymentFrequency: editingEmployee.paymentFrequency || 'monthly',
-                 paymentMethod: editingEmployee.paymentMethod || 'bank_transfer',
-                 bankName: editingEmployee.bankName || '',
-                 accountNumber: editingEmployee.accountNumber || '',
-                 routingNumber: editingEmployee.routingNumber || '',
-                 taxId: editingEmployee.taxId || '',
-                 notes: editingEmployee.notes || '',
-                 contractFile: null,
-                 idDocumentFile: null,
-                 resumeFile: null,
-                 certificatesFiles: [],
-               } : null}
+              initialData={editingEmployee ? {
+                // Convert Employee to EmployeeFormData
+                firstName: editingEmployee.firstName,
+                lastName: editingEmployee.lastName,
+                email: editingEmployee.email,
+                phone: editingEmployee.phone,
+                dateOfBirth: editingEmployee.dateOfBirth || '',
+                gender: editingEmployee.gender || '',
+                nationalId: editingEmployee.nationalId || '',
+                maritalStatus: editingEmployee.maritalStatus || '',
+                address: editingEmployee.address || '',
+                city: editingEmployee.city || '',
+                state: editingEmployee.state || '',
+                postalCode: editingEmployee.postalCode || '',
+                country: editingEmployee.country || '',
+                emergencyContactName: editingEmployee.emergencyContactName || '',
+                emergencyContactPhone: editingEmployee.emergencyContactPhone || '',
+                emergencyContactRelationship: editingEmployee.emergencyContactRelationship || '',
+                employeeNumber: editingEmployee.employeeNumber || '',
+                jobTitle: editingEmployee.jobTitle,
+                department: editingEmployee.department,
+                employmentType: editingEmployee.employmentType,
+                startDate: editingEmployee.startDate,
+                reportingManager: editingEmployee.reportingManager || '',
+                workLocation: editingEmployee.workLocation || '',
+                baseSalary: editingEmployee.baseSalary?.toString() || '',
+                currency: editingEmployee.currency || 'USD',
+                paymentFrequency: editingEmployee.paymentFrequency || 'monthly',
+                paymentMethod: editingEmployee.paymentMethod || 'bank_transfer',
+                bankName: editingEmployee.bankName || '',
+                accountNumber: editingEmployee.accountNumber || '',
+                routingNumber: editingEmployee.routingNumber || '',
+                taxId: editingEmployee.taxId || '',
+                notes: editingEmployee.notes || '',
+                contractFile: null,
+                idDocumentFile: null,
+                resumeFile: null,
+                certificatesFiles: [],
+              } : null}
             />
           )}
         </div>

@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, ArrowRight, Check, AlertCircle, Save, CheckCircle } from 'lucide-react';
 import { FormField, SuccessCard } from '@/components/shared';
+import { BreadcrumbNavigation } from '@/components/shared/BreadcrumbNavigation';
+import { Pagination } from '@/components/shared/Pagination';
 import AppLayout from '@/components/AppLayout';
 
 const STORAGE_KEY = 'customerFormDraft';

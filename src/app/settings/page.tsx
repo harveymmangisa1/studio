@@ -11,10 +11,10 @@ import {
   Building2, Palette, Receipt, DollarSign, Shield, 
   Upload, X, Save, AlertCircle, CheckCircle, Image,
   ShoppingCart, Pill, Wrench, Utensils, Briefcase, Store,
-  Users, MapPin, Plus, Trash2, Building, Globe, Calendar
+  Users, MapPin, Plus, Trash2, Building, Globe, Calendar, LucideProps, ForwardRefExoticComponent, RefAttributes
 } from 'lucide-react';
 
-const INDUSTRY_CONFIGS = {
+const INDUSTRY_CONFIGS: Record<string, IndustryConfig> = {
   retail: {
     name: 'Retail',
     icon: ShoppingCart,
@@ -111,13 +111,38 @@ const INDUSTRY_CONFIGS = {
   }
 };
 
+interface IndustryField {
+  label: string;
+  type: 'text' | 'number' | 'boolean';
+  default?: string | number | boolean;
+  required?: boolean;
+  helpText?: string;
+}
+
+interface IndustryConfig {
+  name: string;
+  icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+  departments: string[];
+  fields: Record<string, IndustryField>;
+  taxFields: string[];
+  compliance: string[];
+}
+
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 
   'Europe/London', 'Europe/Paris', 'Asia/Tokyo', 'Africa/Johannesburg',
   'Africa/Blantyre', 'Australia/Sydney'
 ];
 
-const FormField = ({ label, error, children, helpText, required }) => (
+interface FormFieldProps {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+  helpText?: string;
+  required?: boolean;
+}
+
+const FormField = ({ label, error, children, helpText, required }: FormFieldProps) => (
   <div className="space-y-2">
     <Label className="text-sm font-medium text-gray-700">
       {label}
@@ -134,7 +159,13 @@ const FormField = ({ label, error, children, helpText, required }) => (
   </div>
 );
 
-const LogoUpload = ({ logo, onLogoChange, onLogoRemove }) => (
+interface LogoUploadProps {
+  logo: File | null;
+  onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLogoRemove: () => void;
+}
+
+const LogoUpload = ({ logo, onLogoChange, onLogoRemove }: LogoUploadProps) => (
   <div className="space-y-3">
     <Label className="text-sm font-medium text-gray-700">Company Logo</Label>
     
@@ -163,7 +194,7 @@ const LogoUpload = ({ logo, onLogoChange, onLogoRemove }) => (
             <Image className="w-12 h-12 text-gray-400" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 mb-1">company-logo.png</p>
+            <p className="text-sm font-medium text-gray-900 mb-1">{logo.name}</p>
             <p className="text-xs text-gray-500 mb-3">Uploaded</p>
             <Button variant="outline" size="sm" onClick={onLogoRemove}>
               <X className="w-4 h-4 mr-1" />
@@ -175,6 +206,14 @@ const LogoUpload = ({ logo, onLogoChange, onLogoRemove }) => (
     )}
   </div>
 );
+
+interface Department {
+  id: string;
+  name: string;
+  description: string;
+  headOfDepartment: string;
+  active: boolean;
+}
 
 export default function DynamicSettingsPage() {
   const [activeTab, setActiveTab] = useState('business');
@@ -202,7 +241,7 @@ export default function DynamicSettingsPage() {
     timezone: 'UTC',
     
     // Departments & Services
-    departments: [],
+    departments: [] as Department[],
     
     // Initial User (Setup Administrator)
     adminFirstName: '',
@@ -210,9 +249,10 @@ export default function DynamicSettingsPage() {
     adminEmail: '',
     adminPhone: '',
     adminTitle: 'System Administrator',
+    customAdminTitle: '',
     
     // Branding
-    logo: null,
+    logo: null as File | null,
     primaryColor: '#171717',
     accentColor: '#3B82F6',
     
@@ -229,6 +269,7 @@ export default function DynamicSettingsPage() {
     taxType: 'inclusive',
     fiscalYearEnd: '12-31',
     fiscalYearStart: '01-01',
+    paymentTerms: 'net30',
     
     // Operational
     businessHoursStart: '09:00',
@@ -245,12 +286,12 @@ export default function DynamicSettingsPage() {
     dateFormat: 'MM/DD/YYYY',
     numberFormat: 'en-US',
     
-    industryFields: {}
+    industryFields: {} as Record<string, any>
   });
 
   useEffect(() => {
-    const config = INDUSTRY_CONFIGS[selectedIndustry];
-    const defaultFields = {};
+    const config = INDUSTRY_CONFIGS[selectedIndustry as keyof typeof INDUSTRY_CONFIGS];
+    const defaultFields: Record<string, any> = {};
     
     if (config?.fields) {
       Object.entries(config.fields).forEach(([key, fieldConfig]) => {
@@ -258,8 +299,7 @@ export default function DynamicSettingsPage() {
       });
     }
     
-    // Set default departments based on industry
-    const defaultDepartments = config?.departments?.slice(0, 3).map((name, idx) => ({
+    const defaultDepartments = config?.departments?.slice(0, 3).map((name: string, idx: number) => ({
       id: `dept-${idx}`,
       name,
       description: '',
@@ -275,12 +315,12 @@ export default function DynamicSettingsPage() {
     }));
   }, [selectedIndustry]);
 
-  const handleChange = (field, value) => {
+  const handleChange = (field: keyof typeof settings, value: any) => {
     setSettings({ ...settings, [field]: value });
     setHasChanges(true);
   };
 
-  const handleIndustryFieldChange = (field, value) => {
+  const handleIndustryFieldChange = (field: string, value: any) => {
     setSettings({
       ...settings,
       industryFields: { ...settings.industryFields, [field]: value }
@@ -288,15 +328,15 @@ export default function DynamicSettingsPage() {
     setHasChanges(true);
   };
 
-  const handleLogoChange = (e) => {
-    const file = e.target.files[0];
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file && file.size <= 5 * 1024 * 1024) {
       handleChange('logo', file);
     }
   };
 
   const addDepartment = () => {
-    const newDept = {
+    const newDept: Department = {
       id: `dept-${Date.now()}`,
       name: '',
       description: '',
@@ -310,7 +350,7 @@ export default function DynamicSettingsPage() {
     setHasChanges(true);
   };
 
-  const updateDepartment = (id, field, value) => {
+  const updateDepartment = (id: string, field: keyof Department, value: any) => {
     setSettings({
       ...settings,
       departments: settings.departments.map(dept =>
@@ -320,7 +360,7 @@ export default function DynamicSettingsPage() {
     setHasChanges(true);
   };
 
-  const removeDepartment = (id) => {
+  const removeDepartment = (id: string) => {
     setSettings({
       ...settings,
       departments: settings.departments.filter(dept => dept.id !== id)
@@ -345,7 +385,6 @@ export default function DynamicSettingsPage() {
       return;
     }
     
-    // Here you would call your API to save settings
     console.log('Saving settings:', settings);
 
     setShowSuccess(true);
@@ -353,7 +392,7 @@ export default function DynamicSettingsPage() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  const renderIndustryField = (key, fieldConfig) => {
+  const renderIndustryField = (key: string, fieldConfig: IndustryField) => {
     const value = settings.industryFields[key];
     
     if (fieldConfig.type === 'boolean') {
@@ -369,6 +408,7 @@ export default function DynamicSettingsPage() {
             )}
           </div>
           <button
+            type="button"
             onClick={() => handleIndustryFieldChange(key, !value)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               value ? 'bg-gray-900' : 'bg-gray-300'
@@ -732,14 +772,16 @@ export default function DynamicSettingsPage() {
                           </FormField>
                         </div>
                         
-                        <FormField label="Description & Functions" className="mt-3">
-                          <Textarea
-                            value={dept.description}
-                            onChange={(e) => updateDepartment(dept.id, 'description', e.target.value)}
-                            placeholder="Describe the department's responsibilities and functions..."
-                            rows={3}
-                          />
-                        </FormField>
+                        <div className="mt-3">
+                            <FormField label="Description & Functions">
+                                <Textarea
+                                value={dept.description}
+                                onChange={(e) => updateDepartment(dept.id, 'description', e.target.value)}
+                                placeholder="Describe the department's responsibilities and functions..."
+                                rows={3}
+                                />
+                            </FormField>
+                        </div>
                         
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
                           <div className="flex items-center gap-2">
@@ -783,7 +825,7 @@ export default function DynamicSettingsPage() {
                           <button
                             key={idx}
                             onClick={() => {
-                              const newDept = {
+                              const newDept: Department = {
                                 id: `suggested-${Date.now()}-${idx}`,
                                 name: deptName,
                                 description: `${deptName} department for ${currentIndustryConfig.name.toLowerCase()} operations`,
@@ -1067,14 +1109,16 @@ export default function DynamicSettingsPage() {
                     />
                   </FormField>
 
-                  <FormField label="Terms and Conditions" className="mt-4">
-                    <Textarea
-                      value={settings.termsAndConditions}
-                      onChange={(e) => handleChange('termsAndConditions', e.target.value)}
-                      rows={4}
-                      placeholder="Payment terms, delivery terms, return policies, etc."
-                    />
-                  </FormField>
+                  <div className="mt-4">
+                    <FormField label="Terms and Conditions">
+                      <Textarea
+                        value={settings.termsAndConditions}
+                        onChange={(e) => handleChange('termsAndConditions', e.target.value)}
+                        rows={4}
+                        placeholder="Payment terms, delivery terms, return policies, etc."
+                      />
+                    </FormField>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1173,6 +1217,7 @@ export default function DynamicSettingsPage() {
                         <p className="text-xs text-gray-500">Payment due 30 days after invoice</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => handleChange('paymentTerms', 'net30')}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           settings.paymentTerms === 'net30' ? 'bg-gray-900' : 'bg-gray-300'
@@ -1192,6 +1237,7 @@ export default function DynamicSettingsPage() {
                         <p className="text-xs text-gray-500">Payment due 15 days after invoice</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => handleChange('paymentTerms', 'net15')}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           settings.paymentTerms === 'net15' ? 'bg-gray-900' : 'bg-gray-300'
@@ -1211,6 +1257,7 @@ export default function DynamicSettingsPage() {
                         <p className="text-xs text-gray-500">Payment due immediately</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => handleChange('paymentTerms', 'dueOnReceipt')}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           settings.paymentTerms === 'dueOnReceipt' ? 'bg-gray-900' : 'bg-gray-300'
@@ -1265,6 +1312,7 @@ export default function DynamicSettingsPage() {
                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                       <div key={day} className="flex flex-col items-center">
                         <button
+                          type="button"
                           onClick={() => {
                             const newDays = settings.operatingDays.includes(day)
                               ? settings.operatingDays.filter(d => d !== day)
@@ -1376,6 +1424,7 @@ export default function DynamicSettingsPage() {
                         <p className="text-xs text-gray-500 mt-1">Require 2FA for all administrator accounts</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => handleChange('twoFactorAuth', !settings.twoFactorAuth)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                           settings.twoFactorAuth ? 'bg-green-500' : 'bg-gray-300'
