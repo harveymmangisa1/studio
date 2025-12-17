@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -106,16 +106,26 @@ const AccountTreeTable: React.FC<AccountTreeTableProps> = ({ accounts, onEditAcc
         </React.Fragment>
       ));
   };
+  
+  const { groupedAccounts, accountTypesOrder } = useMemo(() => {
+    const standardOrder = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
+    const grouped = accounts.reduce((acc, account) => {
+      if (!acc[account.account_type]) {
+        acc[account.account_type] = [];
+      }
+      acc[account.account_type].push(account);
+      return acc;
+    }, {} as Record<string, Account[]>);
 
-  const groupedAccounts = accounts.reduce((acc, account) => {
-    if (!acc[account.account_type]) {
-      acc[account.account_type] = [];
-    }
-    acc[account.account_type].push(account);
-    return acc;
-  }, {} as Record<string, Account[]>);
+    const orderedTypes = standardOrder.filter(type => grouped[type]);
+    const otherTypes = Object.keys(grouped).filter(type => !standardOrder.includes(type)).sort();
+    
+    return {
+      groupedAccounts: grouped,
+      accountTypesOrder: [...orderedTypes, ...otherTypes]
+    };
+  }, [accounts]);
 
-  const accountTypesOrder = ['Asset', 'Liability', 'Equity', 'Revenue', 'Expense'];
 
   return (
     <Table className="mt-4">
@@ -135,6 +145,8 @@ const AccountTreeTable: React.FC<AccountTreeTableProps> = ({ accounts, onEditAcc
           const accountsOfType = groupedAccounts[type];
           if (!accountsOfType || accountsOfType.length === 0) return null;
 
+          const isDebitBalance = type === 'Asset' || type === 'Expense';
+
           return (
             <React.Fragment key={type}>
               <TableRow className="bg-gray-100 hover:bg-gray-100">
@@ -146,7 +158,7 @@ const AccountTreeTable: React.FC<AccountTreeTableProps> = ({ accounts, onEditAcc
                       }`}
                       onClick={() => toggleExpand(type)}
                     />
-                    {type} ({type === 'Asset' || type === 'Expense' ? 'Debit Balance' : 'Credit Balance'})
+                    {type} ({isDebitBalance ? 'Debit Balance' : 'Credit Balance'})
                   </div>
                 </TableCell>
               </TableRow>
