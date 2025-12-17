@@ -69,6 +69,7 @@ export default function AccountingPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
+    console.log('Accounting page useEffect - tenant:', tenant);
     if (tenant) {
       fetchAccounts();
     }
@@ -76,6 +77,7 @@ export default function AccountingPage() {
 
   const fetchAccounts = async () => {
     if (!tenant) return;
+    console.log('Fetching accounts for tenant:', tenant.id);
     setLoading(true);
     try {
       // Fetch all accounts as a flat list
@@ -84,6 +86,8 @@ export default function AccountingPage() {
         .select('*')
         .eq('tenant_id', tenant.id);
         
+      console.log('Accounts query result:', { data, error });
+        
       if (error) {
         throw error;
       }
@@ -91,6 +95,7 @@ export default function AccountingPage() {
       const accountsWithBalance = (data || []).map((acc: any) => ({...acc, balance: acc.balance || 0}));
       setAccounts(accountsWithBalance);
     } catch (error: any) {
+      console.error('Error fetching accounts:', error);
       setError(error.message);
     } finally {
       setLoading(false);

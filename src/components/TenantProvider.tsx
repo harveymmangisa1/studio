@@ -98,6 +98,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch tenant after auth is ready
   useEffect(() => {
+    console.log('TenantProvider useEffect:', { authLoading, session });
     if (!authLoading && session) getTenantData();
     else if (!authLoading && !session) setTenantLoading(false);
   }, [authLoading, session]);
