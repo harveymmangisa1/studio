@@ -78,9 +78,10 @@ export default function AccountingPage() {
     if (!tenant) return;
     setLoading(true);
     try {
+      // Fetch all accounts as a flat list
       const { data, error } = await supabase
         .from('accounts')
-        .select('*, parent_account:parent_account_id(*)')
+        .select('*')
         .eq('tenant_id', tenant.id);
         
       if (error) {
