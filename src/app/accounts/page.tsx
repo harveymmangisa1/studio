@@ -76,8 +76,13 @@ export default function ChartOfAccountsPage() {
 
   const fetchAccounts = async () => {
     if (!tenant) return;
+    setLoading(true);
     try {
-      const { data, error } = await supabase.from('accounts').select('*, parent_account_id').eq('tenant_id', tenant.id);
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*, parent_account:parent_account_id(*)')
+        .eq('tenant_id', tenant.id);
+        
       if (error) {
         throw error;
       }
