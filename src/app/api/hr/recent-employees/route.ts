@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await supabase
         .from('employees')
         .select('*')
+        .eq('tenant_id', tenantId)
         .order('hire_date', { ascending: false })
         .limit(5);
 

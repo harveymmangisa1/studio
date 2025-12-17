@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
     }
     const supabase = getSupabase(tenantId);
-    const { data, error } = await supabase.from('employees').select('*');
+    const { data, error } = await supabase.from('employees').select('*').eq('tenant_id', tenantId);
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
     const supabase = getSupabase(tenantId);
     const employee = await req.json();
-    const { data, error } = await supabase.from('employees').insert([employee]).select();
+    const { data, error } = await supabase.from('employees').insert([{ ...employee, tenant_id: tenantId }]).select();
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

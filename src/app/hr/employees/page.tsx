@@ -10,10 +10,12 @@ import { EmployeeForm } from '@/components/hr/EmployeeForm';
 import { EmployeeCard } from '@/components/hr/EmployeeCard';
 
 import AppLayout from '@/components/AppLayout';
+import { Employee } from '@/lib/hr/types';
+import { EmployeeFormData } from '@/components/hr/employee-form/ProgressiveEmployeeForm';
 
 const EmployeesPage = () => {
   const { tenant } = useTenant();
-  const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ const EmployeesPage = () => {
     fetchEmployees();
   }, [tenant]);
 
-  const handleFormSubmit = async (data) => {
+  const handleFormSubmit = async (data: EmployeeFormData) => {
     if (!tenant) return;
     try {
       const response = await fetch('/api/hr', {
@@ -55,7 +57,7 @@ const EmployeesPage = () => {
       }
 
       const newEmployee = await response.json();
-      setEmployees([...employees, newEmployee]);
+      setEmployees([...employees, { ...newEmployee, status: 'pending' }]);
       setIsDialogOpen(false);
     } catch (error) {
       console.error('Error creating employee:', error);

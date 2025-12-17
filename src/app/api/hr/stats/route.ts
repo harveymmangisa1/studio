@@ -14,22 +14,26 @@ export async function GET(req: NextRequest) {
     const {
         data: totalEmployeesData,
         error: totalEmployeesError,
-    } = await supabase.from('employees').select('id', { count: 'exact' });
+        count: totalEmployeesCount,
+    } = await supabase.from('employees').select('id', { count: 'exact' }).eq('tenant_id', tenantId);
 
     const {
         data: activeTodayData,
         error: activeTodayError,
-    } = await supabase.from('attendance').select('id', { count: 'exact' }).eq('date', today);
+        count: activeTodayCount,
+    } = await supabase.from('attendance').select('id', { count: 'exact' }).eq('date', today).eq('tenant_id', tenantId);
 
     const {
         data: onLeaveData,
         error: onLeaveError,
-    } = await supabase.from('leave').select('id', { count: 'exact' }).eq('status', 'Approved').lte('start_date', today).gte('end_date', today);
+        count: onLeaveCount,
+    } = await supabase.from('leave').select('id', { count: 'exact' }).eq('status', 'Approved').lte('start_date', today).gte('end_date', today).eq('tenant_id', tenantId);
 
     const {
         data: pendingApprovalsData,
         error: pendingApprovalsError,
-    } = await supabase.from('leave').select('id', { count: 'exact' }).eq('status', 'Pending');
+        count: pendingApprovalsCount,
+    } = await supabase.from('leave').select('id', { count: 'exact' }).eq('status', 'Pending').eq('tenant_id', tenantId);
 
     if (totalEmployeesError || activeTodayError || onLeaveError || pendingApprovalsError) {
         console.error(
@@ -42,10 +46,10 @@ export async function GET(req: NextRequest) {
     }
 
     const stats = {
-        totalEmployees: totalEmployeesData.length,
-        activeToday: activeTodayData.length,
-        onLeave: onLeaveData.length,
-        pendingApprovals: pendingApprovalsData.length,
+        totalEmployees: totalEmployeesCount,
+        activeToday: activeTodayCount,
+        onLeave: onLeaveCount,
+        pendingApprovals: pendingApprovalsCount,
     };
 
     return NextResponse.json(stats);

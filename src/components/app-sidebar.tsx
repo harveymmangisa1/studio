@@ -54,7 +54,7 @@ const menuGroups = [
       title: 'Financial',
       items: [
         { href: '/expenses', label: 'Expenses', icon: DollarSign, roles: ['Admin', 'Manager', 'Accountant'] },
-        { href: '/accounts', label: 'Accounting', icon: FileText, roles: ['Admin', 'Accountant'] },
+        { href: '/accounting', label: 'Accounting', icon: FileText, roles: ['Admin', 'Accountant'] },
         { href: '/reports', label: 'Reports', icon: BarChart3, roles: ['Admin', 'Manager', 'Accountant', 'Viewer'] },
       ]
     },

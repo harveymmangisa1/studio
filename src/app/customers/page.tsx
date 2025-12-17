@@ -508,7 +508,6 @@ function ProgressiveCustomerForm({ onSuccess, onCancel, initialData }: {
 // Main page component
 export default function CustomersPage() {
   const [customers, setCustomers] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);

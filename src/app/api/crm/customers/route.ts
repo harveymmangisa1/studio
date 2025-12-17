@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
     return new NextResponse(JSON.stringify({ error: 'Tenant context missing' }), { status: 401 });
   }
   const supabase = getSupabase(tenantId);
-  const { data, error } = await supabase.from('customers').select('*').order('name', { ascending: true });
+  const { data, error } = await supabase.from('customers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true });
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }

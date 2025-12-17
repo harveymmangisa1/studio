@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 
@@ -17,7 +18,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: 'Tenant context missing' }, { status: 401 });
   }
   const supabase = getSupabase(tenantId);
-  const { data, error } = await supabase.from('customers').select('*').eq('id', params.id).maybeSingle();
+  const { data, error } = await supabase.from('customers').select('*').eq('id', params.id).eq('tenant_id', tenantId).maybeSingle();
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }
@@ -46,7 +47,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return new NextResponse(JSON.stringify({ error: 'No fields to update' }), { status: 400 });
   }
   updates.updated_at = new Date().toISOString();
-  const { data, error } = await supabase.from('customers').update(updates).eq('id', params.id).single();
+  const { data, error } = await supabase.from('customers').update(updates).eq('id', params.id).eq('tenant_id', tenantId).single();
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }
@@ -59,7 +60,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ error: 'Tenant context missing' }, { status: 401 });
   }
   const supabase = getSupabase(tenantId);
-  const { data, error } = await supabase.from('customers').delete().eq('id', params.id).single();
+  const { data, error } = await supabase.from('customers').delete().eq('id', params.id).eq('tenant_id', tenantId).single();
   if (error) {
     return new NextResponse(JSON.stringify({ error: error.message }), { status: 500 });
   }

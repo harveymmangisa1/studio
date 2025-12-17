@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
     }
     const supabase = getSupabase(tenantId);
-    const { data, error } = await supabase.from('performance_reviews').select('*, employees!performance_reviews_employee_id_fkey (*), employees!performance_reviews_reviewer_id_fkey (*)');
+    const { data, error } = await supabase.from('performance_reviews').select('*, employees!performance_reviews_employee_id_fkey (*), employees!performance_reviews_reviewer_id_fkey (*)').eq('tenant_id', tenantId);
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

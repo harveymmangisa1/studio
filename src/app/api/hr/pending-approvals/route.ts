@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
     const { data, error } = await supabase
         .from('leave')
         .select('*, employees(first_name, last_name)')
-        .eq('status', 'Pending');
+        .eq('status', 'Pending')
+        .eq('tenant_id', tenantId);
 
     if (error) {
         console.error(error);
